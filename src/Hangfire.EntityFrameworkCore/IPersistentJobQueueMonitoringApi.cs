@@ -48,7 +48,7 @@ namespace Hangfire.EntityFrameworkCore
         /// <returns>
         /// A fetched job identifier collection.
         /// </returns>
-        IList<string> GetFetchedJobIds(string queue, int from, int perPage);
+        IList<string> GetFetchedJobIds([NotNull] string queue, int from, int perPage);
 
         /// <summary>
         /// Returns a specified queue statistics.
@@ -59,6 +59,6 @@ namespace Hangfire.EntityFrameworkCore
         /// <returns>
         /// A queue statistics containing counts of enqueued and fetched jobs.
         /// </returns>
-        QueueStatisticsDto GetQueueStatistics(string queue);
+        QueueStatisticsDto GetQueueStatistics([NotNull] string queue);
     }
 }
