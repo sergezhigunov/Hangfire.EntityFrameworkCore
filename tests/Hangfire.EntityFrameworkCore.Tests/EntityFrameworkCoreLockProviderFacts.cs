@@ -66,7 +66,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 () => instance.Acquire(resource, timeout));
         }
 
-        [Fact(Skip = "An unexpected ArgumentException throws on SaveChanges method call")]
+        [Fact]
         public void Acquire_Throws_WhenExisingLockIsActual()
         {
             var instance = CreateInstance(new TimeSpan(0, 0, 0));
@@ -109,7 +109,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             });
         }
 
-        [Fact(Skip = "An unexpected ArgumentException throws on SaveChanges method call")]
+        [Fact]
         public void Acquire_CompletesSuccessfully_WhenExisingLockIsOutdated()
         {
             var instance = CreateInstance(default);
