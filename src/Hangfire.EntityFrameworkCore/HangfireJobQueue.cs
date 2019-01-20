@@ -13,7 +13,8 @@ namespace Hangfire.EntityFrameworkCore
         [MaxLength(50)]
         public string Queue { get; set; }
 
-        public DateTime FetchedAt { get; set; }
+        [ConcurrencyCheck]
+        public DateTime? FetchedAt { get; set; }
 
         public virtual HangfireJob Job { get; set; }
     }

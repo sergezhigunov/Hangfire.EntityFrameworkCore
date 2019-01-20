@@ -31,11 +31,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected void UseContextSavingChanges(Action<HangfireContext> action)
         {
-            UseContext(context =>
-            {
-                action(context);
-                context.SaveChanges();
-            });
+            Options.UseContextSavingChanges(action);
         }
 
         public void Dispose()

@@ -47,6 +47,9 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentNullException">
         /// <paramref name="jobId"/> is <see langword="null" />.
         /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <paramref name="jobId"/> is not exists.
+        /// </exception>
         void Enqueue([NotNull] string queue, [NotNull] string jobId);
     }
 }

@@ -16,6 +16,17 @@ namespace Hangfire.EntityFrameworkCore
                 action(context);
         }
 
+        public static void UseContextSavingChanges(
+            this DbContextOptions<HangfireContext> options,
+            Action<HangfireContext> action)
+        {
+            options.UseContext(context =>
+            {
+                action(context);
+                context.SaveChanges();
+            });
+        }
+
         public static T UseContext<T>(
             this DbContextOptions<HangfireContext> options,
             Func<HangfireContext, T> func)

@@ -19,6 +19,6 @@
         /// <returns>
         ///  An instance of queue monitoring API.
         /// </returns>
-        IPersistentJobQueueMonitoringApi GetJobQueueMonitoringApi();
+        IPersistentJobQueueMonitoringApi GetMonitoringApi();
     }
 }
