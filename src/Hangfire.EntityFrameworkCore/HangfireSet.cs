@@ -15,7 +15,7 @@ namespace Hangfire.EntityFrameworkCore
         public decimal Score { get; set; }
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? ExpireAt { get; set; }
     }

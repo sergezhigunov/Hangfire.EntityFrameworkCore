@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore
         public string Reason { get; set; }
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
         public IReadOnlyDictionary<string, string> Data { get; set; }

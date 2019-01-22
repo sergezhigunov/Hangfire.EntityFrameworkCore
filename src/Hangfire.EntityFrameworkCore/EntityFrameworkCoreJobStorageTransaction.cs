@@ -1,0 +1,629 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using Hangfire.Annotations;
+using Hangfire.States;
+using Hangfire.Storage;
+using Microsoft.EntityFrameworkCore;
+
+namespace Hangfire.EntityFrameworkCore
+{
+    internal sealed class EntityFrameworkCoreJobStorageTransaction : JobStorageTransaction
+    {
+        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly IPersistentJobQueueProvider _queueProvider;
+        private readonly Queue<Action<HangfireContext>> _queue;
+        private readonly Queue<Action> _afterCommitQueue;
+        private bool _disposed;
+
+        public EntityFrameworkCoreJobStorageTransaction(
+            DbContextOptions<HangfireContext> options,
+            IPersistentJobQueueProvider queueProvider)
+        {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _queueProvider = queueProvider ?? throw new ArgumentNullException(nameof(queueProvider));
+            _queue = new Queue<Action<HangfireContext>>();
+            _afterCommitQueue = new Queue<Action>();
+        }
+
+        public override void AddJobState(string jobId, IState state)
+        {
+            AddJobState(jobId, state, false);
+        }
+
+        public override void AddRangeToSet([NotNull] string key, [NotNull] IList<string> items)
+        {
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var exisitingFields = new HashSet<string>(
+                    from set in context.Sets
+                    where set.Key == key
+                    select set.Value);
+
+                foreach (var item in items)
+                {
+                    var set = new HangfireSet
+                    {
+                        Key = key,
+                        Value = item,
+                    };
+
+                    if (!exisitingFields.Contains(item))
+                        context.Sets.Add(set);
+                    else
+                    {
+                        context.Sets.Attach(set).
+                            Property(x => x.Value).
+                            IsModified = true;
+                    }
+                }
+            });
+        }
+
+        public override void AddToQueue(string queue, string jobId)
+        {
+            ValidateQueue(queue);
+            ValidateJobId(jobId);
+            ThrowIfDisposed();
+
+            var persistentQueue = _queueProvider.GetJobQueue();
+            _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
+            if (persistentQueue is EntityFrameworkCoreJobQueue)
+                _afterCommitQueue.Enqueue(() => EntityFrameworkCoreJobQueue.NewItemInQueueEvent.Set());
+        }
+
+        public override void AddToSet(string key, string value)
+        {
+            AddToSet(key, value, 0d);
+        }
+
+        public override void AddToSet(string key, string value, double score)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var entry = context.ChangeTracker.
+                Entries<HangfireSet>().
+                FirstOrDefault(x =>
+                    x.Entity.Key == key &&
+                    x.Entity.Value == value);
+
+                decimal scoreValue = (decimal)score;
+
+                if (entry != null)
+                {
+                    var entity = entry.Entity;
+                    entity.Score = scoreValue;
+                    entity.CreatedAt = DateTime.UtcNow;
+                    entry.State = EntityState.Modified;
+                }
+                else
+                {
+                    var set = new HangfireSet
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        Key = key,
+                        Score = scoreValue,
+                        Value = value,
+                    };
+
+                    if (!context.Sets.Any(x => x.Key == key && x.Value == value))
+                        context.Sets.Add(set);
+                    else
+                        context.Entry(set).State = EntityState.Modified;
+                }
+            });
+        }
+
+        public override void Commit()
+        {
+            ThrowIfDisposed();
+
+            _options.UseContext(context =>
+            {
+                using (var transaction = context.Database.BeginTransaction())
+                {
+                    while (_queue.Count > 0)
+                    {
+                        var action = _queue.Dequeue();
+                        action.Invoke(context);
+                        context.SaveChanges();
+                    }
+                    transaction.Commit();
+                }
+            });
+
+
+            while (_afterCommitQueue.Count > 0)
+            {
+                var action = _afterCommitQueue.Dequeue();
+                action.Invoke();
+            }
+        }
+
+        public override void DecrementCounter(string key)
+        {
+            AddCounter(key, -1L, default);
+        }
+
+        public override void DecrementCounter(string key, TimeSpan expireIn)
+        {
+            AddCounter(key, -1L, DateTime.UtcNow + expireIn);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _queue.Clear();
+                    _afterCommitQueue.Clear();
+                }
+                _disposed = true;
+            }
+        }
+
+        public override void ExpireJob(string jobId, TimeSpan expireIn)
+        {
+            SetJobExpiration(jobId, DateTime.UtcNow + expireIn);
+        }
+
+        public override void ExpireHash([NotNull] string key, TimeSpan expireIn)
+        {
+            SetHashExpiration(key, DateTime.UtcNow + expireIn);
+        }
+
+        public override void ExpireList([NotNull] string key, TimeSpan expireIn)
+        {
+            SetListExpiration(key, DateTime.UtcNow + expireIn);
+        }
+
+        public override void ExpireSet([NotNull] string key, TimeSpan expireIn)
+        {
+            SetSetExpiration(key, DateTime.UtcNow + expireIn);
+        }
+
+        public override void IncrementCounter(string key)
+        {
+            AddCounter(key, 1L, default);
+        }
+
+        public override void IncrementCounter(string key, TimeSpan expireIn)
+        {
+            AddCounter(key, 1L, DateTime.UtcNow + expireIn);
+        }
+
+        public override void InsertToList(string key, string value)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var maxPosition =
+                context.ChangeTracker.Entries<HangfireList>().
+                Where(x => x.Entity.Key == key).
+                Max(x => (int?)x.Entity.Position) ??
+                context.Lists.
+                Where(x => x.Key == key).
+                Max(x => (int?)x.Position) ?? -1;
+
+                context.Add(new HangfireList
+                {
+                    Key = key,
+                    Position = maxPosition + 1,
+                    Value = value,
+                });
+            });
+        }
+
+        public override void PersistJob(string jobId)
+        {
+            SetJobExpiration(jobId, null);
+        }
+
+        public override void PersistHash([NotNull] string key)
+        {
+            SetHashExpiration(key, null);
+        }
+
+        public override void PersistList([NotNull] string key)
+        {
+            SetListExpiration(key, null);
+        }
+
+        public override void PersistSet([NotNull] string key)
+        {
+            SetSetExpiration(key, null);
+        }
+
+        public override void RemoveFromList(string key, string value)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var list = (
+                    from item in context.Lists
+                    where item.Key == key
+                    orderby item.Position
+                    select item).
+                    ToArray();
+
+                var newList = list.
+                    Where(x => x.Value != value).
+                    ToArray();
+
+                for (int i = newList.Length; i < list.Length; i++)
+                    context.Lists.Remove(list[i]);
+
+                CopyNonKeyValues(newList, list);
+            });
+        }
+
+        public override void RemoveFromSet(string key, string value)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var entries = context.ChangeTracker.Entries<HangfireSet>().
+                Where(x => x.Entity.Key == key && x.Entity.Value == value);
+
+                foreach (var entry in entries)
+                    entry.State = EntityState.Detached;
+
+                if (context.Sets.Any(x => x.Key == key && x.Value == value))
+                    context.Remove(new HangfireSet
+                    {
+                        Key = key,
+                        Value = value
+                    });
+            });
+        }
+
+        public override void RemoveHash(string key)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var fields = 
+                    from hash in context.Hashes
+                    where hash.Key == key
+                    select hash.Field;
+
+                foreach (var field in fields)
+                    context.Remove(new HangfireHash
+                    {
+                        Key = key,
+                        Field = field,
+                    });
+            });
+        }
+
+        public override void RemoveSet([NotNull] string key)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var values = 
+                    from set in context.Sets
+                    where set.Key == key
+                    select set.Value;
+
+                foreach (var value in values)
+                    context.Remove(new HangfireSet
+                    {
+                        Key = key,
+                        Value = value,
+                    });
+            });
+        }
+
+        public override void SetJobState(string jobId, IState state)
+        {
+            AddJobState(jobId, state, true);
+        }
+
+        public override void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        {
+            ValidateKey(key);
+            if (keyValuePairs == null)
+                throw new ArgumentNullException(nameof(keyValuePairs));
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var exisitingFields =
+                    from hash in context.Hashes
+                    where hash.Key == key
+                    select hash.Field;
+
+                foreach (var item in keyValuePairs)
+                {
+                    var hash = new HangfireHash
+                    {
+                        Key = key,
+                        Field = item.Key,
+                        Value = item.Value,
+                    };
+
+                    if (exisitingFields.Contains(item.Key))
+                    {
+                        context.Attach(hash).
+                            Property(x => x.Value).
+                            IsModified = true;
+                    }
+                    else
+                    {
+                        context.Hashes.Add(hash);
+                    }
+                }
+            });
+        }
+
+        public override void TrimList(string key, int keepStartingFrom, int keepEndingAt)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var list = (
+                    from item in context.Lists
+                    where item.Key == key
+                    orderby item.Position
+                    select item).
+                    ToArray();
+
+                var newList = list.
+                    Where((item, index) => keepStartingFrom <= index && index <= keepEndingAt).
+                    ToArray();
+
+                for (int i = newList.Length; i < list.Length; i++)
+                    context.Lists.Remove(list[i]);
+
+                CopyNonKeyValues(newList, list);
+            });
+        }
+
+        private void AddCounter(string key, long value, DateTime? expireAt)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                context.Add(new HangfireCounter
+                {
+                    Key = key,
+                    Value = value,
+                    ExpireAt = expireAt,
+                });
+            });
+        }
+
+        private void AddJobState(string jobId, IState state, bool setActual)
+        {
+            var id = ValidateJobId(jobId);
+            if (state == null)
+                throw new ArgumentNullException(nameof(state));
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var stateEntity = context.Add(new HangfireState
+                {
+                    JobId = id,
+                    Name = state.Name,
+                    Reason = state.Reason,
+                    Data = state.SerializeData(),
+                }).Entity;
+
+                if (setActual)
+                {
+                    var actualState = context.JobStates.
+                                SingleOrDefault(x => x.JobId == id);
+
+                    if (actualState == null)
+                        actualState = context.Add(new HangfireJobState
+                        {
+                            JobId = id,
+                        }).Entity;
+
+                    actualState.State = stateEntity;
+                    actualState.Name = state.Name;
+                }
+            });
+        }
+
+        private static void CopyNonKeyValues(HangfireList[] source, HangfireList[] destination)
+        {
+            for (int i = 0; i < source.Length; i++)
+            {
+                var oldItem = destination[i];
+                var newItem = source[i];
+                if (ReferenceEquals(oldItem, newItem))
+                    continue;
+                oldItem.ExpireAt = newItem.ExpireAt;
+                oldItem.Value = newItem.Value;
+            }
+        }
+
+        private void SetJobExpiration(string jobId, DateTime? expireAt)
+        {
+            var id = ValidateJobId(jobId);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var entry = context.ChangeTracker.
+                    Entries<HangfireJob>().
+                    FirstOrDefault(x => x.Entity.Id == id);
+
+                if (entry != null)
+                    entry.Entity.ExpireAt = expireAt;
+                else
+                {
+                    entry = context.Attach(new HangfireJob
+                    {
+                        Id = id,
+                        ExpireAt = expireAt,
+                    });
+                }
+
+                entry.Property(x => x.ExpireAt).IsModified = true;
+            });
+        }
+
+        private void SetHashExpiration(string key, DateTime? expireAt)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var fields = 
+                    from hash in context.Hashes
+                    where hash.Key == key
+                    select hash.Field;
+
+                foreach (var field in fields)
+                {
+                    var hash = new HangfireHash
+                    {
+                        Key = key,
+                        Field = field,
+                        ExpireAt = expireAt,
+                    };
+
+                    context.Attach(hash).
+                        Property(x => x.ExpireAt).
+                        IsModified = true;
+                }
+            });
+        }
+
+        private void SetListExpiration(string key, DateTime? expireAt)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var ids = (
+                    from item in context.Lists
+                    where item.Key == key
+                    select new
+                    {
+                        item.Key,
+                        item.Position,
+                    }).
+                    ToArray();
+
+                foreach (var id in ids)
+                {
+                    var item = new HangfireList
+                    {
+                        Key = id.Key,
+                        Position = id.Position,
+                        ExpireAt = expireAt
+                    };
+
+                    context.Attach(item).
+                        Property(x => x.ExpireAt).
+                        IsModified = true;
+                }
+            });
+        }
+
+        private void SetSetExpiration(string key, DateTime? expireAt)
+        {
+            ValidateKey(key);
+            ThrowIfDisposed();
+
+            _queue.Enqueue(context =>
+            {
+                var ids = (
+                    from item in context.Sets
+                    where item.Key == key
+                    select new
+                    {
+                        item.Key,
+                        item.Value,
+                    }).
+                    ToArray();
+
+                foreach (var id in ids)
+                {
+                    var item = new HangfireSet
+                    {
+                        Key = id.Key,
+                        Value = id.Value,
+                        ExpireAt = expireAt,
+                    };
+
+                    context.Attach(item).
+                        Property(x => x.ExpireAt).
+                        IsModified = true;
+                }
+            });
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().FullName);
+        }
+
+        private static void ValidateKey(string key)
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+
+            if (key.Length == 0)
+                throw new ArgumentException(null, nameof(key));
+        }
+
+        private static void ValidateQueue(string queue)
+        {
+            if (queue == null)
+                throw new ArgumentNullException(nameof(queue));
+
+            if (queue.Length == 0)
+                throw new ArgumentException(null, nameof(queue));
+        }
+
+        private static long ValidateJobId(string jobId)
+        {
+            if (jobId == null)
+                throw new ArgumentNullException(nameof(jobId));
+
+            if (jobId.Length == 0)
+                throw new ArgumentException(null, nameof(jobId));
+
+            return long.Parse(jobId, CultureInfo.InvariantCulture);
+        }
+    }
+}
