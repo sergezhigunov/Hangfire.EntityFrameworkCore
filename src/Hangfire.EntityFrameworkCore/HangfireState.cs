@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -18,8 +17,7 @@ namespace Hangfire.EntityFrameworkCore
         [MaxLength(100)]
         public string Reason { get; set; }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
 
         [Required]
         public IReadOnlyDictionary<string, string> Data { get; set; }

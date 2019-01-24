@@ -22,21 +22,23 @@ namespace Hangfire.EntityFrameworkCore
             IPersistentJobQueueProvider queueProvider)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            _queueProvider = queueProvider ?? throw new ArgumentNullException(nameof(queueProvider));
+            _queueProvider = queueProvider ??
+                throw new ArgumentNullException(nameof(queueProvider));
             _queue = new Queue<Action<HangfireContext>>();
             _afterCommitQueue = new Queue<Action>();
         }
 
-        public override void AddJobState(string jobId, IState state)
+        public override void AddJobState([NotNull] string jobId, [NotNull] IState state)
         {
             AddJobState(jobId, state, false);
         }
 
         public override void AddRangeToSet([NotNull] string key, [NotNull] IList<string> items)
         {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             if (items == null)
                 throw new ArgumentNullException(nameof(items));
-            ValidateKey(key);
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -59,14 +61,14 @@ namespace Hangfire.EntityFrameworkCore
                     else
                     {
                         context.Sets.Attach(set).
-                            Property(x => x.Value).
+                            Property(x => x.Score).
                             IsModified = true;
                     }
                 }
             });
         }
 
-        public override void AddToQueue(string queue, string jobId)
+        public override void AddToQueue([NotNull] string queue, [NotNull] string jobId)
         {
             ValidateQueue(queue);
             ValidateJobId(jobId);
@@ -75,26 +77,30 @@ namespace Hangfire.EntityFrameworkCore
             var persistentQueue = _queueProvider.GetJobQueue();
             _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
             if (persistentQueue is EntityFrameworkCoreJobQueue)
-                _afterCommitQueue.Enqueue(() => EntityFrameworkCoreJobQueue.NewItemInQueueEvent.Set());
+                _afterCommitQueue.Enqueue(
+                    () => EntityFrameworkCoreJobQueue.NewItemInQueueEvent.Set());
         }
 
-        public override void AddToSet(string key, string value)
+        public override void AddToSet([NotNull] string key, [NotNull] string value)
         {
             AddToSet(key, value, 0d);
         }
 
-        public override void AddToSet(string key, string value, double score)
+        public override void AddToSet([NotNull] string key, [NotNull] string value, double score)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
             {
                 var entry = context.ChangeTracker.
-                Entries<HangfireSet>().
-                FirstOrDefault(x =>
-                    x.Entity.Key == key &&
-                    x.Entity.Value == value);
+                    Entries<HangfireSet>().
+                    FirstOrDefault(x =>
+                        x.Entity.Key == key &&
+                        x.Entity.Value == value);
 
                 decimal scoreValue = (decimal)score;
 
@@ -149,12 +155,12 @@ namespace Hangfire.EntityFrameworkCore
             }
         }
 
-        public override void DecrementCounter(string key)
+        public override void DecrementCounter([NotNull] string key)
         {
             AddCounter(key, -1L, default);
         }
 
-        public override void DecrementCounter(string key, TimeSpan expireIn)
+        public override void DecrementCounter([NotNull] string key, TimeSpan expireIn)
         {
             AddCounter(key, -1L, DateTime.UtcNow + expireIn);
         }
@@ -178,7 +184,7 @@ namespace Hangfire.EntityFrameworkCore
             }
         }
 
-        public override void ExpireJob(string jobId, TimeSpan expireIn)
+        public override void ExpireJob([NotNull] string jobId, TimeSpan expireIn)
         {
             SetJobExpiration(jobId, DateTime.UtcNow + expireIn);
         }
@@ -198,30 +204,31 @@ namespace Hangfire.EntityFrameworkCore
             SetSetExpiration(key, DateTime.UtcNow + expireIn);
         }
 
-        public override void IncrementCounter(string key)
+        public override void IncrementCounter([NotNull] string key)
         {
             AddCounter(key, 1L, default);
         }
 
-        public override void IncrementCounter(string key, TimeSpan expireIn)
+        public override void IncrementCounter([NotNull] string key, TimeSpan expireIn)
         {
             AddCounter(key, 1L, DateTime.UtcNow + expireIn);
         }
 
-        public override void InsertToList(string key, string value)
+        public override void InsertToList([NotNull] string key, string value)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
             {
-                var maxPosition =
-                context.ChangeTracker.Entries<HangfireList>().
-                Where(x => x.Entity.Key == key).
-                Max(x => (int?)x.Entity.Position) ??
-                context.Lists.
-                Where(x => x.Key == key).
-                Max(x => (int?)x.Position) ?? -1;
+                var maxPosition = context.ChangeTracker.
+                    Entries<HangfireList>().
+                    Where(x => x.Entity.Key == key).
+                    Max(x => (int?)x.Entity.Position) ??
+                    context.Lists.
+                    Where(x => x.Key == key).
+                    Max(x => (int?)x.Position) ?? -1;
 
                 context.Add(new HangfireList
                 {
@@ -232,7 +239,7 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        public override void PersistJob(string jobId)
+        public override void PersistJob([NotNull] string jobId)
         {
             SetJobExpiration(jobId, null);
         }
@@ -252,9 +259,10 @@ namespace Hangfire.EntityFrameworkCore
             SetSetExpiration(key, null);
         }
 
-        public override void RemoveFromList(string key, string value)
+        public override void RemoveFromList([NotNull] string key, string value)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -277,15 +285,19 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        public override void RemoveFromSet(string key, string value)
+        public override void RemoveFromSet([NotNull] string key, [NotNull] string value)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
             {
-                var entries = context.ChangeTracker.Entries<HangfireSet>().
-                Where(x => x.Entity.Key == key && x.Entity.Value == value);
+                var entries = context.ChangeTracker.
+                    Entries<HangfireSet>().
+                    Where(x => x.Entity.Key == key && x.Entity.Value == value);
 
                 foreach (var entry in entries)
                     entry.State = EntityState.Detached;
@@ -299,9 +311,10 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        public override void RemoveHash(string key)
+        public override void RemoveHash([NotNull] string key)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -322,7 +335,8 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveSet([NotNull] string key)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -341,14 +355,17 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        public override void SetJobState(string jobId, IState state)
+        public override void SetJobState([NotNull] string jobId, [NotNull] IState state)
         {
             AddJobState(jobId, state, true);
         }
 
-        public override void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        public override void SetRangeInHash(
+            [NotNull] string key,
+            [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             if (keyValuePairs == null)
                 throw new ArgumentNullException(nameof(keyValuePairs));
             ThrowIfDisposed();
@@ -383,9 +400,10 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        public override void TrimList(string key, int keepStartingFrom, int keepEndingAt)
+        public override void TrimList([NotNull] string key, int keepStartingFrom, int keepEndingAt)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -408,9 +426,10 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        private void AddCounter(string key, long value, DateTime? expireAt)
+        private void AddCounter([NotNull] string key, long value, DateTime? expireAt)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -424,7 +443,7 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        private void AddJobState(string jobId, IState state, bool setActual)
+        private void AddJobState([NotNull] string jobId, [NotNull] IState state, bool setActual)
         {
             var id = ValidateJobId(jobId);
             if (state == null)
@@ -436,6 +455,7 @@ namespace Hangfire.EntityFrameworkCore
                 var stateEntity = context.Add(new HangfireState
                 {
                     JobId = id,
+                    CreatedAt = DateTime.UtcNow,
                     Name = state.Name,
                     Reason = state.Reason,
                     Data = state.SerializeData(),
@@ -499,7 +519,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetHashExpiration(string key, DateTime? expireAt)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -527,7 +548,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetListExpiration(string key, DateTime? expireAt)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -560,7 +582,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetSetExpiration(string key, DateTime? expireAt)
         {
-            ValidateKey(key);
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
             _queue.Enqueue(context =>
@@ -595,15 +618,6 @@ namespace Hangfire.EntityFrameworkCore
         {
             if (_disposed)
                 throw new ObjectDisposedException(GetType().FullName);
-        }
-
-        private static void ValidateKey(string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            if (key.Length == 0)
-                throw new ArgumentException(null, nameof(key));
         }
 
         private static void ValidateQueue(string queue)

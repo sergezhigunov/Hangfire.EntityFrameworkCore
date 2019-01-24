@@ -89,8 +89,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
                 Queues = new List<HangfireJobQueue>
                 {
                     new HangfireJobQueue
@@ -144,8 +143,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
                 Queues = new List<HangfireJobQueue>
                 {
                     new HangfireJobQueue
@@ -201,8 +199,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
                 Queues = new List<HangfireJobQueue>
                 {
                     new HangfireJobQueue

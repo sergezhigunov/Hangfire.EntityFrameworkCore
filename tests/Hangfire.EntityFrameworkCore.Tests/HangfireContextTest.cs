@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
+using Hangfire.Common;
+using Hangfire.Storage;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -22,6 +25,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Options;
             using (var context = new HangfireContext(Options))
                 context.GetService<IRelationalDatabaseCreator>().CreateTables();
+        }
+
+        private protected static InvocationData CreateInvocationData(Expression<Action> methodCall)
+        {
+            var job = Job.FromExpression(methodCall);
+            return CreateInvocationData(job);
+        }
+
+        private protected static InvocationData CreateInvocationData(Job job)
+        {
+            return InvocationData.Serialize(job);
         }
 
         private protected void UseContext(Action<HangfireContext> action)

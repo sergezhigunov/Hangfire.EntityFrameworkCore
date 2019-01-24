@@ -38,6 +38,18 @@ namespace Hangfire.EntityFrameworkCore
                 return func(context);
         }
 
+        public static T UseContextSavingChanges<T>(
+            this DbContextOptions<HangfireContext> options,
+            Func<HangfireContext, T> func)
+        {
+            return options.UseContext(context =>
+            {
+                var result = func(context);
+                context.SaveChanges();
+                return result;
+            });
+        }
+
         public static HangfireContext CreateContext(
             this DbContextOptions<HangfireContext> options)
         {

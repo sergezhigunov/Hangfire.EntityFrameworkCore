@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hangfire.States;
+using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -163,17 +164,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void AddRangeToSet_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var items = Array.Empty<string>();
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.AddRangeToSet(key, items));
-        }
-
-        [Fact]
         public void AddRangeToSet_Throws_WhenItemsParameterIsNull()
         {
             string key = "key";
@@ -185,7 +175,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void AddRangeToSet_AddsAllItems_ToAGivenSet()
+        public void AddRangeToSet_Throws_WhenTransactionDisposed()
+        {
+            string key = "key";
+            var items = Array.Empty<string>();
+
+            AssertThrowsObjectDisposed(instance => instance.AddRangeToSet(key, items));
+        }
+
+        [Fact]
+        public void AddRangeToSet_AddsAllItems()
         {
             string key = "key";
             var items = new List<string>
@@ -210,12 +209,33 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void AddRangeToSet_Throws_WhenTransactionDisposed()
+        public void AddRangeToSet_AddsAllItems_WhenSomeValuesAlreadySet()
         {
             string key = "key";
-            var items = Array.Empty<string>();
+            var items = new List<string>
+            {
+                "1",
+                "2",
+                "3",
+            };
+            UseContextSavingChanges(context => context.Add(new HangfireSet
+            {
+                Key = key,
+                Value = "1",
+            }));
 
-            AssertThrowsObjectDisposed(instance => instance.AddRangeToSet(key, items));
+            UseTransaction(true, instance => instance.AddRangeToSet(key, items));
+
+            UseContext(context =>
+            {
+                var records = (
+                    from set in context.Sets
+                    where set.Key == key
+                    select set.Value).
+                    ToArray();
+                Assert.Equal(items, records);
+            });
+
         }
 
         [Fact]
@@ -309,16 +329,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void AddToSet_Throws_WhenKeyParameterIsEmpty()
+        public void AddToSet_Throws_WhenValueParameterIsNull()
         {
-            string key = string.Empty;
-            string value = "value";
+            string key = "key";
+            string value = null;
             double score = 0;
             var instance = CreateTransaction();
 
-            Assert.Throws<ArgumentException>(nameof(key),
+            Assert.Throws<ArgumentNullException>(nameof(value),
                 () => instance.AddToSet(key, value));
-            Assert.Throws<ArgumentException>(nameof(key),
+            Assert.Throws<ArgumentNullException>(nameof(value),
                 () => instance.AddToSet(key, value, score));
         }
 
@@ -482,19 +502,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void DecrementCounter_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.DecrementCounter(key));
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.DecrementCounter(key, expireIn));
-        }
-
-        [Fact]
         public void DecrementCounter_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -607,17 +614,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void ExpireHash_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.ExpireHash(key, expireIn));
-        }
-
-        [Fact]
         public void ExpireHash_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -671,17 +667,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void ExpireList_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.ExpireList(key, expireIn));
-        }
-
-        [Fact]
         public void ExpireList_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -730,17 +715,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.ExpireSet(key, expireIn));
-        }
-
-        [Fact]
-        public void ExpireSet_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.ExpireSet(key, expireIn));
         }
 
@@ -800,19 +774,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void IncrementCounter_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.IncrementCounter(key));
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.IncrementCounter(key, expireIn));
-        }
-
-        [Fact]
         public void IncrementCounter_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -868,17 +829,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.InsertToList(key, value));
-        }
-
-        [Fact]
-        public void InsertToList_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            string value = "value";
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.InsertToList(key, value));
         }
 
@@ -979,16 +929,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void PersistHash_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.PersistHash(key));
-        }
-
-        [Fact]
         public void PersistHash_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -1034,16 +974,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.PersistList(key));
-        }
-
-        [Fact]
-        public void PersistList_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.PersistList(key));
         }
 
@@ -1099,16 +1029,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void PersistSet_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.PersistSet(key));
-        }
-
-        [Fact]
         public void PersistSet_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -1156,17 +1076,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveFromList(key, value));
-        }
-
-        [Fact]
-        public void RemoveFromList_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            string value = "value";
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.RemoveFromList(key, value));
         }
 
@@ -1254,13 +1163,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void RemoveFromSet_Throws_WhenKeyParameterIsEmpty()
+        public void RemoveFromSet_Throws_WhenValueParameterIsNull()
         {
-            string key = string.Empty;
-            string value = "value";
+            string key = "key";
+            string value = null;
             var instance = CreateTransaction();
 
-            Assert.Throws<ArgumentException>(nameof(key),
+            Assert.Throws<ArgumentNullException>(nameof(value),
                 () => instance.RemoveFromSet(key, value));
         }
 
@@ -1329,16 +1238,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void RemoveHash_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
-                () => instance.RemoveHash(key));
-        }
-
-        [Fact]
         public void RemoveHash_Throws_WhenTransactionDisposed()
         {
             string key = "key";
@@ -1379,16 +1278,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveSet(key));
-        }
-
-        [Fact]
-        public void RemoveSet_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.RemoveSet(key));
         }
 
@@ -1474,6 +1363,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void SetJobState_AppendsAStateAndSetItToTheJob()
         {
+            var createdAtFrom = DateTime.UtcNow;
             var job = InsertJob();
             var anotherJob = InsertJob();
             var state = new Mock<IState>();
@@ -1485,7 +1375,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     ["Name"] = "Value",
                 });
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-            var createdAtFrom = DateTime.UtcNow;
 
             UseTransaction(true, instance => instance.SetJobState(jobId, state.Object));
 
@@ -1514,17 +1403,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.SetRangeInHash(key, keyValuePairs));
-        }
-
-        [Fact]
-        public void SetRangeInHash_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            var keyValuePairs = new Dictionary<string, string>();
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.SetRangeInHash(key, keyValuePairs));
         }
 
@@ -1579,18 +1457,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var instance = CreateTransaction();
 
             Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
-        }
-
-        [Fact]
-        public void TrimList_Throws_WhenKeyParameterIsEmpty()
-        {
-            string key = string.Empty;
-            const int keepStartingFrom = 0;
-            const int keepEndingAt = 1;
-            var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(key),
                 () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
         }
 
@@ -1767,8 +1633,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
+                CreatedAt = DateTime.UtcNow,
                 ExpireAt = expireAt,
             };
             UseContextSavingChanges(context => context.Add(job));

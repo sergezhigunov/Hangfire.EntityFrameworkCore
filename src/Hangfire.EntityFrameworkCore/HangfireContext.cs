@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Hangfire.Annotations;
 using Hangfire.Common;
+using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
@@ -10,7 +11,6 @@ namespace Hangfire.EntityFrameworkCore
         internal virtual DbSet<HangfireCounter> Counters { get; private set; }
         internal virtual DbSet<HangfireHash> Hashes { get; private set; }
         internal virtual DbSet<HangfireJob> Jobs { get; private set; }
-        internal virtual DbSet<HangfireJobArgument> JobArguments { get; private set; }
         internal virtual DbSet<HangfireJobParameter> JobParameters { get; private set; }
         internal virtual DbSet<HangfireJobState> JobStates { get; private set; }
         internal virtual DbSet<HangfireJobQueue> JobQueues { get; private set; }
@@ -39,12 +39,12 @@ namespace Hangfire.EntityFrameworkCore
             jobBuilder.HasOne(x => x.ActualState).
                 WithOne(x => x.Job).
                 HasForeignKey<HangfireJobState>(x => x.JobId);
+            jobBuilder.Property(x => x.InvocationData).HasConversion(
+                x => JobHelper.ToJson(x),
+                x => JobHelper.FromJson<InvocationData>(x));
 
             var jobParameterBuilder = modelBuilder.Entity<HangfireJobParameter>();
             jobParameterBuilder.HasKey(x => new { x.JobId, x.Name });
-
-            var jobArgumentBuilder = modelBuilder.Entity<HangfireJobArgument>();
-            jobArgumentBuilder.HasKey(x => new { x.JobId, x.Index });
 
             var jobQueueBuilder = modelBuilder.Entity<HangfireJobQueue>();
             jobQueueBuilder.HasIndex(x => new { x.Queue, x.FetchedAt });

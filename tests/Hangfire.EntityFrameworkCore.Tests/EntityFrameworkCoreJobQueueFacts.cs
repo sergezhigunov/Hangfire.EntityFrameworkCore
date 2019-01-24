@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -69,8 +70,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string queue = "queue";
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
                 Queues = new List<HangfireJobQueue>
                 {
                     new HangfireJobQueue
@@ -158,8 +158,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                ClrType = "type",
-                Method = "method",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
             };
             UseContextSavingChanges(context => context.Add(job));
             var instance = new EntityFrameworkCoreJobQueue(Options);

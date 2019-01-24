@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -58,8 +59,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var jobs = Enumerable.Repeat(0, 10).
                 Select(_ => new HangfireJob
                 {
-                    ClrType = "test",
-                    Method = "test",
+                    InvocationData = new InvocationData(null, null, null, string.Empty),
                     Queues = new List<HangfireJobQueue>
                     {
                         new HangfireJobQueue
@@ -110,8 +110,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var jobs = Enumerable.Repeat(0, 10).
                 Select(_ => new HangfireJob
                 {
-                    ClrType = "test",
-                    Method = "test",
+                    InvocationData = new InvocationData(null, null, null, string.Empty),
                     Queues = new List<HangfireJobQueue>
                     {
                         new HangfireJobQueue
@@ -154,8 +153,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 ToArray();
             var job = new HangfireJob
             {
-                ClrType = "test",
-                Method = "test",
+                InvocationData = new InvocationData(null, null, null, string.Empty),
                 Queues = queues.
                     Select(x => new HangfireJobQueue
                     {
@@ -201,8 +199,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var jobs = Enumerable.Range(0, 5).
                 Select(index => new HangfireJob
                 {
-                    ClrType = "test",
-                    Method = "test",
+                    InvocationData = new InvocationData(null, null, null, string.Empty),
                     Queues = new List<HangfireJobQueue>
                     {
                         new HangfireJobQueue
