@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Threading;
 using Hangfire.Common;
 using Hangfire.Storage;
 using Microsoft.Data.Sqlite;
@@ -13,18 +14,29 @@ namespace Hangfire.EntityFrameworkCore.Tests
     [ExcludeFromCodeCoverage]
     public abstract class HangfireContextTest : IDisposable
     {
-        private readonly SqliteConnection _connection;
-        private protected DbContextOptions<HangfireContext> Options { get; }
+        private SqliteConnection _connection;
+        private DbContextOptions<HangfireContext> _options;
+        private bool _disposed = false;
+
+        private SqliteConnection Connection =>
+            LazyInitializer.EnsureInitialized(ref _connection,
+                () => new SqliteConnection("DataSource=:memory:"));
+
+        private protected DbContextOptions<HangfireContext> Options =>
+            LazyInitializer.EnsureInitialized(ref _options, () =>
+            {
+                Connection.Open();
+                var options = new DbContextOptionsBuilder<HangfireContext>().
+                    UseSqlite(Connection).
+                    Options;
+                using (var context = new HangfireContext(options))
+                    context.GetService<IRelationalDatabaseCreator>().CreateTables();
+                return options;
+            });
+
 
         protected HangfireContextTest()
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
-            Options = new DbContextOptionsBuilder<HangfireContext>().
-                UseSqlite(_connection).
-                Options;
-            using (var context = new HangfireContext(Options))
-                context.GetService<IRelationalDatabaseCreator>().CreateTables();
         }
 
         private protected static InvocationData CreateInvocationData(Expression<Action> methodCall)
@@ -50,7 +62,18 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         public void Dispose()
         {
-            _connection.Close();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                    _connection?.Close();
+                _disposed = true;
+            }
         }
     }
 }
