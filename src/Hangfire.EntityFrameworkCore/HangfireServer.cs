@@ -16,6 +16,6 @@ namespace Hangfire.EntityFrameworkCore
         public int WorkerCount { get; set; }
 
         [Required]
-        public IReadOnlyList<string> Queues { get; set; }
+        public IList<string> Queues { get; set; }
     }
 }

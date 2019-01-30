@@ -34,7 +34,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 return options;
             });
 
-
         protected HangfireContextTest()
         {
         }
@@ -75,5 +74,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 _disposed = true;
             }
         }
+
+        [ExcludeFromCodeCoverage]
+        [SuppressMessage("Usage", "xUnit1013")]
+        public static void SampleMethod(string value) { }
     }
 }

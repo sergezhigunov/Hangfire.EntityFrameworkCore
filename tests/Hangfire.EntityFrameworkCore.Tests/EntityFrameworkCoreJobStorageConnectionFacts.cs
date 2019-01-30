@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -196,7 +195,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.Equal(createdAt, hangfireJob.CreatedAt);
                 Assert.Null(hangfireJob.ActualState);
                 var job = invocationData.Deserialize();
-                Assert.Equal(typeof(EntityFrameworkCoreJobStorageConnectionFacts), job.Type);
+                Assert.Equal(typeof(HangfireContextTest), job.Type);
                 Assert.Equal(nameof(SampleMethod), job.Method.Name);
                 Assert.Equal("argument", job.Args[0]);
                 Assert.True(createdAt.AddDays(1).AddMinutes(-1) < hangfireJob.ExpireAt);
@@ -237,7 +236,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var invocationData = hangfireJob.InvocationData;
 
                 var job = invocationData.Deserialize();
-                Assert.Equal(typeof(EntityFrameworkCoreJobStorageConnectionFacts), job.Type);
+                Assert.Equal(typeof(HangfireContextTest), job.Type);
                 Assert.Equal(nameof(SampleMethod), job.Method.Name);
                 Assert.Equal("argument", job.Args[0]);
                 Assert.True(createdAt.AddDays(1).AddMinutes(-1) < hangfireJob.ExpireAt);
@@ -1720,9 +1719,5 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.True(actualServer.StartedAt <= timestampAfterEnd);
             });
         }
-
-        [ExcludeFromCodeCoverage]
-        [SuppressMessage("Usage", "xUnit1013")]
-        public static void SampleMethod(string value) { }
     }
 }
