@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EntityFrameworkCoreJobStorage : JobStorage
+    internal class EFCoreJobStorage : JobStorage
     {
         private readonly DbContextOptions<HangfireContext> _options;
 
-        public EntityFrameworkCoreJobStorage(
+        public EFCoreJobStorage(
             DbContextOptions<HangfireContext> options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -16,12 +16,12 @@ namespace Hangfire.EntityFrameworkCore
 
         public override IStorageConnection GetConnection()
         {
-            return new EntityFrameworkCoreJobStorageConnection(_options);
+            return new EFCoreJobStorageConnection(_options);
         }
 
         public override IMonitoringApi GetMonitoringApi()
         {
-            return new EntityFrameworkCoreJobStorageMonitoringApi(_options);
+            return new EFCoreJobStorageMonitoringApi(_options);
         }
     }
 }

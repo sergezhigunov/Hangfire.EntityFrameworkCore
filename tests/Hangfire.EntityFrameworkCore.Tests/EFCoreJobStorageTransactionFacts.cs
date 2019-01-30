@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreJobStorageTransactionFacts : HangfireContextTest
+    public class EFCoreJobStorageTransactionFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreJobStorageTransaction(options, queueProvider));
+                () => new EFCoreJobStorageTransaction(options, queueProvider));
         }
 
         [Fact]
@@ -29,7 +29,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             IPersistentJobQueueProvider queueProvider = null;
 
             Assert.Throws<ArgumentNullException>(nameof(queueProvider),
-                () => new EntityFrameworkCoreJobStorageTransaction(options, queueProvider));
+                () => new EFCoreJobStorageTransaction(options, queueProvider));
         }
 
         [Fact]
@@ -38,7 +38,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var options = new DbContextOptions<HangfireContext>();
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
 
-            var instance = new EntityFrameworkCoreJobStorageTransaction(options, queueProvider);
+            var instance = new EFCoreJobStorageTransaction(options, queueProvider);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -300,7 +300,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var queueProviderMock = new Mock<IPersistentJobQueueProvider>();
             queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
             var queueProvider = queueProviderMock.Object;
-            using (var instance = new EntityFrameworkCoreJobStorageTransaction(Options, queueProvider))
+            using (var instance = new EFCoreJobStorageTransaction(Options, queueProvider))
             {
                 instance.AddToQueue("queue", jobId);
                 var queue = Assert.IsType<Queue<Action<HangfireContext>>>(
@@ -1614,7 +1614,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         private void AssertThrowsObjectDisposed(
-            Action<EntityFrameworkCoreJobStorageTransaction> action)
+            Action<EFCoreJobStorageTransaction> action)
         {
             var options = new DbContextOptions<HangfireContext>();
             var instance = CreateTransaction();
@@ -1623,10 +1623,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(instance.GetType().FullName, exception.ObjectName);
         }
 
-        private EntityFrameworkCoreJobStorageTransaction CreateTransaction()
+        private EFCoreJobStorageTransaction CreateTransaction()
         {
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
-            return new EntityFrameworkCoreJobStorageTransaction(Options, queueProvider);
+            return new EFCoreJobStorageTransaction(Options, queueProvider);
         }
 
         private HangfireJob InsertJob(DateTime? expireAt = null)
@@ -1644,7 +1644,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private void UseTransaction(
             bool commit,
-            Action<EntityFrameworkCoreJobStorageTransaction> action)
+            Action<EFCoreJobStorageTransaction> action)
         {
             using (var transaction = CreateTransaction())
             {

@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreLockProviderFacts : HangfireContextTest
+    public class EFCoreLockProviderFacts : HangfireContextTest
     {
         [Fact]
         public static void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -14,7 +14,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             TimeSpan timeout = default;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreLockProvider(options, timeout));
+                () => new EFCoreLockProvider(options, timeout));
         }
 
         [Fact]
@@ -23,7 +23,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var options = new DbContextOptions<HangfireContext>();
             var timeout = new TimeSpan(123);
 
-            var instance = new EntityFrameworkCoreLockProvider(options, timeout);
+            var instance = new EFCoreLockProvider(options, timeout);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -172,15 +172,15 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context => Assert.Empty(context.Locks));
         }
 
-        private static EntityFrameworkCoreLockProvider CreateStub()
+        private static EFCoreLockProvider CreateStub()
         {
             var options = new DbContextOptions<HangfireContext>();
-            return new EntityFrameworkCoreLockProvider(options, default);
+            return new EFCoreLockProvider(options, default);
         }
 
-        private EntityFrameworkCoreLockProvider CreateInstance(TimeSpan timeout)
+        private EFCoreLockProvider CreateInstance(TimeSpan timeout)
         {
-            return new EntityFrameworkCoreLockProvider(Options, timeout);
+            return new EFCoreLockProvider(Options, timeout);
         }
     }
 }

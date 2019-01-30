@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EntityFrameworkCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
+    internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {
         private readonly DbContextOptions<HangfireContext> _options;
 
-        public EntityFrameworkCoreJobQueueMonitoringApi(DbContextOptions<HangfireContext> options)
+        public EFCoreJobQueueMonitoringApi(DbContextOptions<HangfireContext> options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }

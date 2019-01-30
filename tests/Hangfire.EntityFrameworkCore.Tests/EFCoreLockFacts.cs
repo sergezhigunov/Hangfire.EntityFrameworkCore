@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreLockFacts
+    public class EFCoreLockFacts
     {
         [Fact]
         public void Ctor_Throws_WhenProviderParameterIsNull()
@@ -14,7 +14,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             TimeSpan timeout = default;
 
             Assert.Throws<ArgumentNullException>(nameof(provider),
-                () => new EntityFrameworkCoreLock(provider, resource, timeout));
+                () => new EFCoreLock(provider, resource, timeout));
         }
 
         [Fact]
@@ -26,7 +26,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             providerMock.Setup(x => x.Acquire(resource, timeout));
             var provider = providerMock.Object;
 
-            var instance = new EntityFrameworkCoreLock(provider, resource, timeout);
+            var instance = new EFCoreLock(provider, resource, timeout);
 
             Assert.Equal(provider,
                 Assert.IsAssignableFrom<IDistributedLockProvider>(
@@ -45,7 +45,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var timeout = new TimeSpan(123);
             var provider = providerMock.Object;
             providerMock.Setup(x => x.Release(resource));
-            var instance = new EntityFrameworkCoreLock(provider, resource, timeout);
+            var instance = new EFCoreLock(provider, resource, timeout);
 
             instance.Dispose();
 

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EntityFrameworkCoreFetchedJob : IFetchedJob
+    internal sealed class EFCoreFetchedJob : IFetchedJob
     {
         private readonly DbContextOptions<HangfireContext> _options;
         private readonly HangfireJobQueue _item;
@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore
 
         string IFetchedJob.JobId => _item.JobId.ToString(CultureInfo.InvariantCulture);
 
-        public EntityFrameworkCoreFetchedJob(
+        public EFCoreFetchedJob(
             [NotNull] DbContextOptions<HangfireContext> options,
             [NotNull] HangfireJobQueue item)
         {

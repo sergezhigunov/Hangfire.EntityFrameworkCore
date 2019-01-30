@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreJobQueueFacts : HangfireContextTest
+    public class EFCoreJobQueueFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -17,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreJobQueue(options));
+                () => new EFCoreJobQueue(options));
         }
 
         [Fact]
@@ -25,7 +25,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EntityFrameworkCoreJobQueue(options);
+            var instance = new EFCoreJobQueue(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Dequeue_Throws_WhenQueuesParameterIsNull()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string[] queues = null;
 
             Assert.Throws<ArgumentNullException>(nameof(queues),
@@ -45,7 +45,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Dequeue_Throws_WhenQueuesParameterIsEmpty()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string[] queues = Array.Empty<string>();
 
             Assert.Throws<ArgumentException>(nameof(queues),
@@ -55,7 +55,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Dequeue_Throws_WhenCancellationTokenIsSet()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string[] queues = { "default" };
             var source = new CancellationTokenSource(0);
 
@@ -66,7 +66,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Dequeue_FetchesJob_FromTheSpecifiedQueue()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string queue = "queue";
             var job = new HangfireJob
             {
@@ -84,7 +84,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var result = instance.Dequeue(new[] { queue }, CancellationToken.None);
 
             Assert.NotNull(result);
-            var fetchedJob = Assert.IsType<EntityFrameworkCoreFetchedJob>(result);
+            var fetchedJob = Assert.IsType<EFCoreFetchedJob>(result);
             Assert.Equal(job.Queues.First().Id, fetchedJob.Id);
             Assert.Equal(queue, fetchedJob.Queue);
             Assert.Equal(job.Id, fetchedJob.JobId);
@@ -101,7 +101,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Dequeue_Throws_WhenThereAreNoJobs()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string queue = "queue";
             var source = new CancellationTokenSource(50);
 
@@ -112,7 +112,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Enqueue_Throws_WhenQueueParameterIsNull()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string queue = null;
             var jobId = "1";
 
@@ -123,7 +123,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Enqueue_Throws_WhenQueueParameterIsEmpty()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             string queue = string.Empty;
             var jobId = "1";
 
@@ -134,7 +134,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Enqueue_Throws_WhenJobIdParameterIsNull()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             var queue = "queue";
             string jobId = null;
 
@@ -145,7 +145,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Enqueue_Throws_WhenJobIdParameterIsInvalid()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             var queue = "queue";
             string jobId = "invalid";
 
@@ -161,7 +161,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 InvocationData = new InvocationData(null, null, null, string.Empty),
             };
             UseContextSavingChanges(context => context.Add(job));
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             var queue = "queue";
 
             instance.Enqueue(queue, job.Id.ToString(CultureInfo.InvariantCulture));
@@ -178,7 +178,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Enqueue_Throws_WhenJobNotExists()
         {
-            var instance = new EntityFrameworkCoreJobQueue(Options);
+            var instance = new EFCoreJobQueue(Options);
             var queue = "queue";
 
             Assert.Throws<InvalidOperationException>(() => instance.Enqueue(queue, "1"));

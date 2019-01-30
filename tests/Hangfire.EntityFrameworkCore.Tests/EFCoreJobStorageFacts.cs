@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreJobStorageFacts : HangfireContextTest
+    public class EFCoreJobStorageFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_IfOptionsParameterIsNull()
@@ -12,7 +12,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreJobStorage(options));
+                () => new EFCoreJobStorage(options));
         }
 
         [Fact]
@@ -20,7 +20,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EntityFrameworkCoreJobStorage(options);
+            var instance = new EFCoreJobStorage(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -31,12 +31,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetConnection_ReturnsCorrectResult()
         {
             var options = new DbContextOptions<HangfireContext>();
-            var instance = new EntityFrameworkCoreJobStorage(options);
+            var instance = new EFCoreJobStorage(options);
 
             var result = instance.GetConnection();
 
             Assert.NotNull(result);
-            var connection = Assert.IsType<EntityFrameworkCoreJobStorageConnection>(result);
+            var connection = Assert.IsType<EFCoreJobStorageConnection>(result);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -47,12 +47,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetMonitoringApi_ReturnsCorrectResult()
         {
             var options = new DbContextOptions<HangfireContext>();
-            var instance = new EntityFrameworkCoreJobStorage(options);
+            var instance = new EFCoreJobStorage(options);
 
             var result = instance.GetMonitoringApi();
 
             Assert.NotNull(result);
-            var api = Assert.IsType<EntityFrameworkCoreJobStorageMonitoringApi>(result);
+            var api = Assert.IsType<EFCoreJobStorageMonitoringApi>(result);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(

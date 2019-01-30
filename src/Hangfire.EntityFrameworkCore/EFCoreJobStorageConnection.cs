@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EntityFrameworkCoreJobStorageConnection : JobStorageConnection
+    internal class EFCoreJobStorageConnection : JobStorageConnection
     {
         private readonly IDistributedLockProvider _lockProvider;
         private readonly DbContextOptions<HangfireContext> _options;
 
-        public EntityFrameworkCoreJobStorageConnection(DbContextOptions<HangfireContext> options)
+        public EFCoreJobStorageConnection(DbContextOptions<HangfireContext> options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            _lockProvider = new EntityFrameworkCoreLockProvider(_options, new TimeSpan(0, 10, 0));
+            _lockProvider = new EFCoreLockProvider(_options, new TimeSpan(0, 10, 0));
         }
 
         public override IDisposable AcquireDistributedLock(
@@ -34,7 +34,7 @@ namespace Hangfire.EntityFrameworkCore
             if (timeout <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(resource), timeout, null);
 
-            return new EntityFrameworkCoreLock(_lockProvider, resource, timeout);
+            return new EFCoreLock(_lockProvider, resource, timeout);
         }
 
         public override void AnnounceServer(
@@ -105,9 +105,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
-            return new EntityFrameworkCoreJobStorageTransaction(
+            return new EFCoreJobStorageTransaction(
                 _options,
-                new EntityFrameworkCoreJobQueueProvider(_options));
+                new EFCoreJobQueueProvider(_options));
         }
 
         public override IFetchedJob FetchNextJob(
@@ -119,7 +119,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queues.Length == 0)
                 throw new ArgumentException(null, nameof(queues));
 
-            var provider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var provider = new EFCoreJobQueueProvider(_options);
             var queue = provider.GetJobQueue();
             return queue.Dequeue(queues, cancellationToken);
         }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EntityFrameworkCoreJobStorageTransaction : JobStorageTransaction
+    internal sealed class EFCoreJobStorageTransaction : JobStorageTransaction
     {
         private readonly DbContextOptions<HangfireContext> _options;
         private readonly IPersistentJobQueueProvider _queueProvider;
@@ -17,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
-        public EntityFrameworkCoreJobStorageTransaction(
+        public EFCoreJobStorageTransaction(
             DbContextOptions<HangfireContext> options,
             IPersistentJobQueueProvider queueProvider)
         {
@@ -76,9 +76,9 @@ namespace Hangfire.EntityFrameworkCore
 
             var persistentQueue = _queueProvider.GetJobQueue();
             _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
-            if (persistentQueue is EntityFrameworkCoreJobQueue)
+            if (persistentQueue is EFCoreJobQueue)
                 _afterCommitQueue.Enqueue(
-                    () => EntityFrameworkCoreJobQueue.NewItemInQueueEvent.Set());
+                    () => EFCoreJobQueue.NewItemInQueueEvent.Set());
         }
 
         public override void AddToSet([NotNull] string key, [NotNull] string value)

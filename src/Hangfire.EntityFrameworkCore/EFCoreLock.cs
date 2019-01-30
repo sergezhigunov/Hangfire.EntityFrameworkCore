@@ -3,13 +3,13 @@ using Hangfire.Annotations;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EntityFrameworkCoreLock : IDisposable
+    internal sealed class EFCoreLock : IDisposable
     {
         private readonly IDistributedLockProvider _provider;
         private readonly string _resource;
         private bool _disposed = false;
 
-        public EntityFrameworkCoreLock(
+        public EFCoreLock(
             [NotNull] IDistributedLockProvider provider,
             [NotNull] string resource,
             TimeSpan timeout)

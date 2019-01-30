@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreJobStorageConnectionFacts : HangfireContextTest
+    public class EFCoreJobStorageConnectionFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreJobStorageConnection(options));
+                () => new EFCoreJobStorageConnection(options));
         }
 
         [Fact]
@@ -27,7 +27,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EntityFrameworkCoreJobStorageConnection(options);
+            var instance = new EFCoreJobStorageConnection(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -74,7 +74,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.NotNull(result);
             using (result)
-                Assert.IsType<EntityFrameworkCoreLock>(result);
+                Assert.IsType<EFCoreLock>(result);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.NotNull(result);
             using (result)
-                Assert.IsType<EntityFrameworkCoreJobStorageTransaction>(result);
+                Assert.IsType<EFCoreJobStorageTransaction>(result);
         }
 
         [Fact]
@@ -291,7 +291,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.NotNull(result);
                 using (result)
                 {
-                    var fetchedJob = Assert.IsType<EntityFrameworkCoreFetchedJob>(result);
+                    var fetchedJob = Assert.IsType<EFCoreFetchedJob>(result);
                 }
 
             });
@@ -1685,13 +1685,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
             });
         }
 
-        private void UseConnection(Action<EntityFrameworkCoreJobStorageConnection> action)
+        private void UseConnection(Action<EFCoreJobStorageConnection> action)
         {
             using (var instance = CreateConnection())
                 action(instance);
         }
 
-        private T UseConnection<T>(Func<EntityFrameworkCoreJobStorageConnection, T> func)
+        private T UseConnection<T>(Func<EFCoreJobStorageConnection, T> func)
         {
             T result = default;
             UseConnection(instance =>
@@ -1701,9 +1701,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             return result;
         }
 
-        private EntityFrameworkCoreJobStorageConnection CreateConnection()
+        private EFCoreJobStorageConnection CreateConnection()
         {
-            return new EntityFrameworkCoreJobStorageConnection(Options);
+            return new EFCoreJobStorageConnection(Options);
         }
 
         private void CheckServer(string serverId, ServerContext expectedContext, DateTime timestampBeforeBegin, DateTime timestampAfterEnd)

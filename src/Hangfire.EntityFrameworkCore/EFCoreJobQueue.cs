@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EntityFrameworkCoreJobQueue : IPersistentJobQueue
+    internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
         private static readonly object s_lock = new object();
         private readonly DbContextOptions<HangfireContext> _options;
@@ -16,7 +16,7 @@ namespace Hangfire.EntityFrameworkCore
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
 
-        public EntityFrameworkCoreJobQueue([NotNull] DbContextOptions<HangfireContext> options)
+        public EFCoreJobQueue([NotNull] DbContextOptions<HangfireContext> options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore
                             try
                             {
                                 context.SaveChanges();
-                                return new EntityFrameworkCoreFetchedJob(_options, queueItem);
+                                return new EFCoreFetchedJob(_options, queueItem);
                             }
                             catch (DbUpdateConcurrencyException)
                             {

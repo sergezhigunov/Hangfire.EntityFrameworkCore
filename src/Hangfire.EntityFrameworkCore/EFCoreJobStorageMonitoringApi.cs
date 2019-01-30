@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EntityFrameworkCoreJobStorageMonitoringApi : IMonitoringApi
+    internal class EFCoreJobStorageMonitoringApi : IMonitoringApi
     {
         private const string FailedStatsName = "failed";
         private const string SucceededStatsName = "succeeded";
@@ -29,7 +29,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private readonly DbContextOptions<HangfireContext> _options;
 
-        public EntityFrameworkCoreJobStorageMonitoringApi(
+        public EFCoreJobStorageMonitoringApi(
             DbContextOptions<HangfireContext> options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -58,7 +58,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_options);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var statistics = monitoringApi.GetQueueStatistics(queue);
             return statistics.Enqueued;
@@ -69,7 +69,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_options);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var id = monitoringApi.GetEnqueuedJobIds(queue, from, perPage);
             return EnqueuedJobs(id);
@@ -107,7 +107,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_options);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var statistics = monitoringApi.GetQueueStatistics(queue);
             return statistics.Fetched;
@@ -118,7 +118,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_options);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var ids =
                 monitoringApi.GetFetchedJobIds(queue, from, perPage).
@@ -195,7 +195,7 @@ namespace Hangfire.EntityFrameworkCore
             });
 
 
-            var provider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var provider = new EFCoreJobQueueProvider(_options);
 
             result.Queues = (
                 from queue in provider.
@@ -300,7 +300,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<QueueWithTopEnqueuedJobsDto> Queues()
         {
-            var queueProvider = new EntityFrameworkCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_options);
             var tuples = (
                 from provider in Enumerable.Repeat(queueProvider, 1)
                 let monitoring = provider.GetMonitoringApi()

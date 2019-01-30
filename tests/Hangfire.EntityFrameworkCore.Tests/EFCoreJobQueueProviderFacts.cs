@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EntityFrameworkCoreJobQueueProviderFacts : HangfireContextTest
+    public class EFCoreJobQueueProviderFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -12,7 +12,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EntityFrameworkCoreJobQueueProvider(options));
+                () => new EFCoreJobQueueProvider(options));
         }
 
         [Fact]
@@ -20,7 +20,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EntityFrameworkCoreJobQueueProvider(options);
+            var instance = new EFCoreJobQueueProvider(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -30,23 +30,23 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetJobQueue_CreatesInstance()
         {
-            var instance = new EntityFrameworkCoreJobQueueProvider(Options);
+            var instance = new EFCoreJobQueueProvider(Options);
 
             var result = instance.GetJobQueue();
 
             Assert.NotNull(result);
-            Assert.IsType<EntityFrameworkCoreJobQueue>(result);
+            Assert.IsType<EFCoreJobQueue>(result);
         }
 
         [Fact]
         public void GetMonitoringApi_CreatesInstance()
         {
-            var instance = new EntityFrameworkCoreJobQueueProvider(Options);
+            var instance = new EFCoreJobQueueProvider(Options);
 
             var result = instance.GetMonitoringApi();
 
             Assert.NotNull(result);
-            Assert.IsType<EntityFrameworkCoreJobQueueMonitoringApi>(result);
+            Assert.IsType<EFCoreJobQueueMonitoringApi>(result);
         }
     }
 }
