@@ -11,12 +11,12 @@ namespace Hangfire.EntityFrameworkCore
     internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
         private static readonly object s_lock = new object();
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
         private readonly TimeSpan _queuePollInterval = new TimeSpan(0, 0, 10);
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
 
-        public EFCoreJobQueue([NotNull] DbContextOptions<HangfireContext> options)
+        public EFCoreJobQueue([NotNull] DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }

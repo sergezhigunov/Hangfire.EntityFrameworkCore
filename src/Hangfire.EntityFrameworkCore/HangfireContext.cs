@@ -20,7 +20,7 @@ namespace Hangfire.EntityFrameworkCore
         internal virtual DbSet<HangfireSet> Sets { get; private set; }
         internal virtual DbSet<HangfireState> States { get; private set; }
 
-        public HangfireContext([NotNull] DbContextOptions<HangfireContext> options) :
+        public HangfireContext([NotNull] DbContextOptions options) :
             base(options)
         {
         }

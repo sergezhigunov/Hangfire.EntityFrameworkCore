@@ -10,9 +10,9 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
 
-        public EFCoreJobQueueMonitoringApi(DbContextOptions<HangfireContext> options)
+        public EFCoreJobQueueMonitoringApi(DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }

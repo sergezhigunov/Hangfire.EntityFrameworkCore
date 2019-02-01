@@ -8,7 +8,7 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreFetchedJob : IFetchedJob
     {
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
         private readonly HangfireJobQueue _item;
         private bool _disposed = false;
         private bool _completed = false;
@@ -20,7 +20,7 @@ namespace Hangfire.EntityFrameworkCore
         string IFetchedJob.JobId => _item.JobId.ToString(CultureInfo.InvariantCulture);
 
         public EFCoreFetchedJob(
-            [NotNull] DbContextOptions<HangfireContext> options,
+            [NotNull] DbContextOptions options,
             [NotNull] HangfireJobQueue item)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));

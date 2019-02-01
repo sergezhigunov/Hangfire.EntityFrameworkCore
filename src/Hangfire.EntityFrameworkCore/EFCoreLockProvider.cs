@@ -10,11 +10,11 @@ namespace Hangfire.EntityFrameworkCore
     internal class EFCoreLockProvider : IDistributedLockProvider
     {
         private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
         private readonly TimeSpan _timeout;
 
         public EFCoreLockProvider(
-            [NotNull] DbContextOptions<HangfireContext> options,
+            [NotNull] DbContextOptions options,
             TimeSpan timeout)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));

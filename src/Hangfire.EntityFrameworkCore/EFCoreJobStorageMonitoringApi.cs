@@ -27,10 +27,10 @@ namespace Hangfire.EntityFrameworkCore
             FailedState.StateName,
         };
 
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
 
         public EFCoreJobStorageMonitoringApi(
-            DbContextOptions<HangfireContext> options)
+            DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }

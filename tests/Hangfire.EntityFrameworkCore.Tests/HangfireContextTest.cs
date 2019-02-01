@@ -15,14 +15,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public abstract class HangfireContextTest : IDisposable
     {
         private SqliteConnection _connection;
-        private DbContextOptions<HangfireContext> _options;
+        private DbContextOptions _options;
         private bool _disposed = false;
 
         private SqliteConnection Connection =>
             LazyInitializer.EnsureInitialized(ref _connection,
                 () => new SqliteConnection("DataSource=:memory:"));
 
-        private protected DbContextOptions<HangfireContext> Options =>
+        private protected DbContextOptions Options =>
             LazyInitializer.EnsureInitialized(ref _options, () =>
             {
                 Connection.Open();

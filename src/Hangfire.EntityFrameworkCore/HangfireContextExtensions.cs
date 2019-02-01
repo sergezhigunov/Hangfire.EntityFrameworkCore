@@ -6,7 +6,7 @@ namespace Hangfire.EntityFrameworkCore
     internal static class HangfireContextExtensions
     {
         public static void UseContext(
-            this DbContextOptions<HangfireContext> options,
+            this DbContextOptions options,
             Action<HangfireContext> action)
         {
             if (action == null)
@@ -17,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         public static void UseContextSavingChanges(
-            this DbContextOptions<HangfireContext> options,
+            this DbContextOptions options,
             Action<HangfireContext> action)
         {
             options.UseContext(context =>
@@ -28,7 +28,7 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         public static T UseContext<T>(
-            this DbContextOptions<HangfireContext> options,
+            this DbContextOptions options,
             Func<HangfireContext, T> func)
         {
             if (func == null)
@@ -39,7 +39,7 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         public static T UseContextSavingChanges<T>(
-            this DbContextOptions<HangfireContext> options,
+            this DbContextOptions options,
             Func<HangfireContext, T> func)
         {
             return options.UseContext(context =>
@@ -51,7 +51,7 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         public static HangfireContext CreateContext(
-            this DbContextOptions<HangfireContext> options)
+            this DbContextOptions options)
         {
             return new HangfireContext(options);
         }

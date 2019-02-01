@@ -11,14 +11,14 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreJobStorageTransaction : JobStorageTransaction
     {
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
         private readonly IPersistentJobQueueProvider _queueProvider;
         private readonly Queue<Action<HangfireContext>> _queue;
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
         public EFCoreJobStorageTransaction(
-            DbContextOptions<HangfireContext> options,
+            DbContextOptions options,
             IPersistentJobQueueProvider queueProvider)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));

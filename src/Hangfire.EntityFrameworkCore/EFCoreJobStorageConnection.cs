@@ -15,9 +15,9 @@ namespace Hangfire.EntityFrameworkCore
     internal class EFCoreJobStorageConnection : JobStorageConnection
     {
         private readonly IDistributedLockProvider _lockProvider;
-        private readonly DbContextOptions<HangfireContext> _options;
+        private readonly DbContextOptions _options;
 
-        public EFCoreJobStorageConnection(DbContextOptions<HangfireContext> options)
+        public EFCoreJobStorageConnection(DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _lockProvider = new EFCoreLockProvider(_options, new TimeSpan(0, 10, 0));
