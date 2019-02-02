@@ -1,14 +1,18 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class HangfireContextFacts : HangfireContextTest
+    public class HangfireContextFacts : DbContextOptionsTest
     {
         [Fact]
         public static void Ctor_Throws_WhenOptionsParameterIsNull()
         {
-            Assert.Throws<ArgumentNullException>("options",  () => new HangfireContext(null));
+            DbContextOptions options = null;
+
+            Assert.Throws<ArgumentNullException>(nameof(options),
+                () => new HangfireContext(null));
         }
 
         [Fact]

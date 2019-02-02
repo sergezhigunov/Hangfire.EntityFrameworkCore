@@ -11,17 +11,17 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
         private readonly IPersistentJobQueueProvider _queueProvider;
         private readonly Queue<Action<HangfireContext>> _queue;
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
         public EFCoreStorageTransaction(
-            DbContextOptions options,
+            EFCoreStorage storage,
             IPersistentJobQueueProvider queueProvider)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _queueProvider = queueProvider ??
                 throw new ArgumentNullException(nameof(queueProvider));
             _queue = new Queue<Action<HangfireContext>>();
@@ -133,7 +133,7 @@ namespace Hangfire.EntityFrameworkCore
         {
             ThrowIfDisposed();
 
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 using (var transaction = context.Database.BeginTransaction())
                 {

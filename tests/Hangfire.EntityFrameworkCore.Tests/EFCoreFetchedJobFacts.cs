@@ -3,31 +3,30 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreFetchedJobFacts : HangfireContextTest
+    public class EFCoreFetchedJobFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenOptionsParameterIsNull()
+        public void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            EFCoreStorage storage = null;
             var item = new HangfireJobQueue();
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreFetchedJob(options, item));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreFetchedJob(storage, item));
         }
 
         [Fact]
         public void Ctor_Throws_WhenItemParameterIsNull()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var storage = CreateStorageStub();
             HangfireJobQueue item = null;
 
             Assert.Throws<ArgumentNullException>(nameof(item),
-                () => new EFCoreFetchedJob(options, item));
+                () => new EFCoreFetchedJob(storage, item));
         }
 
         [Fact]
@@ -40,19 +39,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
             };
 
-            using (var instance = new EFCoreFetchedJob(Options, item))
+            using (var instance = new EFCoreFetchedJob(Storage, item))
             {
                 Assert.False(Assert.IsType<bool>(
                     instance.GetFieldValue("_disposed")));
                 Assert.False(Assert.IsType<bool>(
                     instance.GetFieldValue("_completed")));
-                Assert.Same(Options,
-                    Assert.IsType<DbContextOptions<HangfireContext>>(
-                        instance.GetFieldValue("_options")));
+                Assert.Same(Storage, Assert.IsType<EFCoreStorage>(
+                    instance.GetFieldValue("_storage")));
                 Assert.Same(item,
                     Assert.IsType<HangfireJobQueue>(
                         instance.GetFieldValue("_item")));
-
                 Assert.Equal(item.Id, instance.Id);
                 Assert.Equal(item.JobId, instance.JobId);
                 Assert.Equal(item.Queue, instance.Queue);
@@ -72,7 +69,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Options, item))
+            using (var instance = new EFCoreFetchedJob(Storage, item))
             {
                 instance.RemoveFromQueue();
 
@@ -100,7 +97,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Options, job.Queues.Single()))
+            using (var instance = new EFCoreFetchedJob(Storage, job.Queues.Single()))
             {
                 instance.RemoveFromQueue();
 
@@ -126,7 +123,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Options, item))
+            using (var instance = new EFCoreFetchedJob(Storage, item))
             {
                 instance.Requeue();
 
@@ -154,7 +151,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Options, job.Queues.Single()))
+            using (var instance = new EFCoreFetchedJob(Storage, job.Queues.Single()))
             {
                 instance.Requeue();
 
@@ -180,7 +177,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Options, item))
+            using (var instance = new EFCoreFetchedJob(Storage, item))
             {
                 instance.Dispose();
 
@@ -210,7 +207,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Options, job.Queues.Single()))
+            using (var instance = new EFCoreFetchedJob(Storage, job.Queues.Single()))
             {
                 instance.Dispose();
 

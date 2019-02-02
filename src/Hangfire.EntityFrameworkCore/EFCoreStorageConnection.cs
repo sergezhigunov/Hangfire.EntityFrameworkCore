@@ -15,12 +15,12 @@ namespace Hangfire.EntityFrameworkCore
     internal class EFCoreStorageConnection : JobStorageConnection
     {
         private readonly IDistributedLockProvider _lockProvider;
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
 
-        public EFCoreStorageConnection(DbContextOptions options)
+        public EFCoreStorageConnection(EFCoreStorage storage)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _lockProvider = new EFCoreLockProvider(_options, new TimeSpan(0, 10, 0));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            _lockProvider = new EFCoreLockProvider(_storage, new TimeSpan(0, 10, 0));
         }
 
         public override IDisposable AcquireDistributedLock(
@@ -48,7 +48,7 @@ namespace Hangfire.EntityFrameworkCore
 
             var timestamp = DateTime.UtcNow;
 
-            _options.UseContextSavingChanges(dbContext =>
+            _storage.UseContextSavingChanges(dbContext =>
             {
                 var server = new HangfireServer
                 {
@@ -95,7 +95,7 @@ namespace Hangfire.EntityFrameworkCore
                     ToList(),
             };
 
-            return _options.UseContext(context =>
+            return _storage.UseContext(context =>
             {
                 context.Jobs.Add(hangfireJob);
                 context.SaveChanges();
@@ -106,8 +106,8 @@ namespace Hangfire.EntityFrameworkCore
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
             return new EFCoreStorageTransaction(
-                _options,
-                new EFCoreJobQueueProvider(_options));
+                _storage,
+                new EFCoreJobQueueProvider(_storage));
         }
 
         public override IFetchedJob FetchNextJob(
@@ -119,7 +119,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queues.Length == 0)
                 throw new ArgumentException(null, nameof(queues));
 
-            var provider = new EFCoreJobQueueProvider(_options);
+            var provider = new EFCoreJobQueueProvider(_storage);
             var queue = provider.GetJobQueue();
             return queue.Dequeue(queues, cancellationToken);
         }
@@ -129,7 +129,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            var result = _options.UseContext(context => (
+            var result = _storage.UseContext(context => (
                 from hash in context.Hashes
                 where hash.Key == key
                 select new
@@ -148,7 +148,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from item in context.Lists
                 where item.Key == key
                 orderby item.Position descending
@@ -161,7 +161,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => new HashSet<string>(
+            return _storage.UseContext(context => new HashSet<string>(
                 from set in context.Sets
                 where set.Key == key
                 select set.Value));
@@ -172,7 +172,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => { return (
+            return _storage.UseContext(context => { return (
                 from counter in context.Counters
                 where counter.Key == key
                 select (long?)counter.Value).
@@ -194,7 +194,7 @@ namespace Hangfire.EntityFrameworkCore
             if (toScoreValue < fromScoreValue)
                 Swap(ref fromScoreValue, ref toScoreValue);
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from set in context.Sets
                 where set.Key == key && fromScoreValue <= set.Score && set.Score <= toScoreValue
                 orderby set.Score
@@ -207,7 +207,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => context.Hashes.LongCount(x => x.Key == key));
+            return _storage.UseContext(context => context.Hashes.LongCount(x => x.Key == key));
         }
 
         public override TimeSpan GetHashTtl([NotNull] string key)
@@ -215,7 +215,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            DateTime? minExpiredAt = _options.UseContext(context => (
+            DateTime? minExpiredAt = _storage.UseContext(context => (
                 from hash in context.Hashes
                 where hash.Key == key
                 select hash.ExpireAt).
@@ -234,7 +234,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(jobId, out var id))
                 return null;
 
-            var jobInfo = _options.UseContext(context => (
+            var jobInfo = _storage.UseContext(context => (
                 from job in context.Jobs
                 where job.Id == id
                 select new
@@ -276,7 +276,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(id, out var jobId))
                 return null;
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from parameter in context.JobParameters
                 where parameter.JobId == jobId && parameter.Name == name
                 select parameter.Value).
@@ -288,7 +288,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => context.Lists.LongCount(x => x.Key == key));
+            return _storage.UseContext(context => context.Lists.LongCount(x => x.Key == key));
         }
 
         public override TimeSpan GetListTtl([NotNull] string key)
@@ -296,7 +296,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            DateTime? minExpiredAt = _options.UseContext(context => (
+            DateTime? minExpiredAt = _storage.UseContext(context => (
                 from set in context.Lists
                 where set.Key == key
                 select set.ExpireAt).
@@ -318,7 +318,7 @@ namespace Hangfire.EntityFrameworkCore
             if (endingAt < startingFrom)
                 Swap(ref startingFrom, ref endingAt);
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from item in context.Lists
                 where item.Key == key
                 let position = item.Position
@@ -340,7 +340,7 @@ namespace Hangfire.EntityFrameworkCore
                 Swap(ref startingFrom, ref endingAt);
             int take = endingAt - startingFrom + 1;
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from item in context.Sets
                 where item.Key == key
                 orderby item.CreatedAt
@@ -355,7 +355,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            return _options.UseContext(context => context.Sets.LongCount(x => x.Key == key));
+            return _storage.UseContext(context => context.Sets.LongCount(x => x.Key == key));
         }
 
         public override TimeSpan GetSetTtl([NotNull] string key)
@@ -363,7 +363,7 @@ namespace Hangfire.EntityFrameworkCore
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            DateTime? minExpiredAt = _options.UseContext(context => (
+            DateTime? minExpiredAt = _storage.UseContext(context => (
                 from set in context.Sets
                 where set.Key == key
                 select set.ExpireAt).
@@ -382,7 +382,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(jobId, out var id))
                 return null;
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from job in context.Jobs
                 where job.Id == id
                 let actualState = job.ActualState
@@ -404,7 +404,7 @@ namespace Hangfire.EntityFrameworkCore
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from hash in context.Hashes
                 where hash.Key == key && hash.Field == name
                 select hash.Value).
@@ -416,7 +416,7 @@ namespace Hangfire.EntityFrameworkCore
             if (serverId == null)
                 throw new ArgumentNullException(nameof(serverId));
 
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 var server = context.Servers.SingleOrDefault(x => x.Id == serverId);
                 if (server != null)
@@ -460,7 +460,7 @@ namespace Hangfire.EntityFrameworkCore
                 Value = value,
             };
 
-            _options.UseContextSavingChanges(context =>
+            _storage.UseContextSavingChanges(context =>
             {
                 if (!context.JobParameters.Any(x => x.JobId == jobId && x.Name == name))
                     context.Add(parameter);
@@ -485,7 +485,7 @@ namespace Hangfire.EntityFrameworkCore
                 Value = x.Value,
             });
 
-            _options.UseContextSavingChanges(context =>
+            _storage.UseContextSavingChanges(context =>
             {
                 var fields = new HashSet<string>(
                     from hash in context.Hashes
@@ -502,7 +502,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private int RemoveServers(Expression<Func<HangfireServer, bool>> predicate)
         {
-            return _options.UseContextSavingChanges(context =>
+            return _storage.UseContextSavingChanges(context =>
             {
                 var serverIds = (
                     from server in context.Servers.Where(predicate)

@@ -9,27 +9,26 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreStorageMonitoringApiFacts : HangfireContextTest
+    public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_IfOptionsParameterIsNull()
+        public void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            EFCoreStorage storage = null;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreStorageMonitoringApi(options));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreStorageMonitoringApi(storage));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
             var options = new DbContextOptions<HangfireContext>();
+            var storage = new EFCoreStorage(options);
 
-            var instance = new EFCoreStorageMonitoringApi(options);
+            var instance = new EFCoreStorageMonitoringApi(storage);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
+            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
         }
 
         [Fact]
@@ -652,7 +651,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.NotNull(result);
             Assert.Equal(createdAt, result.CreatedAt);
             Assert.Equal(createdAt.AddDays(1), result.ExpireAt);
-            Assert.Equal(typeof(HangfireContextTest), result.Job.Type);
+            Assert.Equal(typeof(EFCoreStorageTest), result.Job.Type);
             Assert.Equal(nameof(SampleMethod), result.Job.Method.Name);
             Assert.Equal(new[] { "argument" }, result.Job.Args);
             Assert.NotNull(result.History);
@@ -1037,7 +1036,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private T UseMonitoringApi<T>(Func<EFCoreStorageMonitoringApi, T> func)
         {
-            return func(new EFCoreStorageMonitoringApi(Options));
+            return func(new EFCoreStorageMonitoringApi(Storage));
         }
     }
 }

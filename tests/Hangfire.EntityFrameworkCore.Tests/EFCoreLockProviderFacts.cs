@@ -5,32 +5,28 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreLockProviderFacts : HangfireContextTest
+    public class EFCoreLockProviderFacts : EFCoreStorageTest
     {
         [Fact]
-        public static void Ctor_Throws_WhenOptionsParameterIsNull()
+        public static void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            EFCoreStorage storage = null;
             TimeSpan timeout = default;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreLockProvider(options, timeout));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreLockProvider(storage, timeout));
         }
 
         [Fact]
-        public static void Ctor_CreatesInstance()
+        public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var storage = CreateStorageStub();
             var timeout = new TimeSpan(123);
 
-            var instance = new EFCoreLockProvider(options, timeout);
+            var instance = new EFCoreLockProvider(storage, timeout);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
-            Assert.Equal(timeout,
-                Assert.IsType<TimeSpan>(
-                    instance.GetFieldValue("_timeout")));
+            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
+            Assert.Equal(timeout, Assert.IsType<TimeSpan>(instance.GetFieldValue("_timeout")));
         }
 
         [Fact]
@@ -175,12 +171,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private static EFCoreLockProvider CreateStub()
         {
             var options = new DbContextOptions<HangfireContext>();
-            return new EFCoreLockProvider(options, default);
+            var storage = new EFCoreStorage(options);
+            return new EFCoreLockProvider(storage, default);
         }
 
         private EFCoreLockProvider CreateInstance(TimeSpan timeout)
         {
-            return new EFCoreLockProvider(Options, timeout);
+            return new EFCoreLockProvider(Storage, timeout);
         }
     }
 }

@@ -3,39 +3,36 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreJobQueueMonitoringApiFacts : HangfireContextTest
+    public class EFCoreJobQueueMonitoringApiFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenOptionsParameterIsNull()
+        public void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+           EFCoreStorage storage = null;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreJobQueueMonitoringApi(options));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreJobQueueMonitoringApi(storage));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var storage = CreateStorageStub();
 
-            var instance = new EFCoreJobQueueMonitoringApi(options);
+            var instance = new EFCoreJobQueueMonitoringApi(storage);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
+            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
         }
 
         [Fact]
         public void GetEnqueuedJobIds_Throws_IfQueueParameterIsNull()
         {
             string queue = null;
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(CreateStorageStub());
 
             Assert.Throws<ArgumentNullException>(nameof(queue),
                 () => instance.GetEnqueuedJobIds(queue, 0, 1));
@@ -45,7 +42,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetEnqueuedJobIds_ReturnsEmptyCollection_IfQueueIsEmpty()
         {
             string queue = "queue";
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetEnqueuedJobIds(queue, 5, 15);
 
@@ -70,7 +67,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 }).
                 ToArray();
             UseContextSavingChanges(context => context.AddRange(jobs));
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetEnqueuedJobIds(queue, 3, 2).ToArray();
 
@@ -86,7 +83,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetFetchedJobIds_Throws_IfQueueParameterIsNull()
         {
             string queue = null;
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(CreateStorageStub());
 
             Assert.Throws<ArgumentNullException>(nameof(queue),
                 () => instance.GetFetchedJobIds(queue, 0, 1));
@@ -96,7 +93,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetFetchedJobIds_ReturnsEmptyCollection_IfQueueIsEmpty()
         {
             string queue = "queue";
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetFetchedJobIds(queue, 5, 15);
 
@@ -122,7 +119,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 }).
                 ToArray();
             UseContextSavingChanges(context => context.AddRange(jobs));
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetFetchedJobIds(queue, 3, 2).ToArray();
 
@@ -137,7 +134,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetQueues_ReturnsEmptyCollection_WhenQueuedItemsNotExisits()
         {
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var queues = instance.GetQueues();
 
@@ -162,7 +159,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     ToList()
             };
             UseContextSavingChanges(context => context.Jobs.Add(job));
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetQueues();
 
@@ -173,7 +170,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetQueueStatistics_Throws_whenQueueParametrIsNull()
         {
             string queue = null;
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(CreateStorageStub());
 
             Assert.Throws<ArgumentNullException>(nameof(queue),
                 () => instance.GetQueueStatistics(queue));
@@ -183,7 +180,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void GetQueueStatistics_ReturnsZeroes_WhenQueueIsEmpty()
         {
             string queue = "queue";
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetQueueStatistics(queue);
 
@@ -211,7 +208,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 }).
                 ToArray();
             UseContextSavingChanges(context => context.AddRange(jobs));
-            var instance = new EFCoreJobQueueMonitoringApi(Options);
+            var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetQueueStatistics(queue);
 

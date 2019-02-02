@@ -10,14 +10,14 @@ namespace Hangfire.EntityFrameworkCore
     internal class EFCoreLockProvider : IDistributedLockProvider
     {
         private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
         private readonly TimeSpan _timeout;
 
         public EFCoreLockProvider(
-            [NotNull] DbContextOptions options,
+            [NotNull] EFCoreStorage storage,
             TimeSpan timeout)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _timeout = timeout;
         }
 
@@ -63,7 +63,7 @@ namespace Hangfire.EntityFrameworkCore
             if (resource == null)
                 throw new ArgumentNullException(nameof(resource));
 
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 context.Locks.Attach(new HangfireLock { Id = resource }).State = EntityState.Deleted;
                 try
@@ -79,7 +79,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private bool TryAcquireLock(string resource)
         {
-            return _options.UseContext(context =>
+            return _storage.UseContext(context =>
             {
                 context.Locks.Add(new HangfireLock
                 {
@@ -101,7 +101,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private bool? TryReacquireLock(string resource)
         {
-            return _options.UseContext<bool?>(context =>
+            return _storage.UseContext<bool?>(context =>
             {
                 var distributedLock = context.Set<HangfireLock>().
                 SingleOrDefault(x => x.Id == resource);

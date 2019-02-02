@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using System.Threading;
-using Hangfire.Common;
-using Hangfire.Storage;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -12,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Hangfire.EntityFrameworkCore.Tests
 {
     [ExcludeFromCodeCoverage]
-    public abstract class HangfireContextTest : IDisposable
+    public abstract class DbContextOptionsTest : IDisposable
     {
         private SqliteConnection _connection;
         private DbContextOptions _options;
@@ -34,29 +31,23 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 return options;
             });
 
-        protected HangfireContextTest()
+        protected DbContextOptionsTest()
         {
-        }
-
-        private protected static InvocationData CreateInvocationData(Expression<Action> methodCall)
-        {
-            var job = Job.FromExpression(methodCall);
-            return CreateInvocationData(job);
-        }
-
-        private protected static InvocationData CreateInvocationData(Job job)
-        {
-            return InvocationData.Serialize(job);
         }
 
         private protected void UseContext(Action<HangfireContext> action)
         {
-            Options.UseContext(action);
+            using (var context = new HangfireContext(Options))
+                action(context);
         }
 
         private protected void UseContextSavingChanges(Action<HangfireContext> action)
         {
-            Options.UseContextSavingChanges(action);
+            UseContext(context =>
+            {
+                action.Invoke(context);
+                context.SaveChanges();
+            });
         }
 
         public void Dispose()
@@ -74,9 +65,5 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 _disposed = true;
             }
         }
-
-        [ExcludeFromCodeCoverage]
-        [SuppressMessage("Usage", "xUnit1013")]
-        public static void SampleMethod(string value) { }
     }
 }

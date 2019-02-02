@@ -4,17 +4,16 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using Hangfire.Annotations;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
 
-        public EFCoreJobQueueMonitoringApi(DbContextOptions options)
+        public EFCoreJobQueueMonitoringApi(EFCoreStorage storage)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
         public IList<string> GetEnqueuedJobIds([NotNull] string queue, int from, int perPage)
@@ -36,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            return _options.UseContext(context => context.JobQueues.
+            return _storage.UseContext(context => context.JobQueues.
                 Where(predicate).
                 Where(x => x.Queue == queue).
                 OrderBy(x => x.Id).
@@ -50,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<string> GetQueues()
         {
-            return _options.UseContext(context => context.JobQueues.
+            return _storage.UseContext(context => context.JobQueues.
                 Select(x => x.Queue).
                 Distinct().
                 ToArray());
@@ -61,7 +60,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var result = _options.UseContext(context => (
+            var result = _storage.UseContext(context => (
                 from item in context.JobQueues
                 where item.Queue == queue
                 group item by item.FetchedAt.HasValue into grouping

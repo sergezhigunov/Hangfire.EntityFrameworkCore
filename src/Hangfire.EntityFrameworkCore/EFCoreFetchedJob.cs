@@ -8,7 +8,7 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreFetchedJob : IFetchedJob
     {
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
         private readonly HangfireJobQueue _item;
         private bool _disposed = false;
         private bool _completed = false;
@@ -20,17 +20,17 @@ namespace Hangfire.EntityFrameworkCore
         string IFetchedJob.JobId => _item.JobId.ToString(CultureInfo.InvariantCulture);
 
         public EFCoreFetchedJob(
-            [NotNull] DbContextOptions options,
+            [NotNull] EFCoreStorage storage,
             [NotNull] HangfireJobQueue item)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _item = item ?? throw new ArgumentNullException(nameof(item));
         }
 
 
         public void RemoveFromQueue()
         {
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 context.Remove(_item);
                 try
@@ -47,7 +47,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Requeue()
         {
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 context.Attach(_item);
                 _item.FetchedAt = null;

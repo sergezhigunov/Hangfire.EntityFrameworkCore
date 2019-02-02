@@ -7,7 +7,6 @@ using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -27,12 +26,12 @@ namespace Hangfire.EntityFrameworkCore
             FailedState.StateName,
         };
 
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
 
         public EFCoreStorageMonitoringApi(
-            DbContextOptions options)
+            EFCoreStorage storage)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
         public JobList<DeletedJobDto> DeletedJobs(int from, int count)
@@ -58,7 +57,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EFCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_storage);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var statistics = monitoringApi.GetQueueStatistics(queue);
             return statistics.Enqueued;
@@ -69,7 +68,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EFCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_storage);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var id = monitoringApi.GetEnqueuedJobIds(queue, from, perPage);
             return EnqueuedJobs(id);
@@ -107,7 +106,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EFCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_storage);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var statistics = monitoringApi.GetQueueStatistics(queue);
             return statistics.Fetched;
@@ -118,7 +117,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            var queueProvider = new EFCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_storage);
             var monitoringApi = queueProvider.GetMonitoringApi();
             var ids =
                 monitoringApi.GetFetchedJobIds(queue, from, perPage).
@@ -126,7 +125,7 @@ namespace Hangfire.EntityFrameworkCore
                     x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture),
                     x => x);
 
-            var jobs = _options.UseContext(context =>
+            var jobs = _storage.UseContext(context =>
             {
                 return (
                     from job in context.Jobs
@@ -155,7 +154,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public StatisticsDto GetStatistics()
         {
-            var result = _options.UseContext(context =>
+            var result = _storage.UseContext(context =>
             {
                 var stateCounts = (
                     from jobState in context.JobStates
@@ -195,7 +194,7 @@ namespace Hangfire.EntityFrameworkCore
             });
 
 
-            var provider = new EFCoreJobQueueProvider(_options);
+            var provider = new EFCoreJobQueueProvider(_storage);
 
             result.Queues = (
                 from queue in provider.
@@ -225,7 +224,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(jobId, out var id))
                 return null;
 
-            return _options.UseContext(context =>
+            return _storage.UseContext(context =>
             {
                 var jobs = context.Jobs.
                     Where(x => x.Id == id);
@@ -300,7 +299,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<QueueWithTopEnqueuedJobsDto> Queues()
         {
-            var queueProvider = new EFCoreJobQueueProvider(_options);
+            var queueProvider = new EFCoreJobQueueProvider(_storage);
             var tuples = (
                 from provider in Enumerable.Repeat(queueProvider, 1)
                 let monitoring = provider.GetMonitoringApi()
@@ -354,7 +353,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<ServerDto> Servers()
         {
-            return _options.UseContext(context => (
+            return _storage.UseContext(context => (
                 from server in context.Servers
                 select new ServerDto
                 {
@@ -419,7 +418,7 @@ namespace Hangfire.EntityFrameworkCore
                 x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture),
                 x => x);
 
-            var jobs = _options.UseContext(context =>
+            var jobs = _storage.UseContext(context =>
             {
                 return (
                     from job in context.Jobs
@@ -456,7 +455,7 @@ namespace Hangfire.EntityFrameworkCore
             string stateName,
             Func<InvocationData, HangfireState, T> selector)
         {
-            return _options.UseContext(context =>
+            return _storage.UseContext(context =>
             {
                 var items = (
                     from jobState in context.JobStates
@@ -479,7 +478,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private long GetNumberOfJobsByStateName(string state)
         {
-            return _options.UseContext(context =>
+            return _storage.UseContext(context =>
                 context.JobStates.LongCount(x => x.Name == state));
         }
 
@@ -504,7 +503,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private Dictionary<DateTime, long> GetTimelineStats(IDictionary<string, DateTime> keyMaps)
         {
-            var valuesMap = _options.UseContext(context => (
+            var valuesMap = _storage.UseContext(context => (
                 from counter in context.Counters
                 where keyMaps.Keys.Contains(counter.Key)
                 group counter by counter.Key into groupByKey

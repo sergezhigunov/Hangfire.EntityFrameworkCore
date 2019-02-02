@@ -1,36 +1,33 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreJobQueueProviderFacts : HangfireContextTest
+    public class EFCoreJobQueueProviderFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenOptionsParameterIsNull()
+        public void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            EFCoreStorage storage = null;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreJobQueueProvider(options));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreJobQueueProvider(storage));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var storage = CreateStorageStub();
 
-            var instance = new EFCoreJobQueueProvider(options);
+            var instance = new EFCoreJobQueueProvider(storage);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
+            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
         }
 
         [Fact]
         public void GetJobQueue_CreatesInstance()
         {
-            var instance = new EFCoreJobQueueProvider(Options);
+            var instance = new EFCoreJobQueueProvider(CreateStorageStub());
 
             var result = instance.GetJobQueue();
 
@@ -41,7 +38,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetMonitoringApi_CreatesInstance()
         {
-            var instance = new EFCoreJobQueueProvider(Options);
+            var instance = new EFCoreJobQueueProvider(CreateStorageStub());
 
             var result = instance.GetMonitoringApi();
 

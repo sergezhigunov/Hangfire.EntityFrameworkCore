@@ -11,27 +11,25 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreStorageConnectionFacts : HangfireContextTest
+    public class EFCoreStorageConnectionFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenOptionsParameterIsNull()
+        public void Ctor_Throws_WhenStorageParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            EFCoreStorage storage = null;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreStorageConnection(options));
+            Assert.Throws<ArgumentNullException>(nameof(storage),
+                () => new EFCoreStorageConnection(storage));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var storage = CreateStorageStub();
 
-            var instance = new EFCoreStorageConnection(options);
+            var instance = new EFCoreStorageConnection(storage);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
+            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
         }
 
         [Fact]
@@ -195,7 +193,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.Equal(createdAt, hangfireJob.CreatedAt);
                 Assert.Null(hangfireJob.ActualState);
                 var job = invocationData.Deserialize();
-                Assert.Equal(typeof(HangfireContextTest), job.Type);
+                Assert.Equal(typeof(EFCoreStorageTest), job.Type);
                 Assert.Equal(nameof(SampleMethod), job.Method.Name);
                 Assert.Equal("argument", job.Args[0]);
                 Assert.True(createdAt.AddDays(1).AddMinutes(-1) < hangfireJob.ExpireAt);
@@ -236,7 +234,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var invocationData = hangfireJob.InvocationData;
 
                 var job = invocationData.Deserialize();
-                Assert.Equal(typeof(HangfireContextTest), job.Type);
+                Assert.Equal(typeof(EFCoreStorageTest), job.Type);
                 Assert.Equal(nameof(SampleMethod), job.Method.Name);
                 Assert.Equal("argument", job.Args[0]);
                 Assert.True(createdAt.AddDays(1).AddMinutes(-1) < hangfireJob.ExpireAt);
@@ -1703,7 +1701,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private EFCoreStorageConnection CreateConnection()
         {
-            return new EFCoreStorageConnection(Options);
+            return new EFCoreStorageConnection(Storage);
         }
 
         private void CheckServer(string serverId, ServerContext expectedContext, DateTime timestampBeforeBegin, DateTime timestampAfterEnd)

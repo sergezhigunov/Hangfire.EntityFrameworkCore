@@ -11,14 +11,14 @@ namespace Hangfire.EntityFrameworkCore
     internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
         private static readonly object s_lock = new object();
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
         private readonly TimeSpan _queuePollInterval = new TimeSpan(0, 0, 10);
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
 
-        public EFCoreJobQueue([NotNull] DbContextOptions options)
+        public EFCoreJobQueue([NotNull] EFCoreStorage storage)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
         public IFetchedJob Dequeue([NotNull] string[] queues, CancellationToken cancellationToken)
@@ -33,7 +33,7 @@ namespace Hangfire.EntityFrameworkCore
                 cancellationToken.ThrowIfCancellationRequested();
 
                 lock (s_lock)
-                    using (var context = _options.CreateContext())
+                    using (var context = _storage.CreateContext())
                     {
                         var queueItem = (
                             from item in context.JobQueues
@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore
                             try
                             {
                                 context.SaveChanges();
-                                return new EFCoreFetchedJob(_options, queueItem);
+                                return new EFCoreFetchedJob(_storage, queueItem);
                             }
                             catch (DbUpdateConcurrencyException)
                             {
@@ -83,7 +83,7 @@ namespace Hangfire.EntityFrameworkCore
                 Queue = queue,
             };
 
-            _options.UseContext(context =>
+            _storage.UseContext(context =>
             {
                 context.Add(item);
                 try

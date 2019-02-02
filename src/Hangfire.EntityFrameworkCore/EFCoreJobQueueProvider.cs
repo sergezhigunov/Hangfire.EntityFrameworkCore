@@ -1,25 +1,24 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreJobQueueProvider : IPersistentJobQueueProvider
     {
-        private readonly DbContextOptions _options;
+        private readonly EFCoreStorage _storage;
 
-        public EFCoreJobQueueProvider(DbContextOptions options)
+        public EFCoreJobQueueProvider(EFCoreStorage storage)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
         public IPersistentJobQueue GetJobQueue()
         {
-            return new EFCoreJobQueue(_options);
+            return new EFCoreJobQueue(_storage);
         }
 
         public IPersistentJobQueueMonitoringApi GetMonitoringApi()
         {
-            return new EFCoreJobQueueMonitoringApi(_options);
+            return new EFCoreJobQueueMonitoringApi(_storage);
         }
     }
 }
