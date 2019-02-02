@@ -168,13 +168,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private static EFCoreLockProvider CreateStub()
         {
             var options = new DbContextOptions<HangfireContext>();
-            var storage = new EFCoreStorage(options, new EFCoreStorageOptions());
+            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
             return new EFCoreLockProvider(storage);
         }
 
         private EFCoreLockProvider CreateInstance()
         {
-            var storage = new EFCoreStorage(Options, new EFCoreStorageOptions
+            var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions
             {
                 DistributedLockTimeout = new TimeSpan(0, 0, 1),
             });

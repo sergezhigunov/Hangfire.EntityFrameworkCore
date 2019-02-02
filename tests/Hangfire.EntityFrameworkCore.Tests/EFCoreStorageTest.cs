@@ -15,7 +15,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected EFCoreStorage Storage =>
             LazyInitializer.EnsureInitialized(ref _storage,
-                () => new EFCoreStorage(Options, new EFCoreStorageOptions()));
+                () => new EFCoreStorage(OptionsAction, new EFCoreStorageOptions()));
 
         protected EFCoreStorageTest()
         {
@@ -35,8 +35,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private protected EFCoreStorage CreateStorageStub()
         {
             var options = new DbContextOptions<HangfireContext>();
-            return new EFCoreStorage(options, new EFCoreStorageOptions());
+            return new EFCoreStorage(OptionsAction, new EFCoreStorageOptions());
         }
+
+        private protected static Action<DbContextOptionsBuilder> OptionsActionStub { get; } =
+            builder => { };
 
         [SuppressMessage("Usage", "xUnit1013")]
         public static void SampleMethod(string value) { }

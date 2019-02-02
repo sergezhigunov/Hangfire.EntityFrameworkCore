@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EFCoreStorage : JobStorage
+    /// <summary>
+    /// Represents an Entity Framework Core based Hangfire Job Storage.
+    /// </summary>
+    public class EFCoreStorage : JobStorage
     {
         private readonly DbContextOptions _contextOptions;
         private readonly EFCoreStorageOptions _options;
@@ -13,20 +16,53 @@ namespace Hangfire.EntityFrameworkCore
 
         internal TimeSpan QueuePollInterval => _options.QueuePollInterval;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
+        /// </summary>
+        /// <param name="optionsAction">
+        /// An action to configure the <see cref="DbContextOptions"/> for the inner context.
+        /// </param>
+        /// <param name="options">
+        /// A specific storage options.
+        /// </param>
+        /// <returns>
+        /// Global configuration.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="optionsAction"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="options"/> is <see langword="null"/>.
+        /// </exception>
         public EFCoreStorage(
-            DbContextOptions contextOptions,
+            Action<DbContextOptionsBuilder> optionsAction,
             EFCoreStorageOptions options)
         {
-            _contextOptions = contextOptions ??
-                throw new ArgumentNullException(nameof(contextOptions));
+            if (optionsAction == null)
+                throw new ArgumentNullException(nameof(optionsAction));
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            var contextOptionsBuilder = new DbContextOptionsBuilder<HangfireContext>();
+            optionsAction.Invoke(contextOptionsBuilder);
+            _contextOptions = contextOptionsBuilder.Options;
         }
 
+        /// <summary>
+        /// Creates a new job storage connection.
+        /// </summary>
+        /// <returns>
+        /// A new job storage connection.
+        /// </returns>
         public override IStorageConnection GetConnection()
         {
             return new EFCoreStorageConnection(this);
         }
 
+        /// <summary>
+        /// Creates a new job storage monitoring API.
+        /// </summary>
+        /// <returns>
+        /// A new job storage monitoring API.
+        /// </returns>
         public override IMonitoringApi GetMonitoringApi()
         {
             return new EFCoreStorageMonitoringApi(this);

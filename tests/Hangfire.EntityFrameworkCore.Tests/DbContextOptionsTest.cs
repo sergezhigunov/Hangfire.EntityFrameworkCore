@@ -12,24 +12,24 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public abstract class DbContextOptionsTest : IDisposable
     {
         private SqliteConnection _connection;
-        private DbContextOptions _options;
         private bool _disposed = false;
 
         private SqliteConnection Connection =>
-            LazyInitializer.EnsureInitialized(ref _connection,
-                () => new SqliteConnection("DataSource=:memory:"));
-
-        private protected DbContextOptions Options =>
-            LazyInitializer.EnsureInitialized(ref _options, () =>
+            LazyInitializer.EnsureInitialized(ref _connection, () =>
             {
-                Connection.Open();
-                var options = new DbContextOptionsBuilder<HangfireContext>().
-                    UseSqlite(Connection).
-                    Options;
-                using (var context = new HangfireContext(options))
+                var connection = new SqliteConnection("DataSource=:memory:");
+                connection.Open();
+                var builder = new DbContextOptionsBuilder<HangfireContext>();
+                builder.UseSqlite(connection);
+                using (var context = new HangfireContext(builder.Options))
                     context.GetService<IRelationalDatabaseCreator>().CreateTables();
-                return options;
+                return connection;
             });
+
+        private protected void OptionsAction(DbContextOptionsBuilder builder)
+        {
+            builder.UseSqlite(Connection);
+        }
 
         protected DbContextOptionsTest()
         {
@@ -37,7 +37,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected void UseContext(Action<HangfireContext> action)
         {
-            using (var context = new HangfireContext(Options))
+            var builder = new DbContextOptionsBuilder<HangfireContext>();
+            OptionsAction(builder);
+            using (var context = new HangfireContext(builder.Options))
                 action(context);
         }
 

@@ -18,7 +18,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            using (var context = new HangfireContext(Options))
+            var builder = new DbContextOptionsBuilder<HangfireContext>();
+            OptionsAction(builder);
+            using (var context = new HangfireContext(builder.Options))
             {
                 Assert.NotNull(context.Model);
             }

@@ -7,38 +7,37 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreStorageFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenContextOptionsParameterIsNull()
+        public void Ctor_Throws_WhenContextOptionsActionParameterIsNull()
         {
-            DbContextOptions<HangfireContext> contextOptions = null;
+            Action<DbContextOptionsBuilder> optionsAction = null;
             var options = new EFCoreStorageOptions();
 
-            Assert.Throws<ArgumentNullException>(nameof(contextOptions),
-                () => new EFCoreStorage(contextOptions, options));
+            Assert.Throws<ArgumentNullException>(nameof(optionsAction),
+                () => new EFCoreStorage(optionsAction, options));
         }
 
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
         {
-            var contextOptions = new DbContextOptions<HangfireContext>();
+            var contextOptions = OptionsActionStub;
             EFCoreStorageOptions options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreStorage(contextOptions, options));
+                () => new EFCoreStorage(OptionsAction, options));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var contextOptions = new DbContextOptions<HangfireContext>();
             var options = new EFCoreStorageOptions
             {
                 DistributedLockTimeout = new TimeSpan(1, 0, 0),
                 QueuePollInterval = new TimeSpan(0, 1, 0)
             };
 
-            var instance = new EFCoreStorage(contextOptions, options);
+            var instance = new EFCoreStorage(OptionsActionStub, options);
 
-            Assert.Same(contextOptions, Assert.IsType<DbContextOptions<HangfireContext>>(
+            Assert.NotNull(Assert.IsType<DbContextOptions<HangfireContext>>(
                 instance.GetFieldValue("_contextOptions")));
             Assert.Same(options, Assert.IsType<EFCoreStorageOptions>(
                 instance.GetFieldValue("_options")));
@@ -49,9 +48,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetConnection_ReturnsCorrectResult()
         {
-            var contextOptions = new DbContextOptions<HangfireContext>();
             var options = new EFCoreStorageOptions();
-            var instance = new EFCoreStorage(contextOptions, options);
+            var instance = new EFCoreStorage(OptionsAction, options);
 
             var result = instance.GetConnection();
 
@@ -66,9 +64,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetMonitoringApi_ReturnsCorrectResult()
         {
-            var contextOptions = new DbContextOptions<HangfireContext>();
             var options = new EFCoreStorageOptions();
-            var instance = new EFCoreStorage(contextOptions, options);
+            var instance = new EFCoreStorage(OptionsAction, options);
 
             var result = instance.GetMonitoringApi();
 
