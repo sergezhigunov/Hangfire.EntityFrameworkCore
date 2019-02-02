@@ -7,31 +7,51 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreStorageFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_IfOptionsParameterIsNull()
+        public void Ctor_Throws_WhenContextOptionsParameterIsNull()
         {
-            DbContextOptions<HangfireContext> options = null;
+            DbContextOptions<HangfireContext> contextOptions = null;
+            var options = new EFCoreStorageOptions();
+
+            Assert.Throws<ArgumentNullException>(nameof(contextOptions),
+                () => new EFCoreStorage(contextOptions, options));
+        }
+
+        [Fact]
+        public void Ctor_Throws_WhenOptionsParameterIsNull()
+        {
+            var contextOptions = new DbContextOptions<HangfireContext>();
+            EFCoreStorageOptions options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreStorage(options));
+                () => new EFCoreStorage(contextOptions, options));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
+            var contextOptions = new DbContextOptions<HangfireContext>();
+            var options = new EFCoreStorageOptions
+            {
+                DistributedLockTimeout = new TimeSpan(1, 0, 0),
+                QueuePollInterval = new TimeSpan(0, 1, 0)
+            };
 
-            var instance = new EFCoreStorage(options);
+            var instance = new EFCoreStorage(contextOptions, options);
 
-            Assert.Same(options,
-                Assert.IsType<DbContextOptions<HangfireContext>>(
-                    instance.GetFieldValue("_options")));
+            Assert.Same(contextOptions, Assert.IsType<DbContextOptions<HangfireContext>>(
+                instance.GetFieldValue("_contextOptions")));
+            Assert.Same(options, Assert.IsType<EFCoreStorageOptions>(
+                instance.GetFieldValue("_options")));
+            Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
+            Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
         }
 
         [Fact]
         public void GetConnection_ReturnsCorrectResult()
         {
-            var options = new DbContextOptions<HangfireContext>();
-            var instance = new EFCoreStorage(options);
+            var contextOptions = new DbContextOptions<HangfireContext>();
+            var options = new EFCoreStorageOptions();
+            var instance = new EFCoreStorage(contextOptions, options);
 
             var result = instance.GetConnection();
 
@@ -46,8 +66,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void GetMonitoringApi_ReturnsCorrectResult()
         {
-            var options = new DbContextOptions<HangfireContext>();
-            var instance = new EFCoreStorage(options);
+            var contextOptions = new DbContextOptions<HangfireContext>();
+            var options = new EFCoreStorageOptions();
+            var instance = new EFCoreStorage(contextOptions, options);
 
             var result = instance.GetMonitoringApi();
 
@@ -106,6 +127,5 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.True(exposed);
             Assert.True(result);
         }
-
     }
 }

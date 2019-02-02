@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using Hangfire.Common;
 using Hangfire.States;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
@@ -23,8 +22,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Ctor_CreatesInstance()
         {
-            var options = new DbContextOptions<HangfireContext>();
-            var storage = new EFCoreStorage(options);
+            var storage = CreateStorageStub();
 
             var instance = new EFCoreStorageMonitoringApi(storage);
 

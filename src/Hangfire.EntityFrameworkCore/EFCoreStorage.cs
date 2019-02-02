@@ -6,11 +6,19 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class EFCoreStorage : JobStorage
     {
-        private readonly DbContextOptions _options;
+        private readonly DbContextOptions _contextOptions;
+        private readonly EFCoreStorageOptions _options;
+
+        internal TimeSpan DistributedLockTimeout => _options.DistributedLockTimeout;
+
+        internal TimeSpan QueuePollInterval => _options.QueuePollInterval;
 
         public EFCoreStorage(
-            DbContextOptions options)
+            DbContextOptions contextOptions,
+            EFCoreStorageOptions options)
         {
+            _contextOptions = contextOptions ??
+                throw new ArgumentNullException(nameof(contextOptions));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
@@ -63,7 +71,7 @@ namespace Hangfire.EntityFrameworkCore
 
         internal HangfireContext CreateContext()
         {
-            return new HangfireContext(_options);
+            return new HangfireContext(_contextOptions);
         }
     }
 }

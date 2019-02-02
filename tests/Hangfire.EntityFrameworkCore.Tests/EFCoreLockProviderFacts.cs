@@ -11,22 +11,19 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void Ctor_Throws_WhenStorageParameterIsNull()
         {
             EFCoreStorage storage = null;
-            TimeSpan timeout = default;
 
             Assert.Throws<ArgumentNullException>(nameof(storage),
-                () => new EFCoreLockProvider(storage, timeout));
+                () => new EFCoreLockProvider(storage));
         }
 
         [Fact]
         public void Ctor_CreatesInstance()
         {
             var storage = CreateStorageStub();
-            var timeout = new TimeSpan(123);
 
-            var instance = new EFCoreLockProvider(storage, timeout);
+            var instance = new EFCoreLockProvider(storage);
 
             Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
-            Assert.Equal(timeout, Assert.IsType<TimeSpan>(instance.GetFieldValue("_timeout")));
         }
 
         [Fact]
@@ -65,7 +62,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Acquire_Throws_WhenExisingLockIsActual()
         {
-            var instance = CreateInstance(new TimeSpan(0, 0, 0));
+            var instance = CreateInstance();
             string resource = "resource";
             var timeout = new TimeSpan(1);
             var hangfireLock = new HangfireLock
@@ -91,7 +88,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Acquire_CompletesSuccessfully_WhenLockNotExists()
         {
-            var instance = CreateInstance(default);
+            var instance = CreateInstance();
             string resource = "resource";
             var timeout = new TimeSpan(0, 0, 10);
 
@@ -108,7 +105,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Acquire_CompletesSuccessfully_WhenExisingLockIsOutdated()
         {
-            var instance = CreateInstance(default);
+            var instance = CreateInstance();
             string resource = "resource";
             var timeout = new TimeSpan(0, 0, 10);
             var hangfirelock = new HangfireLock
@@ -141,7 +138,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Release_CompletesSuccessfully_WhenLockExists()
         {
-            var instance = CreateInstance(default);
+            var instance = CreateInstance();
             string resource = "resource";
             UseContextSavingChanges(context =>
             {
@@ -160,7 +157,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void Release_CompletesSuccessfully_WhenLockNotExists()
         {
-            var instance = CreateInstance(default);
+            var instance = CreateInstance();
             string resource = "resource";
 
             instance.Release(resource);
@@ -171,13 +168,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private static EFCoreLockProvider CreateStub()
         {
             var options = new DbContextOptions<HangfireContext>();
-            var storage = new EFCoreStorage(options);
-            return new EFCoreLockProvider(storage, default);
+            var storage = new EFCoreStorage(options, new EFCoreStorageOptions());
+            return new EFCoreLockProvider(storage);
         }
 
-        private EFCoreLockProvider CreateInstance(TimeSpan timeout)
+        private EFCoreLockProvider CreateInstance()
         {
-            return new EFCoreLockProvider(Storage, timeout);
+            var storage = new EFCoreStorage(Options, new EFCoreStorageOptions
+            {
+                DistributedLockTimeout = new TimeSpan(0, 0, 1),
+            });
+            return new EFCoreLockProvider(storage);
         }
     }
 }

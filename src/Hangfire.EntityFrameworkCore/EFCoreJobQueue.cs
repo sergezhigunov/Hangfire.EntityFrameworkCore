@@ -12,7 +12,6 @@ namespace Hangfire.EntityFrameworkCore
     {
         private static readonly object s_lock = new object();
         private readonly EFCoreStorage _storage;
-        private readonly TimeSpan _queuePollInterval = new TimeSpan(0, 0, 10);
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
 
@@ -64,7 +63,7 @@ namespace Hangfire.EntityFrameworkCore
                         cancellationToken.WaitHandle,
                         NewItemInQueueEvent,
                     },
-                    _queuePollInterval);
+                    _storage.QueuePollInterval);
             }
         }
 

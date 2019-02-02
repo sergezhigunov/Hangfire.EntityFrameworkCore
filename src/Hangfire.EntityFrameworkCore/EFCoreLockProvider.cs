@@ -11,14 +11,11 @@ namespace Hangfire.EntityFrameworkCore
     {
         private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
         private readonly EFCoreStorage _storage;
-        private readonly TimeSpan _timeout;
 
         public EFCoreLockProvider(
-            [NotNull] EFCoreStorage storage,
-            TimeSpan timeout)
+            [NotNull] EFCoreStorage storage)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _timeout = timeout;
         }
 
         public void Acquire([NotNull] string resource, TimeSpan timeout)
@@ -110,7 +107,7 @@ namespace Hangfire.EntityFrameworkCore
                 if (distributedLock == null)
                     return false;
 
-                var expireAt = distributedLock.AcquiredAt + _timeout;
+                var expireAt = distributedLock.AcquiredAt + _storage.DistributedLockTimeout;
 
                 // If the lock has been expired, we should update its creation timestamp
                 if (expireAt < DateTime.UtcNow)

@@ -20,7 +20,7 @@ namespace Hangfire.EntityFrameworkCore
         public EFCoreStorageConnection(EFCoreStorage storage)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _lockProvider = new EFCoreLockProvider(_storage, new TimeSpan(0, 10, 0));
+            _lockProvider = new EFCoreLockProvider(_storage);
         }
 
         public override IDisposable AcquireDistributedLock(
