@@ -4,9 +4,4 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Hangfire.Core" Version="1.6.21" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.0" />
-  </ItemGroup>
-
 </Project>
