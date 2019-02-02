@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EFCoreJobStorageMonitoringApi : IMonitoringApi
+    internal class EFCoreStorageMonitoringApi : IMonitoringApi
     {
         private const string FailedStatsName = "failed";
         private const string SucceededStatsName = "succeeded";
@@ -29,7 +29,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private readonly DbContextOptions _options;
 
-        public EFCoreJobStorageMonitoringApi(
+        public EFCoreStorageMonitoringApi(
             DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));

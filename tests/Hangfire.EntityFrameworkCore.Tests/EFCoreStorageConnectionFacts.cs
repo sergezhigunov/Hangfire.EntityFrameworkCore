@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreJobStorageConnectionFacts : HangfireContextTest
+    public class EFCoreStorageConnectionFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_WhenOptionsParameterIsNull()
@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreJobStorageConnection(options));
+                () => new EFCoreStorageConnection(options));
         }
 
         [Fact]
@@ -27,7 +27,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EFCoreJobStorageConnection(options);
+            var instance = new EFCoreStorageConnection(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -137,7 +137,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.NotNull(result);
             using (result)
-                Assert.IsType<EFCoreJobStorageTransaction>(result);
+                Assert.IsType<EFCoreStorageTransaction>(result);
         }
 
         [Fact]
@@ -1685,13 +1685,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
             });
         }
 
-        private void UseConnection(Action<EFCoreJobStorageConnection> action)
+        private void UseConnection(Action<EFCoreStorageConnection> action)
         {
             using (var instance = CreateConnection())
                 action(instance);
         }
 
-        private T UseConnection<T>(Func<EFCoreJobStorageConnection, T> func)
+        private T UseConnection<T>(Func<EFCoreStorageConnection, T> func)
         {
             T result = default;
             UseConnection(instance =>
@@ -1701,9 +1701,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             return result;
         }
 
-        private EFCoreJobStorageConnection CreateConnection()
+        private EFCoreStorageConnection CreateConnection()
         {
-            return new EFCoreJobStorageConnection(Options);
+            return new EFCoreStorageConnection(Options);
         }
 
         private void CheckServer(string serverId, ServerContext expectedContext, DateTime timestampBeforeBegin, DateTime timestampAfterEnd)

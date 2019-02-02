@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal sealed class EFCoreJobStorageTransaction : JobStorageTransaction
+    internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
         private readonly DbContextOptions _options;
         private readonly IPersistentJobQueueProvider _queueProvider;
@@ -17,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
-        public EFCoreJobStorageTransaction(
+        public EFCoreStorageTransaction(
             DbContextOptions options,
             IPersistentJobQueueProvider queueProvider)
         {

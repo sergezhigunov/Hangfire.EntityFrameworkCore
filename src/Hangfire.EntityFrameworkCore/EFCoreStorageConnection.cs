@@ -12,12 +12,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class EFCoreJobStorageConnection : JobStorageConnection
+    internal class EFCoreStorageConnection : JobStorageConnection
     {
         private readonly IDistributedLockProvider _lockProvider;
         private readonly DbContextOptions _options;
 
-        public EFCoreJobStorageConnection(DbContextOptions options)
+        public EFCoreStorageConnection(DbContextOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _lockProvider = new EFCoreLockProvider(_options, new TimeSpan(0, 10, 0));
@@ -105,7 +105,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
-            return new EFCoreJobStorageTransaction(
+            return new EFCoreStorageTransaction(
                 _options,
                 new EFCoreJobQueueProvider(_options));
         }

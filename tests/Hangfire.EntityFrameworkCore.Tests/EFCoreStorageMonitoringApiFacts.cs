@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreJobStorageMonitoringApiFacts : HangfireContextTest
+    public class EFCoreStorageMonitoringApiFacts : HangfireContextTest
     {
         [Fact]
         public void Ctor_Throws_IfOptionsParameterIsNull()
@@ -17,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             DbContextOptions<HangfireContext> options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreJobStorageMonitoringApi(options));
+                () => new EFCoreStorageMonitoringApi(options));
         }
 
         [Fact]
@@ -25,7 +25,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
 
-            var instance = new EFCoreJobStorageMonitoringApi(options);
+            var instance = new EFCoreStorageMonitoringApi(options);
 
             Assert.Same(options,
                 Assert.IsType<DbContextOptions<HangfireContext>>(
@@ -1035,9 +1035,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
 
-        private T UseMonitoringApi<T>(Func<EFCoreJobStorageMonitoringApi, T> func)
+        private T UseMonitoringApi<T>(Func<EFCoreStorageMonitoringApi, T> func)
         {
-            return func(new EFCoreJobStorageMonitoringApi(Options));
+            return func(new EFCoreStorageMonitoringApi(Options));
         }
     }
 }
