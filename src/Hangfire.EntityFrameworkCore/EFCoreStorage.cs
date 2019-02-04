@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,11 @@ namespace Hangfire.EntityFrameworkCore
     {
         private readonly DbContextOptions _contextOptions;
         private readonly EFCoreStorageOptions _options;
+
+        internal EFCoreJobQueueProvider DefaultQueueProvider { get; }
+
+        internal IDictionary<string, IPersistentJobQueueProvider> QueueProviders { get; } =
+            new Dictionary<string, IPersistentJobQueueProvider>(StringComparer.OrdinalIgnoreCase);
 
         internal TimeSpan DistributedLockTimeout => _options.DistributedLockTimeout;
 
@@ -44,6 +50,7 @@ namespace Hangfire.EntityFrameworkCore
             var contextOptionsBuilder = new DbContextOptionsBuilder<HangfireContext>();
             optionsAction.Invoke(contextOptionsBuilder);
             _contextOptions = contextOptionsBuilder.Options;
+            DefaultQueueProvider = new EFCoreJobQueueProvider(this);
         }
 
         /// <summary>
@@ -66,6 +73,29 @@ namespace Hangfire.EntityFrameworkCore
         public override IMonitoringApi GetMonitoringApi()
         {
             return new EFCoreStorageMonitoringApi(this);
+        }
+
+        internal IPersistentJobQueueProvider GetQueueProvider(string queue)
+        {
+            if (queue == null)
+                throw new ArgumentNullException(nameof(queue));
+
+            return QueueProviders.GetValue(queue) ?? DefaultQueueProvider;
+        }
+
+        internal void RegisterProvider(IPersistentJobQueueProvider provider, IList<string> queues)
+        {
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+            if (queues == null)
+                throw new ArgumentNullException(nameof(queues));
+            if (queues.Count == 0)
+                throw new ArgumentException(null, nameof(queues));
+
+            var providers = QueueProviders;
+
+            foreach (var queue in queues)
+                providers[queue] = provider;
         }
 
         internal void UseContext(Action<HangfireContext> action)

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
@@ -7,7 +9,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreStorageFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenContextOptionsActionParameterIsNull()
+        public static void Ctor_Throws_WhenContextOptionsActionParameterIsNull()
         {
             Action<DbContextOptionsBuilder> optionsAction = null;
             var options = new EFCoreStorageOptions();
@@ -41,6 +43,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 instance.GetFieldValue("_contextOptions")));
             Assert.Same(options, Assert.IsType<EFCoreStorageOptions>(
                 instance.GetFieldValue("_options")));
+            Assert.NotNull(instance.DefaultQueueProvider);
+            Assert.Same(instance, instance.DefaultQueueProvider.GetFieldValue("_storage"));
+            Assert.NotNull(instance.QueueProviders);
+            Assert.Empty(instance.QueueProviders);
             Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
             Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
         }
@@ -123,6 +129,43 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.True(exposed);
             Assert.True(result);
+        }
+
+        [Fact]
+        public static void GetQueueProvider_Throws_WhenQueueParameterIsNull()
+        {
+            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+            string queue = null;
+
+            Assert.Throws<ArgumentNullException>(nameof(queue),
+                () => storage.GetQueueProvider(queue));
+        }
+
+        [Fact]
+        public static void GetQueueProvider_ReturnsDefaultProvider_WhenProviderIsNotRegistered()
+        {
+            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+            var queue = "queue";
+
+            var result = storage.GetQueueProvider(queue);
+
+            Assert.NotNull(result);
+            Assert.Same(storage.DefaultQueueProvider, result);
+        }
+
+        [Fact]
+        public static void GetQueueProvider_ReturnsRegisteredProvider()
+        {
+            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+            var dictionary = storage.QueueProviders;
+            var provider = new Mock<IPersistentJobQueueProvider>().Object;
+            var queue = "queue";
+            dictionary[queue] = provider;
+
+            var result = storage.GetQueueProvider(queue);
+
+            Assert.NotNull(result);
+            Assert.Same(provider, result);
         }
     }
 }

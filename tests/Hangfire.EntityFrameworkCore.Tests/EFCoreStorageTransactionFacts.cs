@@ -13,23 +13,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenStorageParameterIsNull()
+        public static void Ctor_Throws_WhenStorageParameterIsNull()
         {
             EFCoreStorage storage = null;
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
 
             Assert.Throws<ArgumentNullException>(nameof(storage),
-                () => new EFCoreStorageTransaction(storage, queueProvider));
-        }
-
-        [Fact]
-        public void Ctor_Throws_WhenQueueProviderParameterIsNull()
-        {
-            var storage = CreateStorageStub();
-            IPersistentJobQueueProvider queueProvider = null;
-
-            Assert.Throws<ArgumentNullException>(nameof(queueProvider),
-                () => new EFCoreStorageTransaction(storage, queueProvider));
+                () => new EFCoreStorageTransaction(storage));
         }
 
         [Fact]
@@ -38,14 +28,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var storage = CreateStorageStub();
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
 
-            var instance = new EFCoreStorageTransaction(storage, queueProvider);
+            var instance = new EFCoreStorageTransaction(storage);
 
             Assert.Same(storage,
                 Assert.IsType<EFCoreStorage>(
                     instance.GetFieldValue("_storage")));
-            Assert.Same(queueProvider,
-                Assert.IsAssignableFrom<IPersistentJobQueueProvider>(
-                    instance.GetFieldValue("_queueProvider")));
             Assert.NotNull(
                 Assert.IsType<Queue<Action<HangfireContext>>>(
                     instance.GetFieldValue("_queue")));
@@ -300,9 +287,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var queueProviderMock = new Mock<IPersistentJobQueueProvider>();
             queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
             var queueProvider = queueProviderMock.Object;
-            using (var instance = new EFCoreStorageTransaction(Storage, queueProvider))
+            var queueName = "queue";
+            Storage.UseQueueProvider(queueProvider, new[] { queueName });
+            using (var instance = new EFCoreStorageTransaction(Storage))
             {
                 instance.AddToQueue("queue", jobId);
+
                 var queue = Assert.IsType<Queue<Action<HangfireContext>>>(
                     instance.GetFieldValue("_queue"));
                 var afterCommitQueue = Assert.IsType<Queue<Action>>(
@@ -1626,7 +1616,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private EFCoreStorageTransaction CreateTransaction()
         {
             var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
-            return new EFCoreStorageTransaction(Storage, queueProvider);
+            return new EFCoreStorageTransaction(Storage);
         }
 
         private HangfireJob InsertJob(DateTime? expireAt = null)

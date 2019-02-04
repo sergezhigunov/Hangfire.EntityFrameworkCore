@@ -106,8 +106,7 @@ namespace Hangfire.EntityFrameworkCore
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
             return new EFCoreStorageTransaction(
-                _storage,
-                new EFCoreJobQueueProvider(_storage));
+                _storage);
         }
 
         public override IFetchedJob FetchNextJob(

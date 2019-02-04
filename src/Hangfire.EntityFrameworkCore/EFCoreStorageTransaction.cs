@@ -12,18 +12,14 @@ namespace Hangfire.EntityFrameworkCore
     internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
         private readonly EFCoreStorage _storage;
-        private readonly IPersistentJobQueueProvider _queueProvider;
         private readonly Queue<Action<HangfireContext>> _queue;
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
         public EFCoreStorageTransaction(
-            EFCoreStorage storage,
-            IPersistentJobQueueProvider queueProvider)
+            EFCoreStorage storage)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _queueProvider = queueProvider ??
-                throw new ArgumentNullException(nameof(queueProvider));
             _queue = new Queue<Action<HangfireContext>>();
             _afterCommitQueue = new Queue<Action>();
         }
@@ -74,7 +70,8 @@ namespace Hangfire.EntityFrameworkCore
             ValidateJobId(jobId);
             ThrowIfDisposed();
 
-            var persistentQueue = _queueProvider.GetJobQueue();
+            var provider = _storage.GetQueueProvider(queue);
+            var persistentQueue = provider.GetJobQueue();
             _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
             if (persistentQueue is EFCoreJobQueue)
                 _afterCommitQueue.Enqueue(
