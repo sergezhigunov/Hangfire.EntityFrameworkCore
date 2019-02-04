@@ -36,6 +36,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 DistributedLockTimeout = new TimeSpan(1, 0, 0),
                 QueuePollInterval = new TimeSpan(0, 1, 0),
                 JobExpirationCheckInterval = new TimeSpan(2, 0, 0),
+                CountersAggregationInterval = new TimeSpan(0, 2, 0),
             };
 
             var instance = new EFCoreStorage(OptionsActionStub, options);
@@ -51,6 +52,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
             Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
             Assert.Equal(options.JobExpirationCheckInterval, instance.JobExpirationCheckInterval);
+            Assert.Equal(options.CountersAggregationInterval, instance.CountersAggregationInterval);
         }
 
         [Fact]
@@ -179,6 +181,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             var componentTypes = result.Select(x => x.GetType()).ToArray();
             Assert.Contains(typeof(ExpirationManager), componentTypes);
+            Assert.Contains(typeof(CountersAggregator), componentTypes);
         }
     }
 }

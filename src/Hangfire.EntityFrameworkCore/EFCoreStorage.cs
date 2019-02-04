@@ -25,6 +25,8 @@ namespace Hangfire.EntityFrameworkCore
 
         internal TimeSpan JobExpirationCheckInterval => _options.JobExpirationCheckInterval;
 
+        internal TimeSpan CountersAggregationInterval => _options.CountersAggregationInterval;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
         /// </summary>
@@ -91,6 +93,7 @@ namespace Hangfire.EntityFrameworkCore
             foreach (var item in base.GetComponents())
                 yield return item;
             yield return new ExpirationManager(this);
+            yield return new CountersAggregator(this);
         }
 
         internal IPersistentJobQueueProvider GetQueueProvider(string queue)
