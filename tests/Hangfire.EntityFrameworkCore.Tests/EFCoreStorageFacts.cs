@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -34,7 +34,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var options = new EFCoreStorageOptions
             {
                 DistributedLockTimeout = new TimeSpan(1, 0, 0),
-                QueuePollInterval = new TimeSpan(0, 1, 0)
+                QueuePollInterval = new TimeSpan(0, 1, 0),
+                JobExpirationCheckInterval = new TimeSpan(2, 0, 0),
             };
 
             var instance = new EFCoreStorage(OptionsActionStub, options);
@@ -49,6 +50,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Empty(instance.QueueProviders);
             Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
             Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
+            Assert.Equal(options.JobExpirationCheckInterval, instance.JobExpirationCheckInterval);
         }
 
         [Fact]
@@ -166,6 +168,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.NotNull(result);
             Assert.Same(provider, result);
+        }
+
+        [Fact]
+        public static void GetComponents_ReturnsAllNeededComponents()
+        {
+            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+
+            var result = storage.GetComponents();
+
+            var componentTypes = result.Select(x => x.GetType()).ToArray();
+            Assert.Contains(typeof(ExpirationManager), componentTypes);
         }
     }
 }

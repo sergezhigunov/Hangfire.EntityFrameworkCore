@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Hangfire.Server;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,8 @@ namespace Hangfire.EntityFrameworkCore
         internal TimeSpan DistributedLockTimeout => _options.DistributedLockTimeout;
 
         internal TimeSpan QueuePollInterval => _options.QueuePollInterval;
+
+        internal TimeSpan JobExpirationCheckInterval => _options.JobExpirationCheckInterval;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
@@ -73,6 +76,21 @@ namespace Hangfire.EntityFrameworkCore
         public override IMonitoringApi GetMonitoringApi()
         {
             return new EFCoreStorageMonitoringApi(this);
+        }
+
+        /// <summary>
+        /// Returns of server component collection.
+        /// </summary>
+        /// <returns>
+        /// Collection of server components <see cref="IServerComponent"/>.
+        /// </returns>
+#pragma warning disable CS0618
+        public override IEnumerable<IServerComponent> GetComponents()
+#pragma warning restore CS0618
+        {
+            foreach (var item in base.GetComponents())
+                yield return item;
+            yield return new ExpirationManager(this);
         }
 
         internal IPersistentJobQueueProvider GetQueueProvider(string queue)
