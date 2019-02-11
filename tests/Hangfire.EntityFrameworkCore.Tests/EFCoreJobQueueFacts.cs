@@ -68,9 +68,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var job = new HangfireJob
             {
                 InvocationData = new InvocationData(null, null, null, string.Empty),
-                Queues = new List<HangfireJobQueue>
+                QueuedJobs = new List<HangfireQueuedJob>
                 {
-                    new HangfireJobQueue
+                    new HangfireQueuedJob
                     {
                         Queue = queue,
                     },
@@ -82,12 +82,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.NotNull(result);
             var fetchedJob = Assert.IsType<EFCoreFetchedJob>(result);
-            Assert.Equal(job.Queues.First().Id, fetchedJob.Id);
+            Assert.Equal(job.QueuedJobs.First().Id, fetchedJob.Id);
             Assert.Equal(queue, fetchedJob.Queue);
             Assert.Equal(job.Id, fetchedJob.JobId);
             UseContext(context =>
             {
-                var queueItem = Assert.Single(context.Set<HangfireJobQueue>());
+                var queueItem = Assert.Single(context.Set<HangfireQueuedJob>());
                 Assert.Equal(fetchedJob.Id, queueItem.Id);
                 Assert.Equal(fetchedJob.Queue, queueItem.Queue);
                 Assert.Equal(fetchedJob.JobId, queueItem.JobId);
@@ -165,7 +165,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var actual = Assert.Single(context.Set<HangfireJobQueue>());
+                var actual = Assert.Single(context.Set<HangfireQueuedJob>());
                 Assert.Equal(job.Id, actual.JobId);
                 Assert.Equal(queue, actual.Queue);
                 Assert.Null(actual.FetchedAt);
@@ -180,7 +180,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.Throws<InvalidOperationException>(() => instance.Enqueue(queue, "1"));
             
-            UseContext(context => Assert.Empty(context.Set<HangfireJobQueue>()));
+            UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
         }
     }
 }

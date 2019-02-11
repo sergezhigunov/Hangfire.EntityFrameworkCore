@@ -9,22 +9,22 @@ namespace Hangfire.EntityFrameworkCore
     internal sealed class EFCoreFetchedJob : IFetchedJob
     {
         private readonly EFCoreStorage _storage;
-        private readonly HangfireJobQueue _item;
+        private readonly HangfireQueuedJob _queuedJob;
         private bool _disposed = false;
         private bool _completed = false;
 
-        public long Id => _item.Id;
-        public long JobId => _item.JobId;
-        public string Queue => _item.Queue;
+        public long Id => _queuedJob.Id;
+        public long JobId => _queuedJob.JobId;
+        public string Queue => _queuedJob.Queue;
 
-        string IFetchedJob.JobId => _item.JobId.ToString(CultureInfo.InvariantCulture);
+        string IFetchedJob.JobId => _queuedJob.JobId.ToString(CultureInfo.InvariantCulture);
 
         public EFCoreFetchedJob(
             [NotNull] EFCoreStorage storage,
-            [NotNull] HangfireJobQueue item)
+            [NotNull] HangfireQueuedJob queuedJob)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _item = item ?? throw new ArgumentNullException(nameof(item));
+            _queuedJob = queuedJob ?? throw new ArgumentNullException(nameof(queuedJob));
         }
 
 
@@ -32,7 +32,7 @@ namespace Hangfire.EntityFrameworkCore
         {
             _storage.UseContext(context =>
             {
-                context.Remove(_item);
+                context.Remove(_queuedJob);
                 try
                 {
                     context.SaveChanges();
@@ -49,8 +49,8 @@ namespace Hangfire.EntityFrameworkCore
         {
             _storage.UseContext(context =>
             {
-                context.Attach(_item);
-                _item.FetchedAt = null;
+                context.Attach(_queuedJob);
+                _queuedJob.FetchedAt = null;
                 try
                 {
                     context.SaveChanges();

@@ -114,9 +114,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     CreatedAt = now + new TimeSpan(0, 0, x),
                     InvocationData = invocationData,
-                    Queues = new[]
+                    QueuedJobs = new[]
                     {
-                        new HangfireJobQueue
+                        new HangfireQueuedJob
                         {
                             Queue = queue,
                         },
@@ -185,9 +185,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                             Name = state.Name,
                             State = state,
                         },
-                        Queues = new[]
+                        QueuedJobs = new[]
                         {
-                            new HangfireJobQueue
+                            new HangfireQueuedJob
                             {
                                 Queue = queue,
                             },
@@ -329,9 +329,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     CreatedAt = now + new TimeSpan(0, 0, x),
                     InvocationData = invocationData,
-                    Queues = new[]
+                    QueuedJobs = new[]
                     {
-                        new HangfireJobQueue
+                        new HangfireQueuedJob
                         {
                             Queue = queue,
                             FetchedAt = now,
@@ -401,9 +401,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                             Name = state.Name,
                             State = state,
                         },
-                        Queues = new[]
+                        QueuedJobs = new[]
                         {
-                            new HangfireJobQueue
+                            new HangfireQueuedJob
                             {
                                 Queue = queue,
                                 FetchedAt = now,
@@ -751,9 +751,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 CreatedAt = DateTime.UtcNow,
                 InvocationData = CreateInvocationData(() => SampleMethod(null)),
-                Queues = new[]
+                QueuedJobs = new[]
                 {
-                    new HangfireJobQueue
+                    new HangfireQueuedJob
                     {
                         Queue = x,
                     }
@@ -993,7 +993,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 CreatedAt = DateTime.UtcNow,
                 InvocationData = CreateInvocationData(() => SampleMethod(null)),
             };
-            var queueItem = new HangfireJobQueue
+            var queueItem = new HangfireQueuedJob
             {
                 Job = job,
                 Queue = queue,

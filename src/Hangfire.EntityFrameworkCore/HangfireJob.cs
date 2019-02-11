@@ -10,7 +10,7 @@ namespace Hangfire.EntityFrameworkCore
         public HangfireJob()
         {
             Parameters = new HashSet<HangfireJobParameter>();
-            Queues = new HashSet<HangfireJobQueue>();
+            QueuedJobs = new HashSet<HangfireQueuedJob>();
             States = new HashSet<HangfireState>();
         }
 
@@ -27,7 +27,7 @@ namespace Hangfire.EntityFrameworkCore
         
         public virtual ICollection<HangfireJobParameter> Parameters { get; set; }
 
-        public virtual ICollection<HangfireJobQueue> Queues { get; set; }
+        public virtual ICollection<HangfireQueuedJob> QueuedJobs { get; set; }
 
         public virtual ICollection<HangfireState> States { get; set; }
     }

@@ -272,7 +272,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 InvocationData = new InvocationData(null, null, null, string.Empty),
             };
-            job.Queues.Add(new HangfireJobQueue
+            job.QueuedJobs.Add(new HangfireQueuedJob
             {
                 Job = job,
                 Queue = queue,

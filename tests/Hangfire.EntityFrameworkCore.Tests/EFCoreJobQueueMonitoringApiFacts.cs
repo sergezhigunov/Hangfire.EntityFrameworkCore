@@ -57,9 +57,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Select(_ => new HangfireJob
                 {
                     InvocationData = new InvocationData(null, null, null, string.Empty),
-                    Queues = new List<HangfireJobQueue>
+                    QueuedJobs = new List<HangfireQueuedJob>
                     {
-                        new HangfireJobQueue
+                        new HangfireQueuedJob
                         {
                             Queue = queue,
                         }
@@ -72,7 +72,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var result = instance.GetEnqueuedJobIds(queue, 3, 2).ToArray();
 
             Assert.Equal(2, result.Length);
-            var jobIds = jobs.SelectMany(x => x.Queues).OrderBy(x => x.Id).
+            var jobIds = jobs.SelectMany(x => x.QueuedJobs).OrderBy(x => x.Id).
                 Select(x => x.JobId.ToString(CultureInfo.InvariantCulture)).
                 ToArray();
             Assert.Equal(jobIds[3], result[0]);
@@ -108,9 +108,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Select(_ => new HangfireJob
                 {
                     InvocationData = new InvocationData(null, null, null, string.Empty),
-                    Queues = new List<HangfireJobQueue>
+                    QueuedJobs = new List<HangfireQueuedJob>
                     {
-                        new HangfireJobQueue
+                        new HangfireQueuedJob
                         {
                             Queue = queue,
                             FetchedAt = DateTime.UtcNow,
@@ -124,7 +124,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var result = instance.GetFetchedJobIds(queue, 3, 2).ToArray();
 
             Assert.Equal(2, result.Length);
-            var jobIds = jobs.SelectMany(x => x.Queues).OrderBy(x => x.Id).
+            var jobIds = jobs.SelectMany(x => x.QueuedJobs).OrderBy(x => x.Id).
                 Select(x => x.JobId.ToString(CultureInfo.InvariantCulture)).
                 ToArray();
             Assert.Equal(jobIds[3], result[0]);
@@ -151,8 +151,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var job = new HangfireJob
             {
                 InvocationData = new InvocationData(null, null, null, string.Empty),
-                Queues = queues.
-                    Select(x => new HangfireJobQueue
+                QueuedJobs = queues.
+                    Select(x => new HangfireQueuedJob
                     {
                         Queue = x,
                     }).
@@ -197,9 +197,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Select(index => new HangfireJob
                 {
                     InvocationData = new InvocationData(null, null, null, string.Empty),
-                    Queues = new List<HangfireJobQueue>
+                    QueuedJobs = new List<HangfireQueuedJob>
                     {
-                        new HangfireJobQueue
+                        new HangfireQueuedJob
                         {
                             Queue = queue,
                             FetchedAt = index < 2 ? default(DateTime?) : DateTime.UtcNow,

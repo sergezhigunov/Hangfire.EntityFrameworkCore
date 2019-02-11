@@ -27,7 +27,7 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         private IList<string> GetJobIds(
-            Expression<Func<HangfireJobQueue, bool>> predicate,
+            Expression<Func<HangfireQueuedJob, bool>> predicate,
             string queue,
             int from,
             int perPage)
@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            return _storage.UseContext(context => context.Set<HangfireJobQueue>().
+            return _storage.UseContext(context => context.Set<HangfireQueuedJob>().
                 Where(predicate).
                 Where(x => x.Queue == queue).
                 OrderBy(x => x.Id).
@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<string> GetQueues()
         {
-            return _storage.UseContext(context => context.Set<HangfireJobQueue>().
+            return _storage.UseContext(context => context.Set<HangfireQueuedJob>().
                 Select(x => x.Queue).
                 Distinct().
                 ToArray());
@@ -61,7 +61,7 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(queue));
 
             var result = _storage.UseContext(context => (
-                from item in context.Set<HangfireJobQueue>()
+                from item in context.Set<HangfireQueuedJob>()
                 where item.Queue == queue
                 group item by item.FetchedAt.HasValue into grouping
                 select new

@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore
                     using (var context = _storage.CreateContext())
                     {
                         var queueItem = (
-                            from item in context.Set<HangfireJobQueue>()
+                            from item in context.Set<HangfireQueuedJob>()
                             where queues.Contains(item.Queue)
                             where item.FetchedAt == null
                             orderby item.Id ascending
@@ -76,7 +76,7 @@ namespace Hangfire.EntityFrameworkCore
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
 
-            var item = new HangfireJobQueue
+            var queuedJob = new HangfireQueuedJob
             {
                 JobId = long.Parse(jobId, CultureInfo.InvariantCulture),
                 Queue = queue,
@@ -84,7 +84,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContext(context =>
             {
-                context.Add(item);
+                context.Add(queuedJob);
                 try
                 {
                     context.SaveChanges();

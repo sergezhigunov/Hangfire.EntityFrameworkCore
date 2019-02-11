@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class HangfireJobQueue
+    internal class HangfireQueuedJob
     {
         public long Id { get; set; }
 

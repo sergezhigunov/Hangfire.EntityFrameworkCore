@@ -137,7 +137,7 @@ namespace Hangfire.EntityFrameworkCore
                         job.Id,
                         job.InvocationData,
                         state.Name,
-                        FetchedAt = job.Queues.Max(x => x.FetchedAt),
+                        FetchedAt = job.QueuedJobs.Max(x => x.FetchedAt),
                     }).
                     ToArray();
             });

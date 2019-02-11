@@ -34,9 +34,6 @@ namespace Hangfire.EntityFrameworkCore
             var jobParameterBuilder = modelBuilder.Entity<HangfireJobParameter>();
             jobParameterBuilder.HasKey(x => new { x.JobId, x.Name });
 
-            var jobQueueBuilder = modelBuilder.Entity<HangfireJobQueue>();
-            jobQueueBuilder.HasIndex(x => new { x.Queue, x.FetchedAt });
-
             var jobStateBuilder = modelBuilder.Entity<HangfireJobState>();
             jobStateBuilder.HasKey(x => x.JobId);
             jobStateBuilder.HasIndex(x => x.Name);
@@ -45,6 +42,9 @@ namespace Hangfire.EntityFrameworkCore
             listBuilder.HasKey(x => new { x.Key, x.Position });
 
             modelBuilder.Entity<HangfireLock>();
+
+            var queuedJobBuilder = modelBuilder.Entity<HangfireQueuedJob>();
+            queuedJobBuilder.HasIndex(x => new { x.Queue, x.FetchedAt });
 
             var setBuilder = modelBuilder.Entity<HangfireSet>();
             setBuilder.HasKey(x => new { x.Key, x.Value });
