@@ -8,7 +8,6 @@
     <LangVersion>7.3</LangVersion>
     <VersionPrefix>0.1.0</VersionPrefix>
     <VersionSuffix>alpha1</VersionSuffix>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   
 </Project>

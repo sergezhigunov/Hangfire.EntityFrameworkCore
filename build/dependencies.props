@@ -9,11 +9,13 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <IsSourceProject Condition="'$(IsTestProject)' == '' And ($(MSBuildProjectFullPath.Contains('\src\')) OR $(MSBuildProjectFullPath.Contains('/src/')))">true</IsSourceProject>
     <IsTestProject Condition="'$(IsTestProject)' == '' And ($(MSBuildProjectFullPath.Contains('\tests\')) OR $(MSBuildProjectFullPath.Contains('/tests/')))">true</IsTestProject>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(IsTestProject)' != 'true'">
+  <PropertyGroup Condition="'$(IsSourceProject)' == 'true'">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
