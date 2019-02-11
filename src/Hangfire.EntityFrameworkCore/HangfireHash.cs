@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class HangfireHash
+    internal class HangfireHash : IExpirable
     {
         [MaxLength(100)]
         public string Key { get; set; }

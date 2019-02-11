@@ -5,7 +5,7 @@ using Hangfire.Storage;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    internal class HangfireJob
+    internal class HangfireJob : IExpirable
     {
         public HangfireJob()
         {

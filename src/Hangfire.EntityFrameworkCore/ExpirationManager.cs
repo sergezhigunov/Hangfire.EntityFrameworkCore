@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Hangfire.Server;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -9,6 +11,9 @@ namespace Hangfire.EntityFrameworkCore
     internal class ExpirationManager : IServerComponent
 #pragma warning restore 618
     {
+        private static readonly Type s_expirableType = typeof(IExpirable);
+        private static readonly MethodInfo s_setMethodDefinition =
+            typeof(HangfireContext).GetMethod(nameof(DbContext.Set));
         private readonly EFCoreStorage _storage;
 
         public ExpirationManager(EFCoreStorage storage)
@@ -20,25 +25,19 @@ namespace Hangfire.EntityFrameworkCore
         {
             _storage.UseContextSavingChanges(context =>
             {
+                var expirableSets =
+                    from entityType in context.Model.GetEntityTypes()
+                    let clrType = entityType.ClrType
+                    where s_expirableType.IsAssignableFrom(clrType)
+                    let method = s_setMethodDefinition.MakeGenericMethod(clrType)
+                    select (IQueryable<IExpirable>)method.Invoke(context, null);
+
                 var now = DateTime.UtcNow;
-                context.Counters.RemoveRange(
-                    from counter in context.Counters
-                    group counter by counter.Key into @group
-                    where @group.Max(x => x.ExpireAt) < now
-                    from counter in @group
-                    select counter);
-
-                context.Jobs.
-                    RemoveRange(context.Jobs.Where(x => x.ExpireAt < now));
-
-                context.Lists.
-                    RemoveRange(context.Lists.Where(x => x.ExpireAt < now));
-
-                context.Sets.
-                    RemoveRange(context.Sets.Where(x => x.ExpireAt < now));
-
-                context.Hashes.
-                    RemoveRange(context.Hashes.Where(x => x.ExpireAt < now));
+                foreach (var dbSet in expirableSets)
+                {
+                    context.RemoveRange(dbSet.Where(x => x.ExpireAt < now));
+                    context.SaveChanges();
+                }
             });
 
             cancellationToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
