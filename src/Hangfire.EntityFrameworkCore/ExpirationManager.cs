@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using Hangfire.Logging;
 using Hangfire.Server;
+using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
@@ -12,6 +13,8 @@ namespace Hangfire.EntityFrameworkCore
     internal class ExpirationManager : IServerComponent
 #pragma warning restore 618
     {
+        private const string LockKey = "locks:expirationmanager";
+        private static readonly TimeSpan s_lockTimeout = new TimeSpan(0, 5, 0);
         private static readonly Type s_expirableType = typeof(IExpirable);
         private static readonly MethodInfo s_setMethodDefinition =
             typeof(HangfireContext).GetMethod(nameof(DbContext.Set));
@@ -39,18 +42,46 @@ namespace Hangfire.EntityFrameworkCore
                     };
 
                 var now = DateTime.UtcNow;
-                foreach (var dbSet in expirableSets)
+                foreach (var item in expirableSets)
                 {
-                    _logger.Debug($"Removing outdated records from the '{dbSet.TableName}' table...");
+                    _logger.Debug(
+                        $"Removing outdated records from the '{item.TableName}' table...");
 
-                    context.RemoveRange(dbSet.DbSet.Where(x => x.ExpireAt < now));
-                    context.SaveChanges();
+                    UseLock(() =>
+                    {
+                        context.RemoveRange(item.DbSet.Where(x => x.ExpireAt < now));
+                        context.SaveChanges();
+                    });
 
-                    _logger.Trace($"Outdated records removed from the '{dbSet.TableName}' table.");
+                    _logger.Trace($"Outdated records removed from the '{item.TableName}' table.");
                 }
             });
 
             cancellationToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
+        }
+
+        private void UseLock(Action action)
+        {
+            using (var connection = _storage.GetConnection())
+            {
+                try
+                {
+                    using (var @lock = connection.AcquireDistributedLock(LockKey, s_lockTimeout))
+                        action.Invoke();
+                }
+                catch (DistributedLockTimeoutException exception)
+                when (exception.Resource == LockKey)
+                {
+                    _logger.Log(LogLevel.Debug, () =>
+                        $@"An exception was thrown during acquiring distributed lock on the {
+                            LockKey
+                        } resource within {
+                            s_lockTimeout.TotalSeconds
+                        } seconds. Outdated records were not removed.
+It will be retried in {_storage.JobExpirationCheckInterval.TotalSeconds} seconds.",
+                        exception);
+                }
+            }
         }
     }
 }
