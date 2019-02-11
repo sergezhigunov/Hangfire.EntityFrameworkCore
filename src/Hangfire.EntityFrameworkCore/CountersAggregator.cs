@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Hangfire.Logging;
 using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ namespace Hangfire.EntityFrameworkCore
     internal class CountersAggregator : IServerComponent
 #pragma warning restore CS0618
     {
+        private readonly ILog _logger = LogProvider.For<CountersAggregator>();
         private readonly EFCoreStorage _storage;
 
         public CountersAggregator(EFCoreStorage storage)
@@ -19,6 +21,8 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Execute(CancellationToken cancellationToken)
         {
+            _logger.Debug("Aggregating records in '"+ nameof(HangfireCounter) +"' table...");
+
             int removedCount;
             do
             {
@@ -69,6 +73,8 @@ namespace Hangfire.EntityFrameworkCore
                 cancellationToken.ThrowIfCancellationRequested();
             }
             while (removedCount > 0);
+
+            _logger.Debug("Records from the '" + nameof(HangfireCounter) + "' table aggregated.");
 
             cancellationToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
         }

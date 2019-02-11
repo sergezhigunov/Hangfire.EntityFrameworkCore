@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using Hangfire.Logging;
 using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,7 @@ namespace Hangfire.EntityFrameworkCore
         private static readonly Type s_expirableType = typeof(IExpirable);
         private static readonly MethodInfo s_setMethodDefinition =
             typeof(HangfireContext).GetMethod(nameof(DbContext.Set));
+        private readonly ILog _logger = LogProvider.For<ExpirationManager>();
         private readonly EFCoreStorage _storage;
 
         public ExpirationManager(EFCoreStorage storage)
@@ -30,13 +32,21 @@ namespace Hangfire.EntityFrameworkCore
                     let clrType = entityType.ClrType
                     where s_expirableType.IsAssignableFrom(clrType)
                     let method = s_setMethodDefinition.MakeGenericMethod(clrType)
-                    select (IQueryable<IExpirable>)method.Invoke(context, null);
+                    select new
+                    {
+                        TableName = clrType.Name,
+                        DbSet = (IQueryable<IExpirable>)method.Invoke(context, null),
+                    };
 
                 var now = DateTime.UtcNow;
                 foreach (var dbSet in expirableSets)
                 {
-                    context.RemoveRange(dbSet.Where(x => x.ExpireAt < now));
+                    _logger.Debug($"Removing outdated records from the '{dbSet.TableName}' table...");
+
+                    context.RemoveRange(dbSet.DbSet.Where(x => x.ExpireAt < now));
                     context.SaveChanges();
+
+                    _logger.Trace($"Outdated records removed from the '{dbSet.TableName}' table.");
                 }
             });
 
