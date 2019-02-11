@@ -70,7 +70,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Id = resource,
                 AcquiredAt = DateTime.UtcNow.AddMinutes(1),
             };
-            UseContextSavingChanges(context => context.Locks.Add(hangfireLock));
+            UseContextSavingChanges(context => context.Add(hangfireLock));
 
             var exception = Assert.Throws<DistributedLockTimeoutException>(
                 () => instance.Acquire(resource, timeout));
@@ -79,7 +79,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var actual = Assert.Single(context.Locks);
+                var actual = Assert.Single(context.Set<HangfireLock>());
                 Assert.Equal(hangfireLock.Id, actual.Id);
                 Assert.Equal(hangfireLock.AcquiredAt, actual.AcquiredAt);
             });
@@ -96,7 +96,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var actual = Assert.Single(context.Locks);
+                var actual = Assert.Single(context.Set<HangfireLock>());
                 Assert.Equal(resource, actual.Id);
                 Assert.NotEqual(default, actual.AcquiredAt);
             });
@@ -113,13 +113,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Id = resource,
                 AcquiredAt = DateTime.UtcNow.AddMinutes(-1),
             };
-            UseContextSavingChanges(context => context.Locks.Add(hangfirelock));
+            UseContextSavingChanges(context => context.Add(hangfirelock));
 
             instance.Acquire(resource, timeout);
 
             UseContext(context =>
             {
-                var actual = Assert.Single(context.Locks);
+                var actual = Assert.Single(context.Set<HangfireLock>());
                 Assert.Equal(resource, actual.Id);
                 Assert.True(hangfirelock.AcquiredAt < actual.AcquiredAt);
             });
@@ -142,7 +142,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string resource = "resource";
             UseContextSavingChanges(context =>
             {
-                context.Locks.Add(new HangfireLock
+                context.Add(new HangfireLock
                 {
                     Id = resource,
                     AcquiredAt = DateTime.UtcNow,
@@ -151,7 +151,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             instance.Release(resource);
 
-            UseContext(context => Assert.Empty(context.Locks));
+            UseContext(context => Assert.Empty(context.Set<HangfireLock>()));
         }
 
         [Fact]
@@ -162,7 +162,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             instance.Release(resource);
 
-            UseContext(context => Assert.Empty(context.Locks));
+            UseContext(context => Assert.Empty(context.Set<HangfireLock>()));
         }
 
         private static EFCoreLockProvider CreateStub()

@@ -128,7 +128,7 @@ namespace Hangfire.EntityFrameworkCore
             var jobs = _storage.UseContext(context =>
             {
                 return (
-                    from job in context.Jobs
+                    from job in context.Set<HangfireJob>()
                     where ids.Keys.Contains(job.Id)
                     let actualState = job.ActualState
                     let state = actualState.State
@@ -157,7 +157,7 @@ namespace Hangfire.EntityFrameworkCore
             var result = _storage.UseContext(context =>
             {
                 var stateCounts = (
-                    from jobState in context.JobStates
+                    from jobState in context.Set<HangfireJobState>()
                     where StatsJobStates.Contains(jobState.Name)
                     group jobState by jobState.Name into grouping
                     select new
@@ -168,7 +168,7 @@ namespace Hangfire.EntityFrameworkCore
                     ToDictionary(x => x.State, x => x.Count);
 
                 var counters = (
-                    from counter in context.Counters
+                    from counter in context.Set<HangfireCounter>()
                     where
                         counter.Key == SucceededCounterName ||
                         counter.Key == DeletedCounterName
@@ -182,8 +182,8 @@ namespace Hangfire.EntityFrameworkCore
 
                 return new StatisticsDto
                 {
-                    Recurring = context.Sets.LongCount(x => x.Key == RecurringJobsSetName),
-                    Servers = context.Servers.LongCount(),
+                    Recurring = context.Set<HangfireSet>().LongCount(x => x.Key == RecurringJobsSetName),
+                    Servers = context.Set<HangfireServer>().LongCount(),
                     Enqueued = stateCounts.GetValue(EnqueuedState.StateName),
                     Failed = stateCounts.GetValue(FailedState.StateName),
                     Processing = stateCounts.GetValue(ProcessingState.StateName),
@@ -222,11 +222,8 @@ namespace Hangfire.EntityFrameworkCore
 
             return _storage.UseContext(context =>
             {
-                var jobs = context.Jobs.
-                    Where(x => x.Id == id);
-
                 var jobInfo = (
-                    from job in context.Jobs
+                    from job in context.Set<HangfireJob>()
                     where job.Id == id
                     select new
                     {
@@ -240,7 +237,7 @@ namespace Hangfire.EntityFrameworkCore
                     return null;
 
                 var parameters = (
-                    from parameter in context.JobParameters
+                    from parameter in context.Set<HangfireJobParameter>()
                     where parameter.JobId == id
                     select new
                     {
@@ -250,7 +247,7 @@ namespace Hangfire.EntityFrameworkCore
                     ToDictionary(x => x.Name, x => x.Value);
 
                 var states = (
-                    from state in context.States
+                    from state in context.Set<HangfireState>()
                     where state.JobId == id
                     orderby state.Id descending
                     select new StateHistoryDto
@@ -356,7 +353,7 @@ namespace Hangfire.EntityFrameworkCore
         public IList<ServerDto> Servers()
         {
             return _storage.UseContext(context => (
-                from server in context.Servers
+                from server in context.Set<HangfireServer>()
                 select new ServerDto
                 {
                     Name = server.Id,
@@ -423,7 +420,7 @@ namespace Hangfire.EntityFrameworkCore
             var jobs = _storage.UseContext(context =>
             {
                 return (
-                    from job in context.Jobs
+                    from job in context.Set<HangfireJob>()
                     where idMap.Keys.Contains(job.Id)
                     let actualState = job.ActualState
                     let state = actualState.State
@@ -460,7 +457,7 @@ namespace Hangfire.EntityFrameworkCore
             return _storage.UseContext(context =>
             {
                 var items = (
-                    from jobState in context.JobStates
+                    from jobState in context.Set<HangfireJobState>()
                     where jobState.Name == stateName
                     orderby jobState.JobId descending
                     select new
@@ -481,7 +478,7 @@ namespace Hangfire.EntityFrameworkCore
         private long GetNumberOfJobsByStateName(string state)
         {
             return _storage.UseContext(context =>
-                context.JobStates.LongCount(x => x.Name == state));
+                context.Set<HangfireJobState>().LongCount(x => x.Name == state));
         }
 
         private Dictionary<DateTime, long> GetHourlyTimelineStats(string type)
@@ -506,7 +503,7 @@ namespace Hangfire.EntityFrameworkCore
         private Dictionary<DateTime, long> GetTimelineStats(IDictionary<string, DateTime> keyMaps)
         {
             var valuesMap = _storage.UseContext(context => (
-                from counter in context.Counters
+                from counter in context.Set<HangfireCounter>()
                 where keyMaps.Keys.Contains(counter.Key)
                 group counter by counter.Key into groupByKey
                 select new

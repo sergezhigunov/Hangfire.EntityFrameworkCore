@@ -158,7 +158,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     }).
                     ToList()
             };
-            UseContextSavingChanges(context => context.Jobs.Add(job));
+            UseContextSavingChanges(context => context.Add(job));
             var instance = new EFCoreJobQueueMonitoringApi(Storage);
 
             var result = instance.GetQueues();

@@ -61,7 +61,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.DeletedJobs(1, 2));
 
@@ -123,7 +123,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     },
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.EnqueuedCount(queue));
 
@@ -196,7 +196,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.EnqueuedJobs(queue, 1, 2));
 
@@ -224,7 +224,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var counts = Enumerable.Range(0, 7);
             var dictionaryDates = counts.ToDictionary(x => today.AddDays(-x));
 
-            UseContextSavingChanges(context => context.Counters.AddRange(
+            UseContextSavingChanges(context => context.AddRange(
                 dictionaryDates.Select(item => new HangfireCounter
                 {
                     Key = $"stats:failed:{item.Key:yyyy-MM-dd}",
@@ -288,7 +288,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.FailedJobs(1, 2));
 
@@ -339,7 +339,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     },
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.FetchedCount(queue));
 
@@ -413,7 +413,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.FetchedJobs(queue, 1, 2));
 
@@ -469,7 +469,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 for (int i = 0; i < 4; i++)
                     AddJobWithStateToContext(context, ScheduledState.StateName);
 
-                context.Counters.AddRange(
+                context.AddRange(
                     new HangfireCounter
                     {
                         Key = "stats:deleted",
@@ -482,7 +482,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     });
 
                 for (int i = 0; i < 7; i++)
-                    context.Sets.Add(new HangfireSet
+                    context.Add(new HangfireSet
                     {
                         Key = "recurring-jobs",
                         Value = $"recurring-job-{i}",
@@ -490,7 +490,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     });
 
                 for (int i = 0; i < 8; i++)
-                    context.Servers.Add(new HangfireServer
+                    context.Add(new HangfireServer
                     {
                         Id = $"server-id-{i}",
                         StartedAt = startedAt,
@@ -533,7 +533,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 foreach (var item in dictionaryDates)
                     if (item.Value != 0)
-                        context.Counters.Add(new HangfireCounter
+                        context.Add(new HangfireCounter
                         {
                             Key = $"stats:failed:{item.Key:yyyy-MM-dd-HH}",
                             Value = item.Value,
@@ -564,7 +564,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 foreach (var item in dictionaryDates)
                     if (item.Value != 0)
-                        context.Counters.Add(new HangfireCounter
+                        context.Add(new HangfireCounter
                         {
                             Key = $"stats:succeeded:{item.Key:yyyy-MM-dd-HH}",
                             Value = item.Value,
@@ -710,7 +710,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.ProcessingJobs(1, 2));
 
@@ -814,7 +814,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.ScheduledJobs(1, 2));
 
@@ -878,7 +878,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
 
-            UseContextSavingChanges(context => context.Servers.AddRange(servers));
+            UseContextSavingChanges(context => context.AddRange(servers));
 
             var result = UseMonitoringApi(instance => instance.Servers());
 
@@ -902,7 +902,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var counts = Enumerable.Range(0, 7);
             var dictionaryDates = counts.ToDictionary(x => today.AddDays(-x));
 
-            UseContextSavingChanges(context => context.Counters.AddRange(
+            UseContextSavingChanges(context => context.AddRange(
                 dictionaryDates.Select(item => new HangfireCounter
                 {
                     Key = $"stats:succeeded:{item.Key:yyyy-MM-dd}",
@@ -951,7 +951,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.Jobs.AddRange(jobs));
+            UseContextSavingChanges(context => context.AddRange(jobs));
 
             var result = UseMonitoringApi(instance => instance.SucceededJobs(1, 2));
 
@@ -998,8 +998,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Job = job,
                 Queue = queue,
             };
-            context.Jobs.Add(job);
-            context.JobQueues.Add(queueItem);
+            context.Add(job);
+            context.Add(queueItem);
         }
 
         private void AddJobWithStateToContext(

@@ -8,18 +8,6 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireContext : DbContext
     {
-        internal virtual DbSet<HangfireCounter> Counters { get; private set; }
-        internal virtual DbSet<HangfireHash> Hashes { get; private set; }
-        internal virtual DbSet<HangfireJob> Jobs { get; private set; }
-        internal virtual DbSet<HangfireJobParameter> JobParameters { get; private set; }
-        internal virtual DbSet<HangfireJobState> JobStates { get; private set; }
-        internal virtual DbSet<HangfireJobQueue> JobQueues { get; private set; }
-        internal virtual DbSet<HangfireList> Lists { get; private set; }
-        internal virtual DbSet<HangfireLock> Locks { get; private set; }
-        internal virtual DbSet<HangfireServer> Servers { get; private set; }
-        internal virtual DbSet<HangfireSet> Sets { get; private set; }
-        internal virtual DbSet<HangfireState> States { get; private set; }
-
         public HangfireContext([NotNull] DbContextOptions options) :
             base(options)
         {
@@ -55,6 +43,8 @@ namespace Hangfire.EntityFrameworkCore
 
             var listBuilder = modelBuilder.Entity<HangfireList>();
             listBuilder.HasKey(x => new { x.Key, x.Position });
+
+            modelBuilder.Entity<HangfireLock>();
 
             var setBuilder = modelBuilder.Entity<HangfireSet>();
             setBuilder.HasKey(x => new { x.Key, x.Value });

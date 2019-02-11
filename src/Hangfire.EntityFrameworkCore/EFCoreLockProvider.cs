@@ -62,7 +62,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContext(context =>
             {
-                context.Locks.Attach(new HangfireLock { Id = resource }).State = EntityState.Deleted;
+                context.Attach(new HangfireLock { Id = resource }).State = EntityState.Deleted;
                 try
                 {
                     context.SaveChanges();
@@ -78,7 +78,7 @@ namespace Hangfire.EntityFrameworkCore
         {
             return _storage.UseContext(context =>
             {
-                context.Locks.Add(new HangfireLock
+                context.Add(new HangfireLock
                 {
                     Id = resource,
                     AcquiredAt = DateTime.UtcNow,

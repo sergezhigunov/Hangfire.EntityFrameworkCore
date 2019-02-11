@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
 
-            return _storage.UseContext(context => context.JobQueues.
+            return _storage.UseContext(context => context.Set<HangfireJobQueue>().
                 Where(predicate).
                 Where(x => x.Queue == queue).
                 OrderBy(x => x.Id).
@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public IList<string> GetQueues()
         {
-            return _storage.UseContext(context => context.JobQueues.
+            return _storage.UseContext(context => context.Set<HangfireJobQueue>().
                 Select(x => x.Queue).
                 Distinct().
                 ToArray());
@@ -61,7 +61,7 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(queue));
 
             var result = _storage.UseContext(context => (
-                from item in context.JobQueues
+                from item in context.Set<HangfireJobQueue>()
                 where item.Queue == queue
                 group item by item.FetchedAt.HasValue into grouping
                 select new

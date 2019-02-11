@@ -183,7 +183,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var hangfireJob = context.Jobs.
+                var hangfireJob = context.Set<HangfireJob>().
                     Include(p => p.Parameters).
                     Single();
 
@@ -223,7 +223,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var hangfireJob = context.Jobs.
+                var hangfireJob = context.Set<HangfireJob>().
                     Include(p => p.Parameters).
                     Single();
 
@@ -341,7 +341,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "Value3",
                 },
             };
-            UseContextSavingChanges(context => context.Hashes.AddRange(hangfireHashes));
+            UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
             var result = UseConnection(instance => instance.GetAllEntriesFromHash(key1));
 
@@ -396,7 +396,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "3"
                 , },
             };
-            UseContextSavingChanges(context => context.Lists.AddRange(lists));
+            UseContextSavingChanges(context => context.AddRange(lists));
 
             var result = UseConnection(instance => instance.GetAllItemsFromList(key1));
 
@@ -441,7 +441,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "2",
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetAllItemsFromSet(key));
 
@@ -493,7 +493,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = 1,
                 },
             };
-            UseContextSavingChanges(context => context.Counters.AddRange(counters));
+            UseContextSavingChanges(context => context.AddRange(counters));
 
             var result = UseConnection(instance => instance.GetCounter(key1));
 
@@ -544,7 +544,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Score = -2.0m,
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetFirstByLowestScoreFromSet(key1, fromScore, toScore));
 
@@ -736,7 +736,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Field = "field-1",
                 },
             };
-            UseContextSavingChanges(context => context.Hashes.AddRange(hangfireHashes));
+            UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
             var result = UseConnection(instance => instance.GetHashCount(key1));
 
@@ -782,7 +782,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Field = "field",
                 },
             };
-            UseContextSavingChanges(context => context.Hashes.AddRange(hangfireHashes));
+            UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
             var result = UseConnection(instance => instance.GetHashTtl(key1));
 
@@ -833,7 +833,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Position = 0,
                 },
             };
-            UseContextSavingChanges(context => context.Lists.AddRange(lists));
+            UseContextSavingChanges(context => context.AddRange(lists));
 
             var result = UseConnection(instance => instance.GetListCount(key1));
 
@@ -879,7 +879,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Position = 0,
                 },
             };
-            UseContextSavingChanges(context => context.Lists.AddRange(lists));
+            UseContextSavingChanges(context => context.AddRange(lists));
 
             var result = UseConnection(instance => instance.GetListTtl(key1));
 
@@ -945,7 +945,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "5",
                 },
             };
-            UseContextSavingChanges(context => context.Lists.AddRange(lists));
+            UseContextSavingChanges(context => context.AddRange(lists));
 
             var result = UseConnection(instance => instance.GetRangeFromList(key1, 1, 2));
 
@@ -991,7 +991,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "5",
                 },
             };
-            UseContextSavingChanges(context => context.Lists.AddRange(lists));
+            UseContextSavingChanges(context => context.AddRange(lists));
 
             var result = UseConnection(instance => instance.GetRangeFromList(key1, 2, 1));
 
@@ -1046,7 +1046,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "5",
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetRangeFromSet(key1, 2, 3));
 
@@ -1092,7 +1092,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "5",
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetRangeFromSet(key1, 3, 2));
 
@@ -1142,7 +1142,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "2",
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetSetCount(key1));
 
@@ -1188,7 +1188,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "2",
                 },
             };
-            UseContextSavingChanges(context => context.Sets.AddRange(sets));
+            UseContextSavingChanges(context => context.AddRange(sets));
 
             var result = UseConnection(instance => instance.GetSetTtl(key1));
 
@@ -1277,7 +1277,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             };
             UseContextSavingChanges(context =>
             {
-                context.Jobs.Add(job);
+                context.Add(job);
                 context.SaveChanges();
                 var actualState = job.States.First();
                 job.ActualState.StateId = actualState.Id;
@@ -1353,7 +1353,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "3",
                 },
             };
-            UseContextSavingChanges(context => context.Hashes.AddRange(hangfireHashes));
+            UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
             var result = UseConnection(instance => instance.GetValueFromHash(key1, "field-1"));
 
@@ -1402,14 +1402,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Queues = Array.Empty<string>(),
                 },
             };
-            UseContextSavingChanges(context => context.Servers.AddRange(servers));
+            UseContextSavingChanges(context => context.AddRange(servers));
 
             UseConnection(instance => instance.Heartbeat("server1"));
 
             UseContext(context =>
             {
                 Func<string, DateTime> getHeartbeatByServerId = serverId => (
-                    from server in context.Servers
+                    from server in context.Set<HangfireServer>()
                     where server.Id == serverId
                     select server.Heartbeat).
                     Single();
@@ -1444,11 +1444,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Heartbeat = DateTime.UtcNow,
                 Queues = Array.Empty<string>(),
             };
-            UseContextSavingChanges(context => context.Servers.Add(server));
+            UseContextSavingChanges(context => context.Add(server));
 
             UseConnection(instance => instance.RemoveServer(serverId));
 
-            UseContext(context => Assert.False(context.Servers.Any(x => x.Id == serverId)));
+            UseContext(context => Assert.False(context.Set<HangfireServer>().
+                Any(x => x.Id == serverId)));
         }
 
         [Fact]
@@ -1474,13 +1475,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Queues = Array.Empty<string>(),
                 },
             };
-            UseContextSavingChanges(context => context.Servers.AddRange(servers));
+            UseContextSavingChanges(context => context.AddRange(servers));
 
             UseConnection(instance => instance.RemoveTimedOutServers(TimeSpan.FromHours(2)));
 
             UseContext(context =>
             {
-                var dbSet = context.Servers;
+                var dbSet = context.Set<HangfireServer>();
                 Assert.Single(dbSet.Where(x => x.Id == server1));
                 Assert.Empty(dbSet.Where(x => x.Id == server2));
             });
@@ -1535,7 +1536,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 InvocationData = new InvocationData(null, null, null, string.Empty),
             };
-            UseContextSavingChanges(context => context.Jobs.Add(job));
+            UseContextSavingChanges(context => context.Add(job));
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             UseConnection(instance => instance.SetJobParameter(
@@ -1546,7 +1547,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var result = (
-                    from parameter in context.JobParameters
+                    from parameter in context.Set<HangfireJobParameter>()
                     where parameter.JobId == job.Id && parameter.Name == parameterName
                     select parameter.Value).
                     Single();
@@ -1566,8 +1567,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             };
             UseContextSavingChanges(context =>
             {
-                context.Jobs.Add(job);
-                context.JobParameters.Add(new HangfireJobParameter
+                context.Add(job);
+                context.Add(new HangfireJobParameter
                 {
                     Job = job,
                     Name = parameterName,
@@ -1581,7 +1582,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var result = (
-                    from parameter in context.JobParameters
+                    from parameter in context.Set<HangfireJobParameter>()
                     where parameter.JobId == job.Id && parameter.Name == parameterName
                     select parameter.Value).
                     Single();
@@ -1597,7 +1598,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 InvocationData = new InvocationData(null, null, null, string.Empty),
             };
-            UseContextSavingChanges(context => context.Jobs.Add(job));
+            UseContextSavingChanges(context => context.Add(job));
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             UseConnection(instance => instance.SetJobParameter(jobId, parameterName, null));
@@ -1605,7 +1606,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var result = (
-                    from parameter in context.JobParameters
+                    from parameter in context.Set<HangfireJobParameter>()
                     where parameter.JobId == job.Id && parameter.Name == parameterName
                     select parameter.Value).
                     Single();
@@ -1648,7 +1649,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var result = (
-                    from hash in context.Hashes
+                    from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select new { hash.Field, hash.Value }).
                     ToDictionary(x => x.Field, x => x.Value);
@@ -1662,7 +1663,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = "key";
             var existingHash = new HangfireHash { Key = key, Field = "Field1", Value = "OldValue1" };
-            UseContextSavingChanges(context => context.Hashes.Add(existingHash));
+            UseContextSavingChanges(context => context.Add(existingHash));
             var keyValuePairs = new Dictionary<string, string>
             {
                 ["Field1"] = "Value1",
@@ -1674,7 +1675,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var result = (
-                    from hash in context.Hashes
+                    from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select new { hash.Field, hash.Value }).
                     ToDictionary(x => x.Field, x => x.Value);
@@ -1708,7 +1709,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             UseContext(context =>
             {
-                var actualServer = Assert.Single(context.Servers.Where(x => x.Id == serverId));
+                var actualServer = Assert.Single(context.Set<HangfireServer>().
+                    Where(x => x.Id == serverId));
                 var actualQueues = actualServer.Queues;
                 Assert.Equal(serverId, actualServer.Id);
                 Assert.Equal(expectedContext.WorkerCount, actualServer.WorkerCount);

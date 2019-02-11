@@ -73,7 +73,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 instance.RemoveFromQueue();
 
-                UseContext(context => Assert.Empty(context.JobQueues));
+                UseContext(context => Assert.Empty(context.Set<HangfireJobQueue>()));
                 Assert.True(Assert.IsType<bool>(
                     instance.GetFieldValue("_completed")));
                 Assert.False(Assert.IsType<bool>(
@@ -103,8 +103,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
                 UseContext(context =>
                 {
-                    Assert.Single(context.Jobs);
-                    Assert.Empty(context.JobQueues);
+                    Assert.Single(context.Set<HangfireJob>());
+                    Assert.Empty(context.Set<HangfireJobQueue>());
                 });
                 Assert.True(Assert.IsType<bool>(
                     instance.GetFieldValue("_completed")));
@@ -127,7 +127,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 instance.Requeue();
 
-                UseContext(context => Assert.Empty(context.JobQueues));
+                UseContext(context => Assert.Empty(context.Set<HangfireJobQueue>()));
                 Assert.True(Assert.IsType<bool>(
                     instance.GetFieldValue("_completed")));
                 Assert.False(Assert.IsType<bool>(
@@ -157,7 +157,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
                 UseContext(context =>
                 {
-                    var item = Assert.Single(context.JobQueues);
+                    var item = Assert.Single(context.Set<HangfireJobQueue>());
                     Assert.Null(item.FetchedAt);
                 });
                 Assert.True(Assert.IsType<bool>(
@@ -181,7 +181,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 instance.Dispose();
 
-                UseContext(context => Assert.Empty(context.JobQueues));
+                UseContext(context => Assert.Empty(context.Set<HangfireJobQueue>()));
                 Assert.True(Assert.IsType<bool>(
                     instance.GetFieldValue("_completed")));
                 Assert.True(Assert.IsType<bool>(
@@ -213,7 +213,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
                 UseContext(context =>
                 {
-                    var item = Assert.Single(context.JobQueues);
+                    var item = Assert.Single(context.Set<HangfireJobQueue>());
                     Assert.Null(item.FetchedAt);
                 });
                 Assert.True(Assert.IsType<bool>(

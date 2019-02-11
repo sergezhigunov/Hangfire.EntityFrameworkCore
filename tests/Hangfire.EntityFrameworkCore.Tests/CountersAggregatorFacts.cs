@@ -47,27 +47,27 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContextSavingChanges(context =>
             {
                 for (int i = 0; i < 10; i++)
-                    context.Counters.Add(new HangfireCounter
+                    context.Add(new HangfireCounter
                     {
                         Key = "counter1",
                         Value = 1
                     });
 
                 for (int i = 0; i < 20; i++)
-                    context.Counters.Add(new HangfireCounter
+                    context.Add(new HangfireCounter
                     {
                         Key = "counter2",
                         Value = -1
                     });
 
                 for (int i = 0; i < 5; i++)
-                    context.Counters.Add(new HangfireCounter
+                    context.Add(new HangfireCounter
                     {
                         Key = "counter3",
                         Value = 20
                     });
 
-                context.Counters.Add(new HangfireCounter
+                context.Add(new HangfireCounter
                 {
                     Key = "counter3",
                     Value = -1
@@ -85,7 +85,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var result = context.Counters.ToArray();
+                var result = context.Set<HangfireCounter>().ToArray();
 
                 Assert.Equal(3, result.Length);
                 Assert.Equal(10, result.Single(x => x.Key == "counter1").Value);

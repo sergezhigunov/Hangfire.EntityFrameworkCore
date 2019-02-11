@@ -87,7 +87,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(job.Id, fetchedJob.JobId);
             UseContext(context =>
             {
-                var queueItem = Assert.Single(context.JobQueues);
+                var queueItem = Assert.Single(context.Set<HangfireJobQueue>());
                 Assert.Equal(fetchedJob.Id, queueItem.Id);
                 Assert.Equal(fetchedJob.Queue, queueItem.Queue);
                 Assert.Equal(fetchedJob.JobId, queueItem.JobId);
@@ -165,7 +165,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var actual = Assert.Single(context.JobQueues);
+                var actual = Assert.Single(context.Set<HangfireJobQueue>());
                 Assert.Equal(job.Id, actual.JobId);
                 Assert.Equal(queue, actual.Queue);
                 Assert.Null(actual.FetchedAt);
@@ -180,7 +180,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             Assert.Throws<InvalidOperationException>(() => instance.Enqueue(queue, "1"));
             
-            UseContext(context => Assert.Empty(context.JobQueues));
+            UseContext(context => Assert.Empty(context.Set<HangfireJobQueue>()));
         }
     }
 }

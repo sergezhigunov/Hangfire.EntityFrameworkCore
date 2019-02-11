@@ -37,11 +37,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                Assert.False(context.Counters.Any());
-                Assert.False(context.Jobs.Any());
-                Assert.False(context.Lists.Any());
-                Assert.False(context.Sets.Any());
-                Assert.False(context.Hashes.Any());
+                Assert.False(context.Set<HangfireCounter>().Any());
+                Assert.False(context.Set<HangfireJob>().Any());
+                Assert.False(context.Set<HangfireList>().Any());
+                Assert.False(context.Set<HangfireSet>().Any());
+                Assert.False(context.Set<HangfireHash>().Any());
             });
         }
 
@@ -56,11 +56,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                Assert.Equal(1, context.Counters.Count());
-                Assert.Equal(1, context.Jobs.Count());
-                Assert.Equal(1, context.Lists.Count());
-                Assert.Equal(1, context.Sets.Count());
-                Assert.Equal(1, context.Hashes.Count());
+                Assert.Equal(1, context.Set<HangfireCounter>().Count());
+                Assert.Equal(1, context.Set<HangfireJob>().Count());
+                Assert.Equal(1, context.Set<HangfireList>().Count());
+                Assert.Equal(1, context.Set<HangfireSet>().Count());
+                Assert.Equal(1, context.Set<HangfireHash>().Count());
             });
         }
 
@@ -75,11 +75,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                Assert.Equal(1, context.Counters.Count());
-                Assert.Equal(1, context.Jobs.Count());
-                Assert.Equal(1, context.Lists.Count());
-                Assert.Equal(1, context.Sets.Count());
-                Assert.Equal(1, context.Hashes.Count());
+                Assert.Equal(1, context.Set<HangfireCounter>().Count());
+                Assert.Equal(1, context.Set<HangfireJob>().Count());
+                Assert.Equal(1, context.Set<HangfireList>().Count());
+                Assert.Equal(1, context.Set<HangfireSet>().Count());
+                Assert.Equal(1, context.Set<HangfireHash>().Count());
             });
         }
 
@@ -89,26 +89,26 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContextSavingChanges(context =>
             {
-                context.Counters.Add(new HangfireCounter
+                context.Add(new HangfireCounter
                 {
                     Key = "test",
                     ExpireAt = expireAt,
                 });
 
-                context.Jobs.Add(new HangfireJob
+                context.Add(new HangfireJob
                 {
                     CreatedAt = now,
                     InvocationData = CreateInvocationData(() => SampleMethod("test")),
                     ExpireAt = expireAt,
                 });
 
-                context.Lists.Add(new HangfireList
+                context.Add(new HangfireList
                 {
                     Key = "test",
                     ExpireAt = expireAt,
                 });
 
-                context.Sets.Add(new HangfireSet
+                context.Add(new HangfireSet
                 {
                     Key = "test",
                     Value = "test",
@@ -116,7 +116,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     ExpireAt = expireAt,
                 });
 
-                context.Hashes.Add(new HangfireHash
+                context.Add(new HangfireHash
                 {
                     Key = "test",
                     Field = "test",

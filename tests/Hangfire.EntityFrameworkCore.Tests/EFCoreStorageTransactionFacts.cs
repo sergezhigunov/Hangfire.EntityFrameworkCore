@@ -126,9 +126,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var createdAtTo = DateTime.UtcNow;
             UseContext(context =>
             {
-                var actualJob = Assert.Single(context.Jobs);
+                var actualJob = Assert.Single(context.Set<HangfireJob>());
                 Assert.Null(actualJob.ActualState);
-                var jobState = Assert.Single(context.States);
+                var jobState = Assert.Single(context.Set<HangfireState>());
                 Assert.Equal("State", jobState.Name);
                 Assert.Equal("Reason", jobState.Reason);
                 Assert.True(createdAtFrom <= jobState.CreatedAt);
@@ -186,7 +186,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var records = (
-                    from set in context.Sets
+                    from set in context.Set<HangfireSet>()
                     where set.Key == key
                     select set.Value).
                     ToArray();
@@ -216,13 +216,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var records = (
-                    from set in context.Sets
+                    from set in context.Set<HangfireSet>()
                     where set.Key == key
                     select set.Value).
                     ToArray();
                 Assert.Equal(items, records);
             });
-
         }
 
         [Fact]
@@ -352,7 +351,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Sets.Single();
+                var record = context.Set<HangfireSet>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal("my-value", record.Value);
                 Assert.Equal(0m, record.Score);
@@ -372,7 +371,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.AddToSet(key, "another-value"));
 
-            UseContext(context => Assert.Equal(2, context.Sets.Count()));
+            UseContext(context => Assert.Equal(2, context.Set<HangfireSet>().Count()));
         }
 
         [Fact]
@@ -388,7 +387,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.AddToSet(key, value));
 
-            UseContext(context => Assert.Single(context.Sets));
+            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
         }
 
         [Fact]
@@ -401,7 +400,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Sets.Single();
+                var record = context.Set<HangfireSet>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(value, record.Value);
                 Assert.Equal(3.2m, record.Score);
@@ -423,7 +422,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Sets.Single();
+                var record = context.Set<HangfireSet>().Single();
                 Assert.Equal(3.2m, record.Score);
             });
         }
@@ -511,7 +510,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Counters.Single();
+                var record = context.Set<HangfireCounter>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(-1L, record.Value);
                 Assert.Null(record.ExpireAt);
@@ -530,7 +529,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var record = context.Counters.Single();
+                var record = context.Set<HangfireCounter>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(-1L, record.Value);
                 Assert.NotNull(record.ExpireAt);
@@ -584,10 +583,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var actualJob = context.Jobs.Single(x => x.Id == job.Id);
+                var jobs = context.Set<HangfireJob>();
+                var actualJob = jobs.Single(x => x.Id == job.Id);
                 Assert.True(expiredFrom <= actualJob.ExpireAt);
                 Assert.True(expiredTo >= actualJob.ExpireAt);
-                anotherJob = actualJob = context.Jobs.Single(x => x.Id == anotherJob.Id);
+                anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
                 Assert.Null(anotherJob.ExpireAt);
             });
         }
@@ -638,7 +638,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var records = context.Hashes.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireHash>().
+                    ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.True(expiredFrom < records["hash-1"]);
                 Assert.True(records["hash-1"] < expiredTo);
                 Assert.Null(records["hash-2"]);
@@ -690,7 +691,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var records = context.Lists.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireList>().
+                    ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.True(expiredFrom < records["list-1"]);
                 Assert.True(records["list-1"] < expiredTo);
                 Assert.Null(records["list-2"]);
@@ -743,7 +745,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var records = context.Sets.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.True(expiredFrom < records["set-1"]);
                 Assert.True(records["set-1"] < expiredTo);
                 Assert.Null(records["set-2"]);
@@ -783,7 +785,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Counters.Single();
+                var record = context.Set<HangfireCounter>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(1L, record.Value);
                 Assert.Null(record.ExpireAt);
@@ -802,7 +804,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var expiredTo = DateTime.UtcNow + expireIn;
             UseContext(context =>
             {
-                var record = context.Counters.Single();
+                var record = context.Set<HangfireCounter>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(1L, record.Value);
                 Assert.NotNull(record.ExpireAt);
@@ -840,7 +842,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Lists.Single();
+                var record = context.Set<HangfireList>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal("my-value", record.Value);
             });
@@ -857,7 +859,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 instance.InsertToList(key, "my-value");
             });
 
-            UseContext(context => Assert.Equal(2, context.Lists.Count()));
+            UseContext(context => Assert.Equal(2, context.Set<HangfireList>().Count()));
         }
 
         [Fact]
@@ -901,9 +903,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var actualJob = context.Jobs.Single(x => x.Id == job.Id);
+                var jobs = context.Set<HangfireJob>();
+                var actualJob = jobs.Single(x => x.Id == job.Id);
                 Assert.Null(actualJob.ExpireAt);
-                anotherJob = actualJob = context.Jobs.Single(x => x.Id == anotherJob.Id);
+                anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
                 Assert.Equal(now, anotherJob.ExpireAt);
             });
         }
@@ -951,7 +954,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var records = context.Hashes.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireHash>().
+                    ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.Null(records["hash-1"]);
                 Assert.Equal(expiredAt, records["hash-2"]);
             });
@@ -1002,7 +1006,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var records = context.Lists.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireList>().
+                    ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.Null(records["list-1"]);
                 Assert.Equal(expireAt, records["list-2"]);
             });
@@ -1052,7 +1057,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var records = context.Sets.ToDictionary(x => x.Key, x => x.ExpireAt);
+                var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
                 Assert.Null(records["set-1"]);
                 Assert.NotNull(records["set-2"]);
             });
@@ -1100,7 +1105,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromList(key, "my-value"));
 
-            UseContext(context => Assert.Empty(context.Lists));
+            UseContext(context => Assert.Empty(context.Set<HangfireList>()));
         }
 
         [Fact]
@@ -1119,7 +1124,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromList(key, "different-value"));
 
-            UseContext(context => Assert.Single(context.Lists));
+            UseContext(context => Assert.Single(context.Set<HangfireList>()));
         }
 
         [Fact]
@@ -1138,7 +1143,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromList("different-key", "my-value"));
 
-            UseContext(context => Assert.Single(context.Lists));
+            UseContext(context => Assert.Single(context.Set<HangfireList>()));
         }
 
         [Fact]
@@ -1184,7 +1189,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromSet(key, "my-value"));
 
-            UseContext(context => Assert.Empty(context.Sets));
+            UseContext(context => Assert.Empty(context.Set<HangfireSet>()));
         }
 
         [Fact]
@@ -1199,7 +1204,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromSet(key, "another-value"));
 
-            UseContext(context => Assert.Single(context.Sets));
+            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
         }
 
         [Fact]
@@ -1214,7 +1219,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveFromSet("another-key", "my-value"));
 
-            UseContext(context => Assert.Single(context.Sets));
+            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
         }
 
         [Fact]
@@ -1258,7 +1263,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseTransaction(true, instance => instance.RemoveHash(key));
 
-            UseContext(context => Assert.Empty(context.Hashes));
+            UseContext(context => Assert.Empty(context.Set<HangfireHash>()));
         }
 
         [Fact]
@@ -1303,7 +1308,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var record = context.Sets.Single();
+                var record = context.Set<HangfireSet>().Single();
                 Assert.Equal("set-2", record.Key);
             });
         }
@@ -1371,9 +1376,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var createdAtTo = DateTime.UtcNow;
             UseContext(context =>
             {
-                var actualJobState = Assert.Single(context.JobStates);
+                var actualJobState = Assert.Single(context.Set<HangfireJobState>());
                 Assert.Equal("State", actualJobState.Name);
-                var actualState = Assert.Single(context.States);
+                var actualState = Assert.Single(context.Set<HangfireState>());
                 Assert.Equal("State", actualState.Name);
                 Assert.Equal("Reason", actualState.Reason);
                 Assert.True(createdAtFrom <= actualState.CreatedAt);
@@ -1430,7 +1435,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var result = context.Hashes.
+                var result = context.Set<HangfireHash>().
                     Where(x => x.Key == key).
                     ToDictionary(x => x.Field, x => x.Value);
                 Assert.Equal("value-1", result["field-1"]);
@@ -1497,7 +1502,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var records = context.Lists.ToArray();
+                var records = context.Set<HangfireList>().ToArray();
                 Assert.Equal(2, records.Length);
                 Assert.Equal("1", records[0].Value);
                 Assert.Equal("2", records[1].Value);
@@ -1534,7 +1539,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var recordCount = context.Lists.Count();
+                var recordCount = context.Set<HangfireList>().Count();
                 Assert.Equal(2, recordCount);
             });
         }
@@ -1543,7 +1548,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void TrimList_RemovesAllRecords_WhenStartingFromValue_GreaterThanMaxElementIndex()
         {
             string key = "key";
-            UseContextSavingChanges(context => context.Lists.
+            UseContextSavingChanges(context => context.
                 Add(new HangfireList
                 {
                     Key = key,
@@ -1555,7 +1560,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var recordCount = context.Lists.Count();
+                var recordCount = context.Set<HangfireList>().Count();
                 Assert.Equal(0, recordCount);
             });
         }
@@ -1564,7 +1569,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void TrimList_RemovesAllRecords_IfStartFromGreaterThanEndingAt()
         {
             string key = "key";
-            UseContextSavingChanges(context => context.Lists.
+            UseContextSavingChanges(context => context.
                 Add(new HangfireList
                 {
                     Key = key,
@@ -1576,7 +1581,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var recordCount = context.Lists.Count();
+                var recordCount = context.Set<HangfireList>().Count();
                 Assert.Equal(0, recordCount);
             });
         }
@@ -1586,7 +1591,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = "key";
             string anotherKey = "another-key";
-            UseContextSavingChanges(context => context.Lists.
+            UseContextSavingChanges(context => context.
                 Add(new HangfireList
                 {
                     Key = key,
@@ -1598,7 +1603,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                var recordCount = context.Lists.Count();
+                var recordCount = context.Set<HangfireList>().Count();
                 Assert.Equal(1, recordCount);
             });
         }

@@ -29,8 +29,9 @@ namespace Hangfire.EntityFrameworkCore
                 removedCount = 0;
                 using (var context = _storage.CreateContext())
                 {
+                    var counters = context.Set<HangfireCounter>();
                     var key = (
-                        from counter in context.Counters
+                        from counter in counters
                         group counter by counter.Key into @group
                         let count = @group.Count()
                         where count > 1
@@ -41,7 +42,7 @@ namespace Hangfire.EntityFrameworkCore
                     if (key != null)
                     {
                         var itemsToRemove = (
-                            from counter in context.Counters
+                            from counter in counters
                             where counter.Key == key
                             select counter).
                             Take(100).
@@ -49,8 +50,8 @@ namespace Hangfire.EntityFrameworkCore
 
                         if (itemsToRemove.Length > 1)
                         {
-                            context.Counters.RemoveRange(itemsToRemove);
-                            context.Counters.Add(new HangfireCounter
+                            context.RemoveRange(itemsToRemove);
+                            context.Add(new HangfireCounter
                             {
                                 Key = key,
                                 Value = itemsToRemove.Sum(x => x.Value),

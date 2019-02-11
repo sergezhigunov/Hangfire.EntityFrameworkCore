@@ -40,7 +40,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var exisitingFields = new HashSet<string>(
-                    from set in context.Sets
+                    from set in context.Set<HangfireSet>()
                     where set.Key == key
                     select set.Value);
 
@@ -53,10 +53,10 @@ namespace Hangfire.EntityFrameworkCore
                     };
 
                     if (!exisitingFields.Contains(item))
-                        context.Sets.Add(set);
+                        context.Add(set);
                     else
                     {
-                        context.Sets.Attach(set).
+                        context.Attach(set).
                             Property(x => x.Score).
                             IsModified = true;
                     }
@@ -118,8 +118,8 @@ namespace Hangfire.EntityFrameworkCore
                         Value = value,
                     };
 
-                    if (!context.Sets.Any(x => x.Key == key && x.Value == value))
-                        context.Sets.Add(set);
+                    if (!context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value))
+                        context.Add(set);
                     else
                         context.Entry(set).State = EntityState.Modified;
                 }
@@ -223,7 +223,7 @@ namespace Hangfire.EntityFrameworkCore
                     Entries<HangfireList>().
                     Where(x => x.Entity.Key == key).
                     Max(x => (int?)x.Entity.Position) ??
-                    context.Lists.
+                    context.Set<HangfireList>().
                     Where(x => x.Key == key).
                     Max(x => (int?)x.Position) ?? -1;
 
@@ -265,7 +265,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var list = (
-                    from item in context.Lists
+                    from item in context.Set<HangfireList>()
                     where item.Key == key
                     orderby item.Position
                     select item).
@@ -276,7 +276,7 @@ namespace Hangfire.EntityFrameworkCore
                     ToArray();
 
                 for (int i = newList.Length; i < list.Length; i++)
-                    context.Lists.Remove(list[i]);
+                    context.Remove(list[i]);
 
                 CopyNonKeyValues(newList, list);
             });
@@ -299,7 +299,7 @@ namespace Hangfire.EntityFrameworkCore
                 foreach (var entry in entries)
                     entry.State = EntityState.Detached;
 
-                if (context.Sets.Any(x => x.Key == key && x.Value == value))
+                if (context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value))
                     context.Remove(new HangfireSet
                     {
                         Key = key,
@@ -317,7 +317,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var fields = 
-                    from hash in context.Hashes
+                    from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select hash.Field;
 
@@ -339,7 +339,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var values = 
-                    from set in context.Sets
+                    from set in context.Set<HangfireSet>()
                     where set.Key == key
                     select set.Value;
 
@@ -370,7 +370,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var exisitingFields =
-                    from hash in context.Hashes
+                    from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select hash.Field;
 
@@ -391,7 +391,7 @@ namespace Hangfire.EntityFrameworkCore
                     }
                     else
                     {
-                        context.Hashes.Add(hash);
+                        context.Add(hash);
                     }
                 }
             });
@@ -406,7 +406,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var list = (
-                    from item in context.Lists
+                    from item in context.Set<HangfireList>()
                     where item.Key == key
                     orderby item.Position
                     select item).
@@ -417,7 +417,7 @@ namespace Hangfire.EntityFrameworkCore
                     ToArray();
 
                 for (int i = newList.Length; i < list.Length; i++)
-                    context.Lists.Remove(list[i]);
+                    context.Remove(list[i]);
 
                 CopyNonKeyValues(newList, list);
             });
@@ -460,7 +460,7 @@ namespace Hangfire.EntityFrameworkCore
 
                 if (setActual)
                 {
-                    var actualState = context.JobStates.
+                    var actualState = context.Set<HangfireJobState>().
                                 SingleOrDefault(x => x.JobId == id);
 
                     if (actualState == null)
@@ -523,7 +523,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var fields = 
-                    from hash in context.Hashes
+                    from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select hash.Field;
 
@@ -552,7 +552,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var ids = (
-                    from item in context.Lists
+                    from item in context.Set<HangfireList>()
                     where item.Key == key
                     select new
                     {
@@ -586,7 +586,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var ids = (
-                    from item in context.Sets
+                    from item in context.Set<HangfireSet>()
                     where item.Key == key
                     select new
                     {

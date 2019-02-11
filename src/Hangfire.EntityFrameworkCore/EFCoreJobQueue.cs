@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore
                     using (var context = _storage.CreateContext())
                     {
                         var queueItem = (
-                            from item in context.JobQueues
+                            from item in context.Set<HangfireJobQueue>()
                             where queues.Contains(item.Queue)
                             where item.FetchedAt == null
                             orderby item.Id ascending
