@@ -3,8 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
@@ -21,8 +19,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 connection.Open();
                 var builder = new DbContextOptionsBuilder<HangfireContext>();
                 builder.UseSqlite(connection);
-                using (var context = new HangfireContext(builder.Options))
-                    context.GetService<IRelationalDatabaseCreator>().CreateTables();
                 return connection;
             });
 
@@ -39,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var builder = new DbContextOptionsBuilder<HangfireContext>();
             OptionsAction(builder);
-            using (var context = new HangfireContext(builder.Options))
+            using (var context = new HangfireContext(builder.Options, "Hangfire"))
                 action(context);
         }
 

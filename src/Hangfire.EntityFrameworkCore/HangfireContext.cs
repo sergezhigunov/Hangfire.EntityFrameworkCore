@@ -8,14 +8,21 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireContext : DbContext
     {
-        public HangfireContext([NotNull] DbContextOptions options) :
+        private readonly string _defaultSchema;
+
+        public HangfireContext([NotNull] DbContextOptions options, string defaultSchema) :
             base(options)
         {
+            _defaultSchema = defaultSchema;
+            Database.EnsureCreated();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            if (_defaultSchema == null)
+                modelBuilder.HasDefaultSchema(_defaultSchema);
 
             var counterBuilder = modelBuilder.Entity<HangfireCounter>();
             counterBuilder.HasIndex(x => new { x.Key, x.Value });
