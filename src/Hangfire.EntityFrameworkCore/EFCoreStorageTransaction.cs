@@ -525,23 +525,29 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var fields = 
+                var fields = new HashSet<string>(
                     from hash in context.Set<HangfireHash>()
                     where hash.Key == key
-                    select hash.Field;
+                    select hash.Field);
+
+                var entries = (
+                    from entry in context.ChangeTracker.Entries<HangfireHash>()
+                    let entity = entry.Entity
+                    where entity.Key == key && fields.Contains(entity.Field)
+                    select entry).
+                    ToDictionary(x => x.Entity.Field);
 
                 foreach (var field in fields)
                 {
-                    var hash = new HangfireHash
-                    {
-                        Key = key,
-                        Field = field,
-                        ExpireAt = expireAt,
-                    };
+                    if (!entries.TryGetValue(field, out var entry))
+                        entry = context.Attach(new HangfireHash
+                        {
+                            Key = key,
+                            Field = field,
+                        });
 
-                    context.Attach(hash).
-                        Property(x => x.ExpireAt).
-                        IsModified = true;
+                    entry.Entity.ExpireAt = expireAt;
+                    entry.Property(x => x.ExpireAt).IsModified = true;
                 }
             });
         }
@@ -554,28 +560,29 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var ids = (
+                var positions = new HashSet<int>(
                     from item in context.Set<HangfireList>()
                     where item.Key == key
-                    select new
-                    {
-                        item.Key,
-                        item.Position,
-                    }).
-                    ToArray();
+                    select item.Position);
 
-                foreach (var id in ids)
+                var entries = (
+                    from entry in context.ChangeTracker.Entries<HangfireList>()
+                    let entity = entry.Entity
+                    where entity.Key == key && positions.Contains(entity.Position)
+                    select entry).
+                    ToDictionary(x => x.Entity.Position);
+
+                foreach (var position in positions)
                 {
-                    var item = new HangfireList
-                    {
-                        Key = id.Key,
-                        Position = id.Position,
-                        ExpireAt = expireAt
-                    };
+                    if (!entries.TryGetValue(position, out var entry))
+                        entry = context.Attach(new HangfireList
+                        {
+                            Key = key,
+                            Position = position,
+                        });
 
-                    context.Attach(item).
-                        Property(x => x.ExpireAt).
-                        IsModified = true;
+                    entry.Entity.ExpireAt = expireAt;
+                    entry.Property(x => x.ExpireAt).IsModified = true;
                 }
             });
         }
@@ -588,28 +595,29 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var ids = (
+                var values = new HashSet<string>(
                     from item in context.Set<HangfireSet>()
                     where item.Key == key
-                    select new
-                    {
-                        item.Key,
-                        item.Value,
-                    }).
-                    ToArray();
+                    select item.Value);
 
-                foreach (var id in ids)
+                var entries = (
+                    from entry in context.ChangeTracker.Entries<HangfireSet>()
+                    let entity = entry.Entity
+                    where entity.Key == key && values.Contains(entity.Value)
+                    select entry).
+                    ToDictionary(x => x.Entity.Value);
+
+                foreach (var value in values)
                 {
-                    var item = new HangfireSet
-                    {
-                        Key = id.Key,
-                        Value = id.Value,
-                        ExpireAt = expireAt,
-                    };
+                    if (!entries.TryGetValue(value, out var entry))
+                        entry = context.Attach(new HangfireSet
+                        {
+                            Key = key,
+                            Value = value,
+                        });
 
-                    context.Attach(item).
-                        Property(x => x.ExpireAt).
-                        IsModified = true;
+                    entry.Entity.ExpireAt = expireAt;
+                    entry.Property(x => x.ExpireAt).IsModified = true;
                 }
             });
         }
