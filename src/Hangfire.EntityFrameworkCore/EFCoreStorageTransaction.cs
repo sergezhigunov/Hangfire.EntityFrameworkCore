@@ -67,12 +67,15 @@ namespace Hangfire.EntityFrameworkCore
         public override void AddToQueue([NotNull] string queue, [NotNull] string jobId)
         {
             ValidateQueue(queue);
-            ValidateJobId(jobId);
+            long id = ValidateJobId(jobId);
             ThrowIfDisposed();
 
             var provider = _storage.GetQueueProvider(queue);
             var persistentQueue = provider.GetJobQueue();
-            _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
+            if (persistentQueue is EFCoreJobQueue storageJobQueue)
+                _queue.Enqueue(context => storageJobQueue.Enqueue(context, queue, id));
+            else
+                _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
             if (persistentQueue is EFCoreJobQueue)
                 _afterCommitQueue.Enqueue(
                     () => EFCoreJobQueue.NewItemInQueueEvent.Set());

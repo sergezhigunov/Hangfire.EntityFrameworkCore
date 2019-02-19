@@ -76,15 +76,11 @@ namespace Hangfire.EntityFrameworkCore
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
 
-            var queuedJob = new HangfireQueuedJob
-            {
-                JobId = long.Parse(jobId, CultureInfo.InvariantCulture),
-                Queue = queue,
-            };
+            var id = long.Parse(jobId, CultureInfo.InvariantCulture);
 
             _storage.UseContext(context =>
             {
-                context.Add(queuedJob);
+                Enqueue(context, queue, id);
                 try
                 {
                     context.SaveChanges();
@@ -93,6 +89,18 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     throw new InvalidOperationException(null, exception);
                 }
+            });
+        }
+
+        internal void Enqueue(
+            HangfireContext context,
+            string queue,
+            long jobId)
+        {
+            context.Add(new HangfireQueuedJob
+            {
+                JobId = jobId,
+                Queue = queue,
             });
         }
     }
