@@ -372,30 +372,36 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var exisitingFields =
+                var actualFields = new HashSet<string>(keyValuePairs.Select(x => x.Key));
+
+                var exisitingFields = new HashSet<string>(
                     from hash in context.Set<HangfireHash>()
-                    where hash.Key == key
-                    select hash.Field;
+                    where hash.Key == key && actualFields.Contains(hash.Field)
+                    select hash.Field);
+
+                var entries = (
+                    from entry in context.ChangeTracker.Entries<HangfireHash>()
+                    let entity = entry.Entity
+                    where entity.Key == key && actualFields.Contains(entity.Field)
+                    select entry).
+                    ToDictionary(x => x.Entity.Field);
 
                 foreach (var item in keyValuePairs)
                 {
-                    var hash = new HangfireHash
+                    var field = item.Key;
+                    if (!entries.TryGetValue(field, out var entry))
                     {
-                        Key = key,
-                        Field = item.Key,
-                        Value = item.Value,
-                    };
-
-                    if (exisitingFields.Contains(item.Key))
-                    {
-                        context.Attach(hash).
-                            Property(x => x.Value).
-                            IsModified = true;
+                        var hash = new HangfireHash
+                        {
+                            Key = key,
+                            Field = field,
+                        };
+                        if (exisitingFields.Contains(field))
+                            entry = context.Attach(hash);
+                        else
+                            entry = context.Add(hash);
                     }
-                    else
-                    {
-                        context.Add(hash);
-                    }
+                    entry.Entity.Value = item.Value;
                 }
             });
         }

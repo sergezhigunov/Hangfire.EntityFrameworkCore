@@ -1444,6 +1444,44 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
+        public void SetRangeInHash_MergesAllRecords_WhenStorageHasExistingValues()
+        {
+            string key = "key";
+            UseContextSavingChanges(context => context.AddRange(new[]
+            {
+                new HangfireHash
+                {
+                    Key = key,
+                    Field = "field-1",
+                    Value = "old-value1",
+                },
+                new HangfireHash
+                {
+                    Key = key,
+                    Field = "field-2",
+                    Value = "old-value2",
+                },
+            }));
+            var keyValuePairs = new Dictionary<string, string>
+            {
+                ["field-1"] = "value-1",
+                ["field-2"] = "value-2",
+            };
+
+            UseTransaction(true, instance => instance.SetRangeInHash(key, keyValuePairs));
+
+            UseContext(context =>
+            {
+                var result = context.Set<HangfireHash>().
+                    Where(x => x.Key == key).
+                    ToDictionary(x => x.Field, x => x.Value);
+                Assert.Equal(2, result.Count);
+                Assert.Equal("value-1", result["field-1"]);
+                Assert.Equal("value-2", result["field-2"]);
+            });
+        }
+
+        [Fact]
         public void TrimList_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
