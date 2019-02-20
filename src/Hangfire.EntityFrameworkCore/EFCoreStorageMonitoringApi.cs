@@ -70,8 +70,8 @@ namespace Hangfire.EntityFrameworkCore
 
             var provider = _storage.GetQueueProvider(queue);
             var monitoringApi = provider.GetMonitoringApi();
-            var id = monitoringApi.GetEnqueuedJobIds(queue, from, perPage);
-            return EnqueuedJobs(id);
+            var ids = monitoringApi.GetEnqueuedJobIds(queue, from, perPage);
+            return EnqueuedJobs(ids);
         }
 
         public IDictionary<DateTime, long> FailedByDatesCount()
@@ -119,32 +119,33 @@ namespace Hangfire.EntityFrameworkCore
 
             var provider = _storage.GetQueueProvider(queue);
             var monitoringApi = provider.GetMonitoringApi();
-            var ids =
-                monitoringApi.GetFetchedJobIds(queue, from, perPage).
-                ToDictionary(
-                    x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture),
-                    x => x);
+            var ids = monitoringApi.GetFetchedJobIds(queue, from, perPage);
 
-            var jobs = _storage.UseContext(context =>
-            {
-                return (
-                    from job in context.Set<HangfireJob>()
-                    where ids.Keys.Contains(job.Id)
-                    let actualState = job.ActualState
-                    let state = actualState.State
-                    select new
-                    {
-                        job.Id,
-                        job.InvocationData,
-                        state.Name,
-                        FetchedAt = job.QueuedJobs.Max(x => x.FetchedAt),
-                    }).
-                    ToArray();
-            });
+            if (!ids.Any())
+                return new JobList<FetchedJobDto>(
+                    Array.Empty<KeyValuePair<string, FetchedJobDto>>());
+
+            var idMap = ids.ToDictionary(
+                x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture),
+                x => x);
+
+            var jobs = _storage.UseContext(context => (
+                from job in context.Set<HangfireJob>()
+                where idMap.Keys.Contains(job.Id)
+                let actualState = job.ActualState
+                let state = actualState.State
+                select new
+                {
+                    job.Id,
+                    job.InvocationData,
+                    state.Name,
+                    FetchedAt = job.QueuedJobs.Max(x => x.FetchedAt),
+                }).
+                ToArray());
 
             return new JobList<FetchedJobDto>(
                 jobs.Select(x => new KeyValuePair<string, FetchedJobDto>(
-                    ids[x.Id], new FetchedJobDto
+                    idMap[x.Id], new FetchedJobDto
                     {
                         Job = Deserialize(x.InvocationData),
                         State = x.Name,
@@ -411,28 +412,29 @@ namespace Hangfire.EntityFrameworkCore
             }
         }
 
-        private JobList<EnqueuedJobDto> EnqueuedJobs(IList<string> id)
+        private JobList<EnqueuedJobDto> EnqueuedJobs(IList<string> ids)
         {
-            var idMap = id.ToDictionary(
+            if (!ids.Any())
+                return new JobList<EnqueuedJobDto>(
+                    Array.Empty<KeyValuePair<string, EnqueuedJobDto>>());
+
+            var idMap = ids.ToDictionary(
                 x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture),
                 x => x);
 
-            var jobs = _storage.UseContext(context =>
-            {
-                return (
-                    from job in context.Set<HangfireJob>()
-                    where idMap.Keys.Contains(job.Id)
-                    let actualState = job.ActualState
-                    let state = actualState.State
-                    select new
-                    {
-                        job.Id,
-                        job.InvocationData,
-                        state.Name,
-                        state.Data,
-                    }).
-                    ToArray();
-            });
+            var jobs = _storage.UseContext(context => (
+                from job in context.Set<HangfireJob>()
+                where idMap.Keys.Contains(job.Id)
+                let actualState = job.ActualState
+                let state = actualState.State
+                select new
+                {
+                    job.Id,
+                    job.InvocationData,
+                    state.Name,
+                    state.Data,
+                }).
+                ToArray());
 
             return new JobList<EnqueuedJobDto>(
                 jobs.Select(x => new KeyValuePair<string, EnqueuedJobDto>(
