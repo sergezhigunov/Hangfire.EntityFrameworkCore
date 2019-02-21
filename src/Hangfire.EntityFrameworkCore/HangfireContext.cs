@@ -24,48 +24,75 @@ namespace Hangfire.EntityFrameworkCore
             if (_defaultSchema == null)
                 modelBuilder.HasDefaultSchema(_defaultSchema);
 
-            var counterBuilder = modelBuilder.Entity<HangfireCounter>();
-            counterBuilder.HasIndex(x => new { x.Key, x.Value });
+            modelBuilder.Entity<HangfireCounter>(entity =>
+            {
+                entity.HasIndex(x => new { x.Key, x.Value });
+                entity.HasIndex(x => x.ExpireAt);
+            });
 
-            var hashBuilder = modelBuilder.Entity<HangfireHash>();
-            hashBuilder.HasKey(x => new { x.Key, x.Field });
+            modelBuilder.Entity<HangfireHash>(entity =>
+            {
+                entity.HasKey(x => new { x.Key, x.Field });
+                entity.HasIndex(x => x.ExpireAt);
+            });
 
-            var jobBuilder = modelBuilder.Entity<HangfireJob>();
-            jobBuilder.HasOne(x => x.ActualState).
-                WithOne(x => x.Job).
-                HasForeignKey<HangfireJobState>(x => x.JobId);
-            jobBuilder.Property(x => x.InvocationData).HasConversion(
-                x => JobHelper.ToJson(x),
-                x => JobHelper.FromJson<InvocationData>(x));
+            modelBuilder.Entity<HangfireJob>(entity =>
+            {
+                entity.HasOne(x => x.ActualState).
+                    WithOne(x => x.Job).
+                    HasForeignKey<HangfireJobState>(x => x.JobId);
+                entity.Property(x => x.InvocationData).HasConversion(
+                    x => JobHelper.ToJson(x),
+                    x => JobHelper.FromJson<InvocationData>(x));
+                entity.HasIndex(x => x.ExpireAt);
+            });
 
-            var jobParameterBuilder = modelBuilder.Entity<HangfireJobParameter>();
-            jobParameterBuilder.HasKey(x => new { x.JobId, x.Name });
+            modelBuilder.Entity<HangfireJobParameter>(entity =>
+            {
+                entity.HasKey(x => new { x.JobId, x.Name });
+            });
 
-            var jobStateBuilder = modelBuilder.Entity<HangfireJobState>();
-            jobStateBuilder.HasKey(x => x.JobId);
-            jobStateBuilder.HasIndex(x => x.Name);
+            modelBuilder.Entity<HangfireJobState>(entity =>
+            {
+                entity.HasKey(x => x.JobId);
+                entity.HasIndex(x => x.Name);
+            });
 
-            var listBuilder = modelBuilder.Entity<HangfireList>();
-            listBuilder.HasKey(x => new { x.Key, x.Position });
+            modelBuilder.Entity<HangfireList>(entity =>
+            {
+                entity.HasKey(x => new { x.Key, x.Position });
+                entity.HasIndex(x => x.ExpireAt);
+            });
 
             modelBuilder.Entity<HangfireLock>();
 
-            var queuedJobBuilder = modelBuilder.Entity<HangfireQueuedJob>();
-            queuedJobBuilder.HasIndex(x => new { x.Queue, x.FetchedAt });
+            modelBuilder.Entity<HangfireQueuedJob>(entity =>
+            {
+                entity.HasIndex(x => new { x.Queue, x.FetchedAt });
+            });
 
-            var setBuilder = modelBuilder.Entity<HangfireSet>();
-            setBuilder.HasKey(x => new { x.Key, x.Value });
+            modelBuilder.Entity<HangfireSet>(entity =>
+            {
+                entity.HasKey(x => new { x.Key, x.Value });
+                entity.HasIndex(x => new { x.Key, x.Score });
+                entity.HasIndex(x => x.ExpireAt);
+            });
 
-            var serverBuilder = modelBuilder.Entity<HangfireServer>();
-            serverBuilder.Property(x => x.Queues).HasConversion(
-                x => JobHelper.ToJson(x),
-                x => JobHelper.FromJson<string[]>(x));
+            modelBuilder.Entity<HangfireServer>(entity =>
+            {
+                entity.Property(x => x.Queues).HasConversion(
+                    x => JobHelper.ToJson(x),
+                    x => JobHelper.FromJson<string[]>(x));
+                entity.HasIndex(x => x.Heartbeat);
+            });
 
-            var stateBuilder = modelBuilder.Entity<HangfireState>();
-            stateBuilder.HasIndex(x => x.JobId);
-            stateBuilder.Property(x => x.Data).HasConversion(
-                x => JobHelper.ToJson(x),
-                x => JobHelper.FromJson<Dictionary<string, string>>(x));
+            modelBuilder.Entity<HangfireState>(entity =>
+            {
+                entity.HasIndex(x => x.JobId);
+                entity.Property(x => x.Data).HasConversion(
+                    x => JobHelper.ToJson(x),
+                    x => JobHelper.FromJson<Dictionary<string, string>>(x));
+            });
         }
     }
 }
