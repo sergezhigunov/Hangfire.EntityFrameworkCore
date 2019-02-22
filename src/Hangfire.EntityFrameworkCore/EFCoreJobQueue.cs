@@ -10,7 +10,6 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
-        private static readonly object s_lock = new object();
         private readonly EFCoreStorage _storage;
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
@@ -27,42 +26,43 @@ namespace Hangfire.EntityFrameworkCore
             if (queues.Length == 0)
                 throw new ArgumentException(null, nameof(queues));
 
+            var waitHandles = new[]
+            {
+                cancellationToken.WaitHandle,
+                NewItemInQueueEvent,
+            };
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                lock (s_lock)
-                    using (var context = _storage.CreateContext())
-                    {
-                        var queueItem = (
-                            from item in context.Set<HangfireQueuedJob>()
-                            where queues.Contains(item.Queue)
-                            where item.FetchedAt == null
-                            orderby item.Id ascending
-                            select item).
-                            FirstOrDefault();
+                using (var context = _storage.CreateContext())
+                {
+                    var queueItem = (
+                        from item in context.Set<HangfireQueuedJob>()
+                        where queues.Contains(item.Queue)
+                        where item.FetchedAt == null
+                        orderby item.Id ascending
+                        select item).
+                        FirstOrDefault();
 
-                        if (queueItem != null)
+                    if (queueItem != null)
+                    {
+                        queueItem.FetchedAt = DateTime.UtcNow;
+                        try
                         {
-                            queueItem.FetchedAt = DateTime.UtcNow;
-                            try
-                            {
-                                context.SaveChanges();
-                                return new EFCoreFetchedJob(_storage, queueItem);
-                            }
-                            catch (DbUpdateConcurrencyException)
-                            {
-                                continue;
-                            }
+                            context.SaveChanges();
+                            return new EFCoreFetchedJob(_storage, queueItem);
+                        }
+                        catch (DbUpdateConcurrencyException)
+                        {
+                            continue;
                         }
                     }
+                }
 
                 WaitHandle.WaitAny(
-                    new[]
-                    {
-                        cancellationToken.WaitHandle,
-                        NewItemInQueueEvent,
-                    },
+                    waitHandles,
                     _storage.QueuePollInterval);
             }
         }
