@@ -18,6 +18,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 instance.GetFieldValue("_countersAggregationInterval")));
             Assert.Equal(new TimeSpan(0, 30, 0), Assert.IsType<TimeSpan>(
                 instance.GetFieldValue("_jobExpirationCheckInterval")));
+            Assert.Equal(new TimeSpan(0, 5, 0), Assert.IsType<TimeSpan>(
+                instance.GetFieldValue("_slidingInvisibilityTimeout")));
             Assert.Equal("Hangfire", Assert.IsType<string>(
                 instance.GetFieldValue("_defaultSchemaName")));
         }
@@ -120,6 +122,31 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(value, instance.JobExpirationCheckInterval);
             Assert.Equal(value, Assert.IsType<TimeSpan>(
                 instance.GetFieldValue("_jobExpirationCheckInterval")));
+        }
+
+        [Fact]
+        public static void SlidingInvisibilityTimeout_Throws_WhenValueIsNonPositive()
+        {
+            var instance = new EFCoreStorageOptions();
+
+            Assert.Throws<ArgumentOutOfRangeException>("value",
+                () => instance.SlidingInvisibilityTimeout = default);
+
+            Assert.Throws<ArgumentOutOfRangeException>("value",
+                () => instance.SlidingInvisibilityTimeout = new TimeSpan(-1));
+        }
+
+        [Fact]
+        public static void SlidingInvisibilityTimeout_GetsAndSetsCorrectly()
+        {
+            var instance = new EFCoreStorageOptions();
+            var value = new TimeSpan(0, 20, 0);
+
+            instance.SlidingInvisibilityTimeout = value;
+
+            Assert.Equal(value, instance.SlidingInvisibilityTimeout);
+            Assert.Equal(value, Assert.IsType<TimeSpan>(
+                instance.GetFieldValue("_slidingInvisibilityTimeout")));
         }
 
         [Fact]

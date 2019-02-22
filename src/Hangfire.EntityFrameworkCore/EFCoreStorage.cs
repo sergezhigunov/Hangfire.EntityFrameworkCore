@@ -27,6 +27,8 @@ namespace Hangfire.EntityFrameworkCore
 
         internal TimeSpan CountersAggregationInterval => _options.CountersAggregationInterval;
 
+        internal TimeSpan SlidingInvisibilityTimeout => _options.SlidingInvisibilityTimeout;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
         /// </summary>

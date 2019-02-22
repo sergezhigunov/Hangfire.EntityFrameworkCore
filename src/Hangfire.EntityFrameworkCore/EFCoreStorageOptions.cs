@@ -12,6 +12,7 @@ namespace Hangfire.EntityFrameworkCore
         private TimeSpan _queuePollInterval = new TimeSpan(0, 0, 15);
         private TimeSpan _countersAggregationInterval = new TimeSpan(0, 5, 0);
         private TimeSpan _jobExpirationCheckInterval = new TimeSpan(0, 30, 0);
+        private TimeSpan _slidingInvisibilityTimeout = new TimeSpan(0, 5, 0);
         private string _defaultSchemaName = "Hangfire";
 
         /// <summary>
@@ -89,6 +90,25 @@ namespace Hangfire.EntityFrameworkCore
             {
                 ThrowIfNonPositive(value);
                 _jobExpirationCheckInterval = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or set fetched job invisibility timeout. The default value is 00:05:00.
+        /// </summary>
+        /// <value>
+        /// A <see cref="TimeSpan"/> value.
+        /// </value>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="value"/> is less or equal to <see cref="TimeSpan.Zero"/>.
+        /// </exception>
+        public TimeSpan SlidingInvisibilityTimeout
+        {
+            get => _slidingInvisibilityTimeout;
+            set
+            {
+                ThrowIfNonPositive(value);
+                _slidingInvisibilityTimeout = value;
             }
         }
 

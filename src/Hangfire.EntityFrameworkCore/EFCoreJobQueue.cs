@@ -38,10 +38,13 @@ namespace Hangfire.EntityFrameworkCore
 
                 using (var context = _storage.CreateContext())
                 {
+                    var expiredAt = DateTime.UtcNow - _storage.SlidingInvisibilityTimeout;
                     var queueItem = (
                         from item in context.Set<HangfireQueuedJob>()
                         where queues.Contains(item.Queue)
-                        where item.FetchedAt == null
+                        where
+                            item.FetchedAt == null ||
+                            item.FetchedAt < expiredAt
                         orderby item.Id ascending
                         select item).
                         FirstOrDefault();
