@@ -21,7 +21,7 @@ namespace Hangfire.EntityFrameworkCore
         {
             base.OnModelCreating(modelBuilder);
 
-            if (_defaultSchema == null)
+            if (_defaultSchema != null)
                 modelBuilder.HasDefaultSchema(_defaultSchema);
 
             modelBuilder.Entity<HangfireCounter>(entity =>
