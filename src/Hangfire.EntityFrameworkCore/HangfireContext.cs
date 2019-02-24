@@ -40,7 +40,8 @@ namespace Hangfire.EntityFrameworkCore
             {
                 entity.HasOne(x => x.ActualState).
                     WithOne(x => x.Job).
-                    HasForeignKey<HangfireJobState>(x => x.JobId);
+                    HasForeignKey<HangfireJobState>(x => x.JobId).
+                    OnDelete(DeleteBehavior.Restrict);
                 entity.Property(x => x.InvocationData).HasConversion(
                     x => JobHelper.ToJson(x),
                     x => JobHelper.FromJson<InvocationData>(x));
