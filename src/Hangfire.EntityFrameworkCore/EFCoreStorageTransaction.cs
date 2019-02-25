@@ -37,28 +37,36 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(items));
             ThrowIfDisposed();
 
+            var values = new HashSet<string>(items);
+
             _queue.Enqueue(context =>
             {
-                var exisitingFields = new HashSet<string>(
+                var entries = context.ChangeTracker.Entries<HangfireSet>().
+                    Where(x => x.Entity.Key == key && values.Contains(x.Entity.Value)).
+                    ToDictionary(x => x.Entity.Value);
+
+                var exisitingValues = new HashSet<string>(
                     from set in context.Set<HangfireSet>()
-                    where set.Key == key
+                    where set.Key == key && values.Contains(set.Value)
                     select set.Value);
 
-                foreach (var item in items)
+                foreach (var value in values)
                 {
-                    var set = new HangfireSet
+                    if (!entries.TryGetValue(value, out var entry))
                     {
-                        Key = key,
-                        Value = item,
-                    };
-
-                    if (!exisitingFields.Contains(item))
-                        context.Add(set);
+                        if (!exisitingValues.Contains(value))
+                            context.Add(new HangfireSet
+                            {
+                                Key = key,
+                                Value = value,
+                            });
+                    }
+                    else if (exisitingValues.Contains(value))
+                        entry.State = EntityState.Unchanged;
                     else
                     {
-                        context.Attach(set).
-                            Property(x => x.Score).
-                            IsModified = true;
+                        entry.Entity.Score = 0;
+                        entry.State = EntityState.Added;
                     }
                 }
             });
@@ -133,20 +141,15 @@ namespace Hangfire.EntityFrameworkCore
         {
             ThrowIfDisposed();
 
-            _storage.UseContext(context =>
+            _storage.UseContextSavingChanges(context =>
             {
-                using (var transaction = context.Database.BeginTransaction())
+                while (_queue.Count > 0)
                 {
-                    while (_queue.Count > 0)
-                    {
-                        var action = _queue.Dequeue();
-                        action.Invoke(context);
-                        context.SaveChanges();
-                    }
-                    transaction.Commit();
+                    var action = _queue.Dequeue();
+                    action.Invoke(context);
                 }
+                context.SaveChanges();
             });
-
 
             while (_afterCommitQueue.Count > 0)
             {
@@ -295,19 +298,25 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entries = context.ChangeTracker.
+                var entry = context.ChangeTracker.
                     Entries<HangfireSet>().
-                    Where(x => x.Entity.Key == key && x.Entity.Value == value);
+                    SingleOrDefault(x => x.Entity.Key == key && x.Entity.Value == value);
 
-                foreach (var entry in entries)
+                var exists = context.Set<HangfireSet>().
+                    Any(x => x.Key == key && x.Value == value);
+
+                if (exists)
+                {
+                    if (entry == null)
+                        entry = context.Attach(new HangfireSet
+                        {
+                            Key = key,
+                            Value = value,
+                        });
+                    entry.State = EntityState.Deleted;
+                }
+                else if (entry != null && entry.State != EntityState.Detached)
                     entry.State = EntityState.Detached;
-
-                if (context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value))
-                    context.Remove(new HangfireSet
-                    {
-                        Key = key,
-                        Value = value
-                    });
             });
         }
 
@@ -319,17 +328,27 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
+                var entries = (
+                    from entry in context.ChangeTracker.Entries<HangfireHash>()
+                    where entry.Entity.Key == key
+                    select entry).
+                    ToDictionary(x => x.Entity.Field);
+
                 var fields = 
                     from hash in context.Set<HangfireHash>()
                     where hash.Key == key
                     select hash.Field;
 
                 foreach (var field in fields)
-                    context.Remove(new HangfireHash
-                    {
-                        Key = key,
-                        Field = field,
-                    });
+                    if (entries.TryGetValue(field, out var entry) &&
+                        entry.State != EntityState.Deleted)
+                        entry.State = EntityState.Deleted;
+                    else
+                        context.Remove(new HangfireHash
+                        {
+                            Key = key,
+                            Field = field,
+                        });
             });
         }
 
@@ -341,17 +360,26 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
+                var entries = context.ChangeTracker.
+                    Entries<HangfireSet>().
+                    Where(x => x.Entity.Key == key).
+                    ToDictionary(x => x.Entity.Value);
+
                 var values = 
                     from set in context.Set<HangfireSet>()
                     where set.Key == key
                     select set.Value;
 
                 foreach (var value in values)
-                    context.Remove(new HangfireSet
-                    {
-                        Key = key,
-                        Value = value,
-                    });
+                    if (entries.TryGetValue(value, out var entry) &&
+                        entry.State != EntityState.Deleted)
+                        entry.State = EntityState.Deleted;
+                    else
+                        context.Remove(new HangfireSet
+                        {
+                            Key = key,
+                            Value = value,
+                        });
             });
         }
 
@@ -440,12 +468,18 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                context.Add(new HangfireCounter
-                {
-                    Key = key,
-                    Value = value,
-                    ExpireAt = expireAt,
-                });
+                var entity = (context.ChangeTracker.
+                    Entries<HangfireCounter>().
+                    FirstOrDefault(x => x.Entity.Key == key &&
+                        (x.State == EntityState.Added || x.State == EntityState.Modified)) ??
+                    context.Add(new HangfireCounter
+                    {
+                        Key = key,
+                    })).
+                    Entity;
+
+                entity.Value = entity.Value + value;
+                entity.ExpireAt = expireAt;
             });
         }
 
@@ -469,17 +503,20 @@ namespace Hangfire.EntityFrameworkCore
 
                 if (setActual)
                 {
-                    var actualState = context.Set<HangfireJobState>().
-                                SingleOrDefault(x => x.JobId == id);
-
-                    if (actualState == null)
-                        actualState = context.Add(new HangfireJobState
+                    var jobStateEntry = context.ChangeTracker.
+                        Entries<HangfireJobState>().
+                        SingleOrDefault(x => x.Entity.JobId == id) ??
+                        context.Set<HangfireJobState>().
+                        Attach(new HangfireJobState
                         {
                             JobId = id,
-                        }).Entity;
-
-                    actualState.State = stateEntity;
-                    actualState.Name = state.Name;
+                            Name = state.Name,
+                        });
+                    jobStateEntry.Entity.State = stateEntity;
+                    jobStateEntry.State =
+                        context.Set<HangfireJobState>().Any(x => x.JobId == id) ?
+                        EntityState.Modified :
+                        EntityState.Added;
                 }
             });
         }
