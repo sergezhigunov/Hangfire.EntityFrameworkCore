@@ -160,7 +160,7 @@ namespace Hangfire.EntityFrameworkCore
 
         internal HangfireContext CreateContext()
         {
-            return new HangfireContext(_contextOptions, _options.DefaultSchemaName);
+            return new HangfireContext(_contextOptions, _options.Schema);
         }
     }
 }

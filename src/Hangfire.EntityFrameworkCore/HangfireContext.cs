@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Hangfire.Annotations;
 using Hangfire.Common;
 using Hangfire.Storage;
@@ -8,12 +9,12 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireContext : DbContext
     {
-        private readonly string _defaultSchema;
+        private readonly string _schema;
 
-        public HangfireContext([NotNull] DbContextOptions options, string defaultSchema) :
+        public HangfireContext([NotNull] DbContextOptions options, string schema) :
             base(options)
         {
-            _defaultSchema = defaultSchema;
+            _schema = schema ?? throw new ArgumentNullException(nameof(schema));
             Database.EnsureCreated();
         }
 
@@ -21,8 +22,8 @@ namespace Hangfire.EntityFrameworkCore
         {
             base.OnModelCreating(modelBuilder);
 
-            if (_defaultSchema != null)
-                modelBuilder.HasDefaultSchema(_defaultSchema);
+            if (!string.IsNullOrEmpty(_schema))
+                modelBuilder.HasDefaultSchema(_schema);
 
             modelBuilder.Entity<HangfireCounter>(entity =>
             {

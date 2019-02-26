@@ -35,7 +35,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var builder = new DbContextOptionsBuilder<HangfireContext>();
             OptionsAction(builder);
-            using (var context = new HangfireContext(builder.Options, "Hangfire"))
+            using (var context = new HangfireContext(builder.Options, string.Empty))
                 action(context);
         }
 

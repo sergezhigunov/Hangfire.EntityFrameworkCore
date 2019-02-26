@@ -20,8 +20,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 instance.GetFieldValue("_jobExpirationCheckInterval")));
             Assert.Equal(new TimeSpan(0, 5, 0), Assert.IsType<TimeSpan>(
                 instance.GetFieldValue("_slidingInvisibilityTimeout")));
-            Assert.Equal("Hangfire", Assert.IsType<string>(
-                instance.GetFieldValue("_defaultSchemaName")));
+            Assert.Empty(Assert.IsType<string>(instance.GetFieldValue("_schema")));
         }
 
         [Fact]
@@ -150,25 +149,25 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public static void DefaultSchemaName_Throws_WhenValueIsNull()
+        public static void Schema_Throws_WhenValueIsNull()
         {
             var instance = new EFCoreStorageOptions();
 
             Assert.Throws<ArgumentNullException>("value",
-                () => instance.DefaultSchemaName = default);
+                () => instance.Schema = default);
         }
 
         [Fact]
-        public static void DefaultSchemaName_GetsAndSetsCorrectly()
+        public static void Schema_GetsAndSetsCorrectly()
         {
             var instance = new EFCoreStorageOptions();
             var value = "test";
 
-            instance.DefaultSchemaName = value;
+            instance.Schema = value;
 
-            Assert.Equal(value, instance.DefaultSchemaName);
+            Assert.Equal(value, instance.Schema);
             Assert.Equal(value, Assert.IsType<string>(
-                instance.GetFieldValue("_defaultSchemaName")));
+                instance.GetFieldValue("_schema")));
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Hangfire.EntityFrameworkCore
         private TimeSpan _countersAggregationInterval = new TimeSpan(0, 5, 0);
         private TimeSpan _jobExpirationCheckInterval = new TimeSpan(0, 30, 0);
         private TimeSpan _slidingInvisibilityTimeout = new TimeSpan(0, 5, 0);
-        private string _defaultSchemaName = "Hangfire";
+        private string _schema = string.Empty;
 
         /// <summary>
         /// Gets or set maximal distributed lock lifetime. The default value is 00:10:00.
@@ -113,7 +113,9 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Gets or set DB storage schema name. The default value is "Hangfire".
+        /// Gets or set DB storage schema name. The <see cref="string.Empty"/> value means that
+        /// the provider-specific default schema name will be used.
+        /// The default value is <see cref="string.Empty"/>.
         /// </summary>
         /// <value>
         /// A schema name.
@@ -121,10 +123,10 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <see langword="null"/>.
         /// </exception>
-        public string DefaultSchemaName
+        public string Schema
         {
-            get => _defaultSchemaName;
-            set => _defaultSchemaName = value ?? throw new ArgumentNullException(nameof(value));
+            get => _schema;
+            set => _schema = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         private static void ThrowIfNonPositive(TimeSpan value)

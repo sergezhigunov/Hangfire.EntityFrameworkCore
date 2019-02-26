@@ -10,20 +10,35 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void Ctor_Throws_WhenOptionsParameterIsNull()
         {
             DbContextOptions options = null;
-            string defaultSchema = "Hangfire";
+            string schema = string.Empty;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new HangfireContext(null, defaultSchema));
+                () => new HangfireContext(options, schema));
         }
 
         [Fact]
-        public void Ctor_CreatesInstance()
+        public static void Ctor_Throws_WhenSchemaParameterIsNull()
+        {
+            DbContextOptions options = new DbContextOptionsBuilder<HangfireContext>().Options;
+            string schema = null;
+
+            Assert.Throws<ArgumentNullException>(nameof(schema),
+                () => new HangfireContext(options, schema));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("Hangfire")]
+        public void Ctor_CreatesInstance(string schema)
         {
             var builder = new DbContextOptionsBuilder<HangfireContext>();
-            string defaultSchema = "Hangfire";
             OptionsAction(builder);
-            using (var context = new HangfireContext(builder.Options, defaultSchema))
+            DbContextOptions options = builder.Options;
+
+            using (var context = new HangfireContext(options, schema))
             {
+                var actualSchema = Assert.IsType<string>(context.GetFieldValue("_schema"));
+                Assert.Same(schema, actualSchema);
                 Assert.NotNull(context.Model);
             }
         }
