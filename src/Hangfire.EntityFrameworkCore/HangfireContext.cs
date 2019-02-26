@@ -4,26 +4,33 @@ using Hangfire.Annotations;
 using Hangfire.Common;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireContext : DbContext
     {
-        private readonly string _schema;
+        internal string Schema { get; }
 
-        public HangfireContext([NotNull] DbContextOptions options, string schema) :
-            base(options)
+        public HangfireContext([NotNull] DbContextOptions options, [NotNull] string schema)
+            : base(options)
         {
-            _schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            Schema = schema ?? throw new ArgumentNullException(nameof(schema));
             Database.EnsureCreated();
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            optionsBuilder.ReplaceService<IModelCacheKeyFactory, HangfireModelCacheKeyFactory>();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            if (!string.IsNullOrEmpty(_schema))
-                modelBuilder.HasDefaultSchema(_schema);
+            if (!string.IsNullOrEmpty(Schema))
+                modelBuilder.HasDefaultSchema(Schema);
 
             modelBuilder.Entity<HangfireCounter>(entity =>
             {

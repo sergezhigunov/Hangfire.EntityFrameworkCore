@@ -37,9 +37,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             using (var context = new HangfireContext(options, schema))
             {
-                var actualSchema = Assert.IsType<string>(context.GetFieldValue("_schema"));
-                Assert.Same(schema, actualSchema);
+                Assert.Same(schema, context.Schema);
                 Assert.NotNull(context.Model);
+                var relational = context.Model.Relational();
+                Assert.Equal(schema, relational.DefaultSchema ?? string.Empty);
             }
         }
     }
