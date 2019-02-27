@@ -8,11 +8,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
+    using DequeueFunc = Func<HangfireContext, string[], DateTime, HangfireQueuedJob>;
+
     internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
         private readonly EFCoreStorage _storage;
 
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
+
+        private static DequeueFunc DequeueFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string[] queues, DateTime expireAt) => (
+                from x in context.Set<HangfireQueuedJob>()
+                where queues.Contains(x.Queue)
+                where
+                    x.FetchedAt == null ||
+                    x.FetchedAt < expireAt
+                orderby x.Id ascending
+                select x).
+                FirstOrDefault());
 
         public EFCoreJobQueue([NotNull] EFCoreStorage storage)
         {
@@ -36,19 +49,10 @@ namespace Hangfire.EntityFrameworkCore
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                var expireAt = DateTime.UtcNow - _storage.SlidingInvisibilityTimeout;
                 using (var context = _storage.CreateContext())
                 {
-                    var expiredAt = DateTime.UtcNow - _storage.SlidingInvisibilityTimeout;
-                    var queueItem = (
-                        from item in context.Set<HangfireQueuedJob>()
-                        where queues.Contains(item.Queue)
-                        where
-                            item.FetchedAt == null ||
-                            item.FetchedAt < expiredAt
-                        orderby item.Id ascending
-                        select item).
-                        FirstOrDefault();
-
+                    var queueItem = DequeueFunc(context, queues, expireAt);
                     if (queueItem != null)
                     {
                         queueItem.FetchedAt = DateTime.UtcNow;
