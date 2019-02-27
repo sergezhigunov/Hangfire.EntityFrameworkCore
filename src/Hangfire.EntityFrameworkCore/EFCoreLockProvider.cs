@@ -7,10 +7,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
+    using GetLockFunc = Func<HangfireContext, string, HangfireLock>;
+
     internal class EFCoreLockProvider : IDistributedLockProvider
     {
         private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
         private readonly EFCoreStorage _storage;
+
+        private static GetLockFunc GetLockFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string id) =>
+                context.Set<HangfireLock>().
+                SingleOrDefault(x => x.Id == id));
 
         public EFCoreLockProvider(
             [NotNull] EFCoreStorage storage)
@@ -62,7 +69,10 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContext(context =>
             {
-                context.Attach(new HangfireLock { Id = resource }).State = EntityState.Deleted;
+                context.Remove(new HangfireLock
+                {
+                    Id = resource,
+                });
                 try
                 {
                     context.SaveChanges();
@@ -100,19 +110,17 @@ namespace Hangfire.EntityFrameworkCore
         {
             return _storage.UseContext<bool?>(context =>
             {
-                var distributedLock = context.Set<HangfireLock>().
-                SingleOrDefault(x => x.Id == resource);
+                var @lock = GetLockFunc(context, resource);
 
                 // If the lock has been removed we should try to insert again
-                if (distributedLock == null)
+                if (@lock == null)
                     return false;
 
-                var expireAt = distributedLock.AcquiredAt + _storage.DistributedLockTimeout;
-
                 // If the lock has been expired, we should update its creation timestamp
-                if (expireAt < DateTime.UtcNow)
+                var now = DateTime.UtcNow;
+                if (@lock.AcquiredAt + _storage.DistributedLockTimeout < now)
                 {
-                    distributedLock.AcquiredAt = DateTime.UtcNow;
+                    @lock.AcquiredAt = now;
 
                     try
                     {
@@ -123,7 +131,6 @@ namespace Hangfire.EntityFrameworkCore
                     {
                         return false; // Already removed, we should try to insert again
                     }
-
                 }
 
                 return default;
