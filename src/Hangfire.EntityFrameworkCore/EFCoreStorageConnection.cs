@@ -12,8 +12,163 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
+    using GetAllEntriesFromHashFunc = Func<HangfireContext, string, IEnumerable<KeyValuePair<string, string>>>;
+    using GetAllItemsFromListFunc = Func<HangfireContext, string, IEnumerable<string>>;
+    using GetAllItemsFromSetFunc = Func<HangfireContext, string, IEnumerable<string>>;
+    using GetCounterFunc = Func<HangfireContext, string, long>;
+    using GetFirstByLowestScoreFromSetFunc = Func<HangfireContext, string, decimal, decimal, string>;
+    using GetHashCountFunc = Func<HangfireContext, string, long>;
+    using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
+    using GetHashTtlFunc = Func<HangfireContext, string, DateTime?>;
+    using GetJobDataFunc = Func<HangfireContext, long, JobData>;
+    using GetJobParameterFunc = Func<HangfireContext, long, string, string>;
+    using GetListCountFunc = Func<HangfireContext, string, long>;
+    using GetListTtlFunc = Func<HangfireContext, string, DateTime?>;
+    using GetRangeFromListFunc = Func<HangfireContext, string, int, int, IEnumerable<string>>;
+    using GetRangeFromSetFunc = Func<HangfireContext, string ,int, int, IEnumerable<string>>;
+    using GetSetCountFunc = Func<HangfireContext, string, long>;
+    using GetSetTtlFunc = Func<HangfireContext, string, DateTime?>;
+    using GetStateDataFunc = Func<HangfireContext, long, StateData>;
+    using GetTimedOutServersFunc = Func<HangfireContext, DateTime, IEnumerable<string>>;
+    using GetValueFromHashFunc = Func<HangfireContext, string, string, string>;
+    using JobParameterExistsFunc = Func<HangfireContext, long, string, bool>;
+
     internal class EFCoreStorageConnection : JobStorageConnection
     {
+        private static GetAllEntriesFromHashFunc GetAllEntriesFromHashFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from x in context.Set<HangfireHash>()
+                where x.Key == key
+                select new KeyValuePair<string, string>(x.Field, x.Value));
+
+        private static GetAllItemsFromListFunc GetAllItemsFromListFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from x in context.Set<HangfireList>()
+                where x.Key == key
+                orderby x.Position descending
+                select x.Value);
+
+        private static GetAllItemsFromSetFunc GetAllItemsFromSetFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from x in context.Set<HangfireSet>()
+                where x.Key == key
+                select x.Value);
+
+        private static GetCounterFunc GetCounterFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                context.Set<HangfireCounter>().
+                Where(x => x.Key == key).
+                Sum(x => x.Value));
+
+        private static GetFirstByLowestScoreFromSetFunc GetFirstByLowestScoreFromSetFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key, decimal from, decimal to) => (
+                from x in context.Set<HangfireSet>()
+                where x.Key == key && @from <= x.Score && x.Score <= to
+                orderby x.Score
+                select x.Value).
+                FirstOrDefault());
+
+        private static GetHashCountFunc GetHashCountFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                context.Set<HangfireHash>().LongCount(x => x.Key == key));
+
+        private static GetHashFieldsFunc GetHashFieldsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from x in context.Set<HangfireHash>()
+                where x.Key == key
+                select x.Field);
+
+        private static GetHashTtlFunc GetHashTtlFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) => (
+                from x in context.Set<HangfireHash>()
+                where x.Key == key
+                select x.ExpireAt).
+                Min());
+
+        private static GetJobDataFunc GetJobDataFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, long id) => (
+                from x in context.Set<HangfireJob>()
+                where x.Id == id
+                select CreateJobData(x.InvocationData, x.CreatedAt, x.ActualState.Name)).
+                FirstOrDefault());
+
+        private static GetJobParameterFunc GetJobParameterFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, long id, string name) => (
+                from x in context.Set<HangfireJobParameter>()
+                where x.JobId == id && x.Name == name
+                select x.Value).
+                SingleOrDefault());
+
+        private static GetListCountFunc GetListCountFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                context.Set<HangfireList>().LongCount(x => x.Key == key));
+
+        private static GetListTtlFunc GetListTtlFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) => (
+                from x in context.Set<HangfireList>()
+                where x.Key == key
+                select x.ExpireAt).
+                Min());
+
+        private static GetRangeFromListFunc GetRangeFromListFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key, int from, int to) =>
+                from x in context.Set<HangfireList>()
+                where x.Key == key
+                let position = x.Position
+                where @from <= position && position <= to
+                orderby position descending
+                select x.Value);
+
+        private static GetRangeFromSetFunc GetRangeFromSetFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key, int skip, int take) => (
+                from x in context.Set<HangfireSet>()
+                where x.Key == key
+                orderby x.CreatedAt
+                select x.Value).
+                Skip(skip).
+                Take(take));
+
+        private static GetSetCountFunc GetSetCountFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                context.Set<HangfireSet>().LongCount(x => x.Key == key));
+
+        private static GetSetTtlFunc GetSetTtlFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) => (
+                from x in context.Set<HangfireSet>()
+                where x.Key == key
+                select x.ExpireAt).
+                Min());
+
+        private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, long id) => (
+                from x in context.Set<HangfireJobState>()
+                where x.JobId == id
+                let s = x.State
+                select new StateData
+                {
+                    Name = s.Name,
+                    Reason = s.Reason,
+                    Data = s.Data,
+                }).
+                SingleOrDefault());
+
+        private static GetTimedOutServersFunc GetTimedOutServersFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, DateTime outdate) =>
+                from x in context.Set<HangfireServer>()
+                where x.Heartbeat <= outdate
+                select x.Id);
+
+        private static GetValueFromHashFunc GetValueFromHashFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key, string name) => (
+                from hash in context.Set<HangfireHash>()
+                where hash.Key == key && hash.Field == name
+                select hash.Value).
+                SingleOrDefault());
+
+        private static JobParameterExistsFunc JobParameterExistsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, long id, string name) =>
+                context.Set<HangfireJobParameter>().Any(x => x.JobId == id && x.Name == name));
+
         private readonly IDistributedLockProvider _lockProvider;
         private readonly EFCoreStorage _storage;
 
@@ -123,106 +278,38 @@ namespace Hangfire.EntityFrameworkCore
 
         public override Dictionary<string, string> GetAllEntriesFromHash([NotNull] string key)
         {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            var result = _storage.UseContext(context => (
-                from hash in context.Set<HangfireHash>()
-                where hash.Key == key
-                select new
-                {
-                    hash.Field,
-                    hash.Value,
-                }).
-                ToDictionary(x => x.Field, x => x.Value)
-            );
+            var result = UseContext(GetAllEntriesFromHashFunc, key).
+                ToDictionary(x => x.Key, x => x.Value);
 
             return result.Count != 0 ? result : null;
         }
 
-        public override List<string> GetAllItemsFromList([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+        public override List<string> GetAllItemsFromList([NotNull] string key) =>
+            UseContext(GetAllItemsFromListFunc, key).ToList();
 
-            return _storage.UseContext(context => (
-                from item in context.Set<HangfireList>()
-                where item.Key == key
-                orderby item.Position descending
-                select item.Value).
-                ToList());
-        }
+        public override HashSet<string> GetAllItemsFromSet([NotNull] string key) =>
+            new HashSet<string>(UseContext(GetAllItemsFromSetFunc, key));
 
-        public override HashSet<string> GetAllItemsFromSet([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            return _storage.UseContext(context => new HashSet<string>(
-                from set in context.Set<HangfireSet>()
-                where set.Key == key
-                select set.Value));
-        }
-
-        public override long GetCounter([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            return _storage.UseContext(context => { return (
-                from counter in context.Set<HangfireCounter>()
-                where counter.Key == key
-                select (long?)counter.Value).
-                Sum(); }) ?? 0L;
-        }
+        public override long GetCounter([NotNull] string key) => UseContext(GetCounterFunc, key);
 
         public override string GetFirstByLowestScoreFromSet(
             [NotNull] string key,
             double fromScore,
-            double toScore)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+            double toScore) =>
+            UseContext((context, k) =>
+            {
+                if (toScore < fromScore)
+                    Swap(ref fromScore, ref toScore);
 
-            decimal
-                fromScoreValue = (decimal)fromScore,
-                toScoreValue = (decimal)toScore;
+                return GetFirstByLowestScoreFromSetFunc(context, k,
+                    (decimal)fromScore, (decimal)toScore);
+            }, key);
 
-            if (toScoreValue < fromScoreValue)
-                Swap(ref fromScoreValue, ref toScoreValue);
+        public override long GetHashCount([NotNull] string key) =>
+            UseContext(GetHashCountFunc, key);
 
-            return _storage.UseContext(context => (
-                from set in context.Set<HangfireSet>()
-                where set.Key == key && fromScoreValue <= set.Score && set.Score <= toScoreValue
-                orderby set.Score
-                select set.Value).
-                FirstOrDefault());
-        }
-
-        public override long GetHashCount([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            return _storage.UseContext(context => context.Set<HangfireHash>().
-                LongCount(x => x.Key == key));
-        }
-
-        public override TimeSpan GetHashTtl([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            DateTime? minExpiredAt = _storage.UseContext(context => (
-                from hash in context.Set<HangfireHash>()
-                where hash.Key == key
-                select hash.ExpireAt).
-                Min());
-
-            return minExpiredAt.HasValue ?
-                minExpiredAt.Value - DateTime.UtcNow :
-                new TimeSpan(0, 0, -1);
-        }
+        public override TimeSpan GetHashTtl([NotNull] string key) =>
+            ToTtl(UseContext(GetHashTtlFunc, key));
 
         public override JobData GetJobData([NotNull] string jobId)
         {
@@ -232,36 +319,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(jobId, out var id))
                 return null;
 
-            var jobInfo = _storage.UseContext(context => (
-                from job in context.Set<HangfireJob>()
-                where job.Id == id
-                select new
-                {
-                    job.InvocationData,
-                    job.CreatedAt,
-                    State = job.ActualState.Name,
-                }).
-                FirstOrDefault());
-
-            if (jobInfo == null)
-                return null;
-
-            var jobData = new JobData
-            {
-                State = jobInfo.State,
-                CreatedAt = jobInfo.CreatedAt,
-            };
-
-            try
-            {
-                jobData.Job = jobInfo.InvocationData.Deserialize();
-            }
-            catch (JobLoadException exception)
-            {
-                jobData.LoadException = exception;
-            }
-
-            return jobData;
+            return _storage.UseContext(context => GetJobDataFunc(context, id));
         }
 
         public override string GetJobParameter([NotNull] string id, [NotNull] string name)
@@ -274,105 +332,46 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(id, out var jobId))
                 return null;
 
-            return _storage.UseContext(context => (
-                from parameter in context.Set<HangfireJobParameter>()
-                where parameter.JobId == jobId && parameter.Name == name
-                select parameter.Value).
-                SingleOrDefault());
+            return _storage.UseContext(context => GetJobParameterFunc(context, jobId, name));
         }
 
-        public override long GetListCount([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+        public override long GetListCount([NotNull] string key) =>
+            UseContext(GetListCountFunc, key);
 
-            return _storage.UseContext(context => context.Set<HangfireList>().
-                LongCount(x => x.Key == key));
-        }
-
-        public override TimeSpan GetListTtl([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            DateTime? minExpiredAt = _storage.UseContext(context => (
-                from set in context.Set<HangfireList>()
-                where set.Key == key
-                select set.ExpireAt).
-                Min());
-
-            return minExpiredAt.HasValue ?
-                minExpiredAt.Value - DateTime.UtcNow :
-                TimeSpan.FromSeconds(-1);
-        }
+        public override TimeSpan GetListTtl([NotNull] string key) =>
+            ToTtl(UseContext(GetListTtlFunc, key));
 
         public override List<string> GetRangeFromList(
             [NotNull] string key,
             int startingFrom,
-            int endingAt)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+            int endingAt) =>
+            UseContext((context, k) =>
+            {
+                if (endingAt < startingFrom)
+                    Swap(ref startingFrom, ref endingAt);
 
-            if (endingAt < startingFrom)
-                Swap(ref startingFrom, ref endingAt);
-
-            return _storage.UseContext(context => (
-                from item in context.Set<HangfireList>()
-                where item.Key == key
-                let position = item.Position
-                where startingFrom <= position && position <= endingAt
-                orderby item.Position descending
-                select item.Value).
-                ToList());
-        }
+                return GetRangeFromListFunc(context, k, startingFrom, endingAt).ToList();
+            }, key);
 
         public override List<string> GetRangeFromSet(
             [NotNull] string key,
             int startingFrom,
-            int endingAt)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+            int endingAt) =>
+            UseContext((context, k) =>
+            {
+                if (endingAt < startingFrom)
+                    Swap(ref startingFrom, ref endingAt);
+                int take = endingAt - startingFrom + 1;
 
-            if (endingAt < startingFrom)
-                Swap(ref startingFrom, ref endingAt);
-            int take = endingAt - startingFrom + 1;
+                return GetRangeFromSetFunc(context, key, startingFrom, take).ToList();
+            }, key);
+        
 
-            return _storage.UseContext(context => (
-                from item in context.Set<HangfireSet>()
-                where item.Key == key
-                orderby item.CreatedAt
-                select item.Value).
-                Skip(startingFrom).
-                Take(take).
-                ToList());
-        }
+        public override long GetSetCount([NotNull] string key) =>
+            UseContext(GetSetCountFunc, key);
 
-        public override long GetSetCount([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            return _storage.UseContext(context => context.Set<HangfireSet>().
-                LongCount(x => x.Key == key));
-        }
-
-        public override TimeSpan GetSetTtl([NotNull] string key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            DateTime? minExpiredAt = _storage.UseContext(context => (
-                from set in context.Set<HangfireSet>()
-                where set.Key == key
-                select set.ExpireAt).
-                Min());
-
-            return minExpiredAt.HasValue ?
-                minExpiredAt.Value - DateTime.UtcNow :
-                TimeSpan.FromSeconds(-1);
-        }
+        public override TimeSpan GetSetTtl([NotNull] string key) =>
+            ToTtl(UseContext(GetSetTtlFunc, key));
 
         public override StateData GetStateData([NotNull] string jobId)
         {
@@ -382,19 +381,7 @@ namespace Hangfire.EntityFrameworkCore
             if (!TryParseJobId(jobId, out var id))
                 return null;
 
-            return _storage.UseContext(context => (
-                from job in context.Set<HangfireJob>()
-                where job.Id == id
-                let actualState = job.ActualState
-                where actualState != null
-                let state = actualState.State
-                select new StateData
-                {
-                    Name = state.Name,
-                    Reason = state.Reason,
-                    Data = (Dictionary<string, string>)state.Data,
-                }).
-                SingleOrDefault());
+            return _storage.UseContext(context => GetStateDataFunc(context, id));
         }
 
         public override string GetValueFromHash([NotNull] string key, [NotNull] string name)
@@ -404,11 +391,7 @@ namespace Hangfire.EntityFrameworkCore
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            return _storage.UseContext(context => (
-                from hash in context.Set<HangfireHash>()
-                where hash.Key == key && hash.Field == name
-                select hash.Value).
-                SingleOrDefault());
+            return _storage.UseContext(context => GetValueFromHashFunc(context, key, name));
         }
 
         public override void Heartbeat([NotNull] string serverId)
@@ -418,11 +401,19 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContext(context =>
             {
-                var server = context.Set<HangfireServer>().SingleOrDefault(x => x.Id == serverId);
-                if (server != null)
+                var entry = context.Attach(new HangfireServer
                 {
-                    server.Heartbeat = DateTime.UtcNow;
+                    Id = serverId,
+                    Heartbeat = DateTime.UtcNow,
+                });
+                entry.Property(x => x.Heartbeat).IsModified = true;
+                try
+                {
                     context.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Someone else already has deleted this record. Database wins.
                 }
             });
         }
@@ -432,7 +423,21 @@ namespace Hangfire.EntityFrameworkCore
             if (serverId == null)
                 throw new ArgumentNullException(nameof(serverId));
 
-            RemoveServers(x => x.Id == serverId);
+            _storage.UseContext(context =>
+            {
+                context.Remove(new HangfireServer
+                {
+                    Id = serverId,
+                });
+                try
+                {
+                    context.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Someone else already has deleted this record. Database wins.
+                }
+            });
         }
 
         public override int RemoveTimedOutServers(TimeSpan timeOut)
@@ -440,8 +445,28 @@ namespace Hangfire.EntityFrameworkCore
             if (timeOut < TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(timeOut), timeOut, null);
 
-            var outdate = DateTime.UtcNow - timeOut;
-            return RemoveServers(x => x.Heartbeat <= outdate);
+            return _storage.UseContextSavingChanges(context =>
+            {
+                var ids = GetTimedOutServersFunc(context, DateTime.UtcNow - timeOut).ToList();
+                var count = ids.Count;
+                if (count == 0)
+                    return 0;
+
+                context.RemoveRange(ids.Select(x => new HangfireServer
+                {
+                    Id = x,
+                }));
+
+                try
+                {
+                    return context.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException exception)
+                {
+                    // Someone else already has deleted this record. Database wins.
+                    return count - exception.Entries.Count;
+                }
+            });
         }
 
         public override void SetJobParameter(
@@ -462,11 +487,10 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContextSavingChanges(context =>
             {
-                if (!context.Set<HangfireJobParameter>().
-                    Any(x => x.JobId == jobId && x.Name == name))
-                    context.Add(parameter);
+                if (JobParameterExistsFunc(context, jobId, name))
+                    context.Update(parameter);
                 else
-                    context.Entry(parameter).State = EntityState.Modified;
+                    context.Add(parameter);
             });
         }
 
@@ -488,37 +512,41 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContextSavingChanges(context =>
             {
-                var fields = new HashSet<string>(
-                    from hash in context.Set<HangfireHash>()
-                    where hash.Key == key
-                    select hash.Field);
+                var fields = new HashSet<string>(GetHashFieldsFunc(context, key));
 
                 foreach (var hash in hashes)
                     if (!fields.Contains(hash.Field))
                         context.Add(hash);
                     else
-                        context.Entry(hash).State = EntityState.Modified;
+                        context.Update(hash);
             });
         }
 
-        private int RemoveServers(Expression<Func<HangfireServer, bool>> predicate)
+        private T UseContext<T>(Func<HangfireContext, string, T> func, string key)
         {
-            return _storage.UseContextSavingChanges(context =>
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+
+            return _storage.UseContext(context => func(context, key));
+        }
+
+        private static JobData CreateJobData(InvocationData data, DateTime createdAt, string state)
+        {
+            var result = new JobData
             {
-                var serverIds = (
-                    from server in context.Set<HangfireServer>().Where(predicate)
-                    select server.Id).
-                    ToArray();
+                State = state,
+                CreatedAt = createdAt,
+            };
+            try
+            {
+                result.Job = data.Deserialize();
+            }
+            catch (JobLoadException exception)
+            {
+                result.LoadException = exception;
+            }
 
-                foreach (var serverId in serverIds)
-                    context.Entry(new HangfireServer
-                    {
-                        Id = serverId,
-                    }).
-                    State = EntityState.Deleted;
-
-                return serverIds.Length;
-            });
+            return result;
         }
 
         private static void Swap<T>(ref T left, ref T right)
@@ -527,6 +555,11 @@ namespace Hangfire.EntityFrameworkCore
             left = right;
             right = temp;
         }
+
+        private static TimeSpan ToTtl(DateTime? expireAt) =>
+           expireAt.HasValue ?
+           expireAt.Value - DateTime.UtcNow :
+           new TimeSpan(0, 0, -1);
 
         private static bool TryParseJobId(string jobId, out long id) =>
             long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
