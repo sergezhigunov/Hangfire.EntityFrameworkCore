@@ -3,12 +3,19 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
     [ExcludeFromCodeCoverage]
     public abstract class DbContextOptionsTest : IDisposable
     {
+        public static LoggerFactory LoggerFactory { get; } = new LoggerFactory(new[]
+        {
+            new DebugLoggerProvider(),
+        });
+
         private SqliteConnection _connection;
         private bool _disposed = false;
 
@@ -24,6 +31,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected void OptionsAction(DbContextOptionsBuilder builder)
         {
+            builder.UseLoggerFactory(LoggerFactory);
             builder.UseSqlite(Connection);
         }
 
