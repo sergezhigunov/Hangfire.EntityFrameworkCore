@@ -16,7 +16,6 @@ namespace Hangfire.EntityFrameworkCore
             : base(options)
         {
             Schema = schema ?? throw new ArgumentNullException(nameof(schema));
-            Database.EnsureCreated();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
