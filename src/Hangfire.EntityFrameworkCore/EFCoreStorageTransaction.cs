@@ -9,8 +9,54 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
+    using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
+    using GetJobStateExists = Func<HangfireContext, long, bool>;
+    using GetSetValuesFunc = Func<HangfireContext, string, IEnumerable<string>>;
+    using GetListsFunc = Func<HangfireContext, string, IEnumerable<HangfireList>>;
+    using GetListPositionsFunc = Func<HangfireContext, string, IEnumerable<int>>;
+    using GetMaxListPositionFunc = Func<HangfireContext, string, int?>;
+    using SetExistsFunc = Func<HangfireContext, string, string, bool>;
+
     internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
+        private static GetHashFieldsFunc GetHashFieldsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from x in context.Set<HangfireHash>()
+                where x.Key == key
+                select x.Field);
+
+        private static GetJobStateExists GetJobStateExists { get; } = EF.CompileQuery(
+            (HangfireContext context, long id) =>
+                context.Set<HangfireJobState>().Any(x => x.JobId == id));
+
+        private static GetListPositionsFunc GetListPositionsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from item in context.Set<HangfireList>()
+                where item.Key == key
+                select item.Position);
+
+        private static GetListsFunc GetListsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from item in context.Set<HangfireList>()
+                where item.Key == key
+                select item);
+
+        private static GetMaxListPositionFunc GetMaxListPositionFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                context.Set<HangfireList>().
+                    Where(x => x.Key == key).
+                    Max(x => (int?)x.Position));
+
+        private static GetSetValuesFunc GetSetValuesFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key) =>
+                from set in context.Set<HangfireSet>()
+                where set.Key == key
+                select set.Value);
+
+        private static SetExistsFunc SetExistsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context, string key, string value) =>
+                context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value));
+
         private readonly EFCoreStorage _storage;
         private readonly Queue<Action<HangfireContext>> _queue;
         private readonly Queue<Action> _afterCommitQueue;
@@ -44,11 +90,7 @@ namespace Hangfire.EntityFrameworkCore
                 var entries = context.ChangeTracker.Entries<HangfireSet>().
                     Where(x => x.Entity.Key == key && values.Contains(x.Entity.Value)).
                     ToDictionary(x => x.Entity.Value);
-
-                var exisitingValues = new HashSet<string>(
-                    from set in context.Set<HangfireSet>()
-                    where set.Key == key && values.Contains(set.Value)
-                    select set.Value);
+                var exisitingValues = new HashSet<string>(GetSetValuesFunc(context, key));
 
                 foreach (var value in values)
                 {
@@ -129,10 +171,10 @@ namespace Hangfire.EntityFrameworkCore
                         Value = value,
                     };
 
-                    if (!context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value))
-                        context.Add(set);
+                    if (SetExistsFunc(context, key, value))
+                        context.Update(set);
                     else
-                        context.Entry(set).State = EntityState.Modified;
+                        context.Add(set);
                 }
             });
         }
@@ -229,9 +271,7 @@ namespace Hangfire.EntityFrameworkCore
                     Entries<HangfireList>().
                     Where(x => x.Entity.Key == key).
                     Max(x => (int?)x.Entity.Position) ??
-                    context.Set<HangfireList>().
-                    Where(x => x.Key == key).
-                    Max(x => (int?)x.Position) ?? -1;
+                    GetMaxListPositionFunc(context, key) ?? -1;
 
                 context.Add(new HangfireList
                 {
@@ -270,20 +310,10 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var list = (
-                    from item in context.Set<HangfireList>()
-                    where item.Key == key
-                    orderby item.Position
-                    select item).
-                    ToArray();
-
-                var newList = list.
-                    Where(x => x.Value != value).
-                    ToArray();
-
-                for (int i = newList.Length; i < list.Length; i++)
+                var list = GetListsFunc(context, key).OrderBy(x => x.Position).ToList();
+                var newList = list. Where(x => x.Value != value).ToList();
+                for (int i = newList.Count; i < list.Count; i++)
                     context.Remove(list[i]);
-
                 CopyNonKeyValues(newList, list);
             });
         }
@@ -302,10 +332,7 @@ namespace Hangfire.EntityFrameworkCore
                     Entries<HangfireSet>().
                     SingleOrDefault(x => x.Entity.Key == key && x.Entity.Value == value);
 
-                var exists = context.Set<HangfireSet>().
-                    Any(x => x.Key == key && x.Value == value);
-
-                if (exists)
+                if (SetExistsFunc(context, key, value))
                 {
                     if (entry == null)
                         entry = context.Attach(new HangfireSet
@@ -334,10 +361,7 @@ namespace Hangfire.EntityFrameworkCore
                     select entry).
                     ToDictionary(x => x.Entity.Field);
 
-                var fields = 
-                    from hash in context.Set<HangfireHash>()
-                    where hash.Key == key
-                    select hash.Field;
+                var fields = GetHashFieldsFunc(context, key);
 
                 foreach (var field in fields)
                     if (entries.TryGetValue(field, out var entry) &&
@@ -365,10 +389,7 @@ namespace Hangfire.EntityFrameworkCore
                     Where(x => x.Entity.Key == key).
                     ToDictionary(x => x.Entity.Value);
 
-                var values = 
-                    from set in context.Set<HangfireSet>()
-                    where set.Key == key
-                    select set.Value;
+                var values = GetSetValuesFunc(context, key);
 
                 foreach (var value in values)
                     if (entries.TryGetValue(value, out var entry) &&
@@ -401,12 +422,7 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var actualFields = new HashSet<string>(keyValuePairs.Select(x => x.Key));
-
-                var exisitingFields = new HashSet<string>(
-                    from hash in context.Set<HangfireHash>()
-                    where hash.Key == key && actualFields.Contains(hash.Field)
-                    select hash.Field);
-
+                var exisitingFields = new HashSet<string>(GetHashFieldsFunc(context, key));
                 var entries = (
                     from entry in context.ChangeTracker.Entries<HangfireHash>()
                     let entity = entry.Entity
@@ -442,18 +458,12 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var list = (
-                    from item in context.Set<HangfireList>()
-                    where item.Key == key
-                    orderby item.Position
-                    select item).
-                    ToArray();
-
+                var list = GetListsFunc(context, key).OrderBy(x => x.Position).ToList();
                 var newList = list.
                     Where((item, index) => keepStartingFrom <= index && index <= keepEndingAt).
-                    ToArray();
+                    ToList();
 
-                for (int i = newList.Length; i < list.Length; i++)
+                for (int i = newList.Count; i < list.Count; i++)
                     context.Remove(list[i]);
 
                 CopyNonKeyValues(newList, list);
@@ -506,24 +516,26 @@ namespace Hangfire.EntityFrameworkCore
                     var jobStateEntry = context.ChangeTracker.
                         Entries<HangfireJobState>().
                         SingleOrDefault(x => x.Entity.JobId == id) ??
-                        context.Set<HangfireJobState>().
-                        Attach(new HangfireJobState
+                        context.Attach(new HangfireJobState
                         {
                             JobId = id,
                             Name = state.Name,
                         });
                     jobStateEntry.Entity.State = stateEntity;
                     jobStateEntry.State =
-                        context.Set<HangfireJobState>().Any(x => x.JobId == id) ?
+                        GetJobStateExists(context, id) ?
                         EntityState.Modified :
                         EntityState.Added;
                 }
             });
         }
 
-        private static void CopyNonKeyValues(HangfireList[] source, HangfireList[] destination)
+        private static void CopyNonKeyValues(
+            IReadOnlyList<HangfireList> source,
+            IReadOnlyList<HangfireList> destination)
         {
-            for (int i = 0; i < source.Length; i++)
+            var count = source.Count;
+            for (int i = 0; i < count; i++)
             {
                 var oldItem = destination[i];
                 var newItem = source[i];
@@ -568,11 +580,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var fields = new HashSet<string>(
-                    from hash in context.Set<HangfireHash>()
-                    where hash.Key == key
-                    select hash.Field);
-
+                var fields = new HashSet<string>(GetHashFieldsFunc(context, key));
                 var entries = (
                     from entry in context.ChangeTracker.Entries<HangfireHash>()
                     let entity = entry.Entity
@@ -603,11 +611,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var positions = new HashSet<int>(
-                    from item in context.Set<HangfireList>()
-                    where item.Key == key
-                    select item.Position);
-
+                var positions = new HashSet<int>(GetListPositionsFunc(context, key));
                 var entries = (
                     from entry in context.ChangeTracker.Entries<HangfireList>()
                     let entity = entry.Entity
@@ -638,11 +642,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var values = new HashSet<string>(
-                    from item in context.Set<HangfireSet>()
-                    where item.Key == key
-                    select item.Value);
-
+                var values = new HashSet<string>(GetSetValuesFunc(context, key));
                 var entries = (
                     from entry in context.ChangeTracker.Entries<HangfireSet>()
                     let entity = entry.Entity
