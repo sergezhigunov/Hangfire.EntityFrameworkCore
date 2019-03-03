@@ -39,29 +39,33 @@ namespace Hangfire.EntityFrameworkCore.Tests
             };
             var invocationData = CreateInvocationData(() => SampleMethod("Arguments"));
             var jobs = Enumerable.Range(0, 5).
-                Select(x =>
+                Select(x => new HangfireJob
                 {
-                    var job = new HangfireJob
+                    CreatedAt = now + new TimeSpan(0, 0, x),
+                    InvocationData = invocationData,
+                    States = new List<HangfireState>
                     {
-                        CreatedAt = now + new TimeSpan(0, 0, x),
-                        InvocationData = invocationData,
-                    };
-                    var state = new HangfireState
-                    {
-                        CreatedAt = DateTime.UtcNow,
-                        Name = DeletedState.StateName,
-                        Data = data,
-                    };
-                    job.States.Add(state);
-                    job.ActualState = new HangfireJobState
-                    {
-                        State = state,
-                        Name = state.Name,
-                    };
-                    return job;
+                        new HangfireState
+                        {
+                            CreatedAt = DateTime.UtcNow,
+                            Name = DeletedState.StateName,
+                            Data = data,
+                        },
+                    },
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.DeletedJobs(1, 2));
 
@@ -180,11 +184,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         {
                             state,
                         },
-                        ActualState = new HangfireJobState
-                        {
-                            Name = state.Name,
-                            State = state,
-                        },
                         QueuedJobs = new[]
                         {
                             new HangfireQueuedJob
@@ -196,7 +195,18 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.EnqueuedJobs(queue, 1, 2));
 
@@ -210,10 +220,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var job = Assert.Single(jobs.Where(x => x.Id == id));
                 var value = item.Value;
                 Assert.NotNull(value);
-                Assert.Equal(job.ActualState.State.CreatedAt, value.EnqueuedAt);
+                Assert.Equal(job.State.CreatedAt, value.EnqueuedAt);
                 Assert.True(value.InEnqueuedState);
-                Assert.Equal(job.ActualState.Name, value.State);
-                Assert.Equal(job.ActualState.State.Name, value.State);
+                Assert.Equal(job.StateName, value.State);
+                Assert.Equal(job.State.Name, value.State);
             });
         }
 
@@ -280,15 +290,21 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         Reason = "Reason",
                     };
                     job.States.Add(state);
-                    job.ActualState = new HangfireJobState
-                    {
-                        State = state,
-                        Name = state.Name,
-                    };
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.FailedJobs(1, 2));
 
@@ -396,11 +412,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         {
                             state,
                         },
-                        ActualState = new HangfireJobState
-                        {
-                            Name = state.Name,
-                            State = state,
-                        },
                         QueuedJobs = new[]
                         {
                             new HangfireQueuedJob
@@ -413,7 +424,18 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.FetchedJobs(queue, 1, 2));
 
@@ -428,8 +450,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var value = item.Value;
                 Assert.NotNull(value);
                 Assert.Equal(now, value.FetchedAt);
-                Assert.Equal(job.ActualState.Name, value.State);
-                Assert.Equal(job.ActualState.State.Name, value.State);
+                Assert.Equal(job.StateName, value.State);
+                Assert.Equal(job.State.Name, value.State);
             });
         }
 
@@ -628,11 +650,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     state,
                 },
-                ActualState = new HangfireJobState
-                {
-                    State = state,
-                    Name = state.Name,
-                },
                 Parameters = parameters.
                     Select(x => new HangfireJobParameter
                     {
@@ -702,15 +719,21 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         Data = data,
                     };
                     job.States.Add(state);
-                    job.ActualState = new HangfireJobState
-                    {
-                        State = state,
-                        Name = state.Name,
-                    };
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.ProcessingJobs(1, 2));
 
@@ -806,15 +829,21 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         Data = data,
                     };
                     job.States.Add(state);
-                    job.ActualState = new HangfireJobState
-                    {
-                        State = state,
-                        Name = state.Name,
-                    };
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.ScheduledJobs(1, 2));
 
@@ -943,15 +972,21 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         Data = data,
                     };
                     job.States.Add(state);
-                    job.ActualState = new HangfireJobState
-                    {
-                        State = state,
-                        Name = state.Name,
-                    };
                     return job;
                 }).
                 ToArray();
-            UseContextSavingChanges(context => context.AddRange(jobs));
+            UseContextSavingChanges(context =>
+            {
+                foreach (var job in jobs)
+                    context.Add(job);
+                context.SaveChanges();
+                foreach (var job in jobs)
+                {
+                    var state = job.States.Single();
+                    job.State = state;
+                    job.StateName = state.Name;
+                }
+            });
 
             var result = UseMonitoringApi(instance => instance.SucceededJobs(1, 2));
 
@@ -1021,14 +1056,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     state,
                 },
-                ActualState = new HangfireJobState
-                {
-                    Name = state.Name,
-                    State = state,
-                },
             };
-
             context.Add(job);
+            context.SaveChanges();
+            job.State = state;
+            job.StateName = state.Name;
+            context.SaveChanges();
         }
 
 

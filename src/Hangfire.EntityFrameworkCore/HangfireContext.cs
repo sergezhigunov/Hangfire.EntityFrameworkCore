@@ -45,25 +45,16 @@ namespace Hangfire.EntityFrameworkCore
 
             modelBuilder.Entity<HangfireJob>(entity =>
             {
-                entity.HasOne(x => x.ActualState).
-                    WithOne(x => x.Job).
-                    HasForeignKey<HangfireJobState>(x => x.JobId).
-                    OnDelete(DeleteBehavior.Restrict);
                 entity.Property(x => x.InvocationData).HasConversion(
                     x => JobHelper.ToJson(x),
                     x => JobHelper.FromJson<InvocationData>(x));
+                entity.HasIndex(x => x.StateName);
                 entity.HasIndex(x => x.ExpireAt);
             });
 
             modelBuilder.Entity<HangfireJobParameter>(entity =>
             {
                 entity.HasKey(x => new { x.JobId, x.Name });
-            });
-
-            modelBuilder.Entity<HangfireJobState>(entity =>
-            {
-                entity.HasKey(x => x.JobId);
-                entity.HasIndex(x => x.Name);
             });
 
             modelBuilder.Entity<HangfireList>(entity =>
@@ -100,6 +91,9 @@ namespace Hangfire.EntityFrameworkCore
                 entity.Property(x => x.Data).HasConversion(
                     x => JobHelper.ToJson(x),
                     x => JobHelper.FromJson<Dictionary<string, string>>(x));
+                entity.HasMany<HangfireJob>().
+                    WithOne(x => x.State).
+                    HasForeignKey(x => x.StateId);
             });
         }
     }

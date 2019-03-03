@@ -191,7 +191,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
                 Assert.Equal(jobId, hangfireJob.Id.ToString(CultureInfo.InvariantCulture));
                 Assert.Equal(createdAt, hangfireJob.CreatedAt);
-                Assert.Null(hangfireJob.ActualState);
+                Assert.Null(hangfireJob.State);
+                Assert.Null(hangfireJob.StateName);
                 var job = invocationData.Deserialize();
                 Assert.Equal(typeof(EFCoreStorageTest), job.Type);
                 Assert.Equal(nameof(SampleMethod), job.Method.Name);
@@ -229,7 +230,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
                 Assert.Equal(jobId, hangfireJob.Id.ToString(CultureInfo.InvariantCulture));
                 Assert.Equal(createdAt, hangfireJob.CreatedAt);
-                Assert.Null(hangfireJob.ActualState);
+                Assert.Null(hangfireJob.State);
+                Assert.Null(hangfireJob.StateName);
 
                 var invocationData = hangfireJob.InvocationData;
 
@@ -586,12 +588,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Data = new Dictionary<string, string>(),
             };
             job.States.Add(state);
-            job.ActualState = new HangfireJobState
+            UseContextSavingChanges(context =>
             {
-                State = state,
-                Name = state.Name,
-            };
-            UseContextSavingChanges(context => context.Add(job));
+                context.Add(job);
+                context.SaveChanges();
+                job.State = state;
+                job.StateName = state.Name;
+            });
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             var result = UseConnection(instance => instance.GetJobData(jobId));
@@ -618,12 +621,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Data = new Dictionary<string, string>(),
             };
             job.States.Add(state);
-            job.ActualState = new HangfireJobState
+            UseContextSavingChanges(context =>
             {
-                State = state,
-                Name = state.Name,
-            };
-            UseContextSavingChanges(context => context.Add(job));
+                context.Add(job);
+                context.SaveChanges();
+                job.State = state;
+                job.StateName = state.Name;
+            });
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             var result = UseConnection(instance => instance.GetJobData(jobId));
@@ -1234,12 +1238,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             };
             job.States.Add(state);
-            job.ActualState = new HangfireJobState
+            UseContextSavingChanges(context =>
             {
-                State = state,
-                Name = state.Name,
-            };
-            UseContextSavingChanges(context => context.Add(job));
+                context.Add(job);
+                context.SaveChanges();
+                job.State = state;
+                job.StateName = state.Name;
+            });
             string jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             var result = UseConnection(instance => instance.GetStateData(jobId));
@@ -1270,19 +1275,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             job.States.Add(state);
-            job.ActualState = new HangfireJobState
-            {
-                State = state,
-                Name = state.Name,
-            };
             UseContextSavingChanges(context =>
             {
                 context.Add(job);
                 context.SaveChanges();
-                var actualState = job.States.First();
-                job.ActualState.StateId = actualState.Id;
-                job.ActualState.Name = actualState.Name;
+                job.State = state;
+                job.StateName = state.Name;
             });
+
             string jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
             var result = UseConnection(instance => instance.GetStateData(jobId));

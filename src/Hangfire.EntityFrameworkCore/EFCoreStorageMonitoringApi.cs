@@ -57,14 +57,14 @@ namespace Hangfire.EntityFrameworkCore
 
         private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
             (HangfireContext context, string name, int from, int count) => (
-                from x in context.Set<HangfireJobState>()
-                where x.Name == name
+                from x in context.Set<HangfireJob>()
+                where x.StateName == name
                 let s = x.State
-                orderby x.JobId descending
+                orderby x.Id descending
                 select new JobState
                 {
-                    Id = x.JobId,
-                    Job = Deserialize(x.Job.InvocationData),
+                    Id = x.Id,
+                    Job = Deserialize(x.InvocationData),
                     Reason = s.Reason,
                     Data = s.Data,
                 }).
@@ -85,14 +85,14 @@ namespace Hangfire.EntityFrameworkCore
 
         private static GetStateCountFunc GetStateCountFunc { get; } = EF.CompileQuery(
             (HangfireContext context, string name) =>
-                context.Set<HangfireJobState>().
-                LongCount(x => x.Name == name));
+                context.Set<HangfireJob>().
+                LongCount(x => x.StateName != null && x.StateName == name));
 
         private static GetStatisticsFunc GetStatisticsFunc { get; } = EF.CompileQuery(
             (HangfireContext context) => (
                 from stub in Enumerable.Repeat(0, 1)
                 let sets = context.Set<HangfireSet>().AsQueryable()
-                let jobStates = context.Set<HangfireJobState>().AsQueryable()
+                let jobs = context.Set<HangfireJob>().AsQueryable()
                 let counters = context.Set<HangfireCounter>().AsQueryable()
                 let deletedCounters = counters.Where(x => x.Key == DeletedCounterName)
                 let succeededCounters = counters.Where(x => x.Key == SucceededCounterName)
@@ -100,10 +100,14 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     Recurring = sets.LongCount(x => x.Key == RecurringJobsSetName),
                     Servers = context.Set<HangfireServer>().LongCount(),
-                    Enqueued = jobStates.LongCount(x => x.Name == EnqueuedState.StateName),
-                    Failed = jobStates.LongCount(x => x.Name == FailedState.StateName),
-                    Processing = jobStates.LongCount(x => x.Name == ProcessingState.StateName),
-                    Scheduled = jobStates.LongCount(x => x.Name == ScheduledState.StateName),
+                    Enqueued = jobs.LongCount(x =>
+                        x.StateName != null && x.StateName == EnqueuedState.StateName),
+                    Failed = jobs.LongCount(x =>
+                        x.StateName != null && x.StateName == FailedState.StateName),
+                    Processing = jobs.LongCount(x =>
+                        x.StateName != null && x.StateName == ProcessingState.StateName),
+                    Scheduled = jobs.LongCount(x =>
+                        x.StateName != null && x.StateName == ScheduledState.StateName),
                     Deleted = deletedCounters.Sum(x => x.Value),
                     Succeeded = succeededCounters.Sum(x => x.Value),
                 }).
@@ -111,36 +115,35 @@ namespace Hangfire.EntityFrameworkCore
 
         private static EnqueuedJobsFunc EnqueuedJobsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, IEnumerable<long> keys) =>
-                from jobState in context.Set<HangfireJobState>()
-                let id = jobState.JobId
+                from job in context.Set<HangfireJob>()
+                let id = job.Id
                 where keys.Contains(id)
-                let state = jobState.State
-                let job = jobState.Job
+                let state = job.State
                 select new KeyValuePair<string, EnqueuedJobDto>(
                     id.ToString(CultureInfo.InvariantCulture),
                     new EnqueuedJobDto
                     {
                         Job = Deserialize(job.InvocationData),
-                        State = jobState.Name,
-                        InEnqueuedState = EnqueuedState.StateName.Equals(jobState.Name,
+                        State = job.StateName,
+                        InEnqueuedState = EnqueuedState.StateName.Equals(job.StateName,
                             StringComparison.OrdinalIgnoreCase),
-                        EnqueuedAt = JobHelper.DeserializeNullableDateTime(
-                            state.Data.GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
+                        EnqueuedAt = state == null ? default :
+                            JobHelper.DeserializeNullableDateTime(
+                                state.Data.GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
                     }));
 
         private static FetchedJobsFunc FetchedJobsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, IEnumerable<long> keys) =>
-                from jobState in context.Set<HangfireJobState>()
-                let id = jobState.JobId
+                from job in context.Set<HangfireJob>()
+                let id = job.Id
                 where keys.Contains(id)
-                let state = jobState.State
-                let job = jobState.Job
+                let state = job.State
                 select new KeyValuePair<string, FetchedJobDto>(
                     id.ToString(CultureInfo.InvariantCulture),
                     new FetchedJobDto
                     {
                         Job = Deserialize(job.InvocationData),
-                        State = jobState.Name,
+                        State = job.StateName,
                         FetchedAt = job.QueuedJobs.Max(x => x.FetchedAt),
                     }));
 

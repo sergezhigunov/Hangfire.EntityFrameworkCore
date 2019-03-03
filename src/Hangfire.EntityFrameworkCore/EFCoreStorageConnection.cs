@@ -89,7 +89,7 @@ namespace Hangfire.EntityFrameworkCore
             (HangfireContext context, long id) => (
                 from x in context.Set<HangfireJob>()
                 where x.Id == id
-                select CreateJobData(x.InvocationData, x.CreatedAt, x.ActualState.Name)).
+                select CreateJobData(x.InvocationData, x.CreatedAt, x.State.Name)).
                 FirstOrDefault());
 
         private static GetJobParameterFunc GetJobParameterFunc { get; } = EF.CompileQuery(
@@ -141,8 +141,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
             (HangfireContext context, long id) => (
-                from x in context.Set<HangfireJobState>()
-                where x.JobId == id
+                from x in context.Set<HangfireJob>()
+                where x.Id == id
                 let s = x.State
                 select new StateData
                 {

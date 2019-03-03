@@ -127,7 +127,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var actualJob = Assert.Single(context.Set<HangfireJob>());
-                Assert.Null(actualJob.ActualState);
+                Assert.Null(actualJob.StateId);
                 var jobState = Assert.Single(context.Set<HangfireState>());
                 Assert.Equal("State", jobState.Name);
                 Assert.Equal("Reason", jobState.Reason);
@@ -1376,8 +1376,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var createdAtTo = DateTime.UtcNow;
             UseContext(context =>
             {
-                var actualJobState = Assert.Single(context.Set<HangfireJobState>());
-                Assert.Equal("State", actualJobState.Name);
+                var actualJob = Assert.Single(
+                    context.Set<HangfireJob>().Where(x => x.Id == job.Id));
+                Assert.Equal("State", actualJob.StateName);
                 var actualState = Assert.Single(context.Set<HangfireState>());
                 Assert.Equal("State", actualState.Name);
                 Assert.Equal("Reason", actualState.Reason);
@@ -1386,7 +1387,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var data = actualState.Data;
                 Assert.Single(data);
                 Assert.Equal("Value", data["Name"]);
-                Assert.Equal(actualState.Id, actualJobState.StateId);
+                Assert.Equal(actualState.Id, actualJob.StateId);
             });
         }
 

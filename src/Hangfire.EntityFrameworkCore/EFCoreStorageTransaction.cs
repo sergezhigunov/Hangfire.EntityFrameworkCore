@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Hangfire.EntityFrameworkCore
 {
     using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetJobStateExists = Func<HangfireContext, long, bool>;
     using GetSetValuesFunc = Func<HangfireContext, string, IEnumerable<string>>;
     using GetListsFunc = Func<HangfireContext, string, IEnumerable<HangfireList>>;
     using GetListPositionsFunc = Func<HangfireContext, string, IEnumerable<int>>;
@@ -24,10 +23,6 @@ namespace Hangfire.EntityFrameworkCore
                 from x in context.Set<HangfireHash>()
                 where x.Key == key
                 select x.Field);
-
-        private static GetJobStateExists GetJobStateExists { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) =>
-                context.Set<HangfireJobState>().Any(x => x.JobId == id));
 
         private static GetListPositionsFunc GetListPositionsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, string key) =>
@@ -513,19 +508,17 @@ namespace Hangfire.EntityFrameworkCore
 
                 if (setActual)
                 {
-                    var jobStateEntry = context.ChangeTracker.
-                        Entries<HangfireJobState>().
-                        SingleOrDefault(x => x.Entity.JobId == id) ??
-                        context.Attach(new HangfireJobState
+                    var jobEntry = context.ChangeTracker.
+                        Entries<HangfireJob>().
+                        SingleOrDefault(x => x.Entity.Id == id) ??
+                        context.Attach(new HangfireJob
                         {
-                            JobId = id,
-                            Name = state.Name,
+                            Id = id,
+                            State = stateEntity,
+                            StateName = state.Name,
                         });
-                    jobStateEntry.Entity.State = stateEntity;
-                    jobStateEntry.State =
-                        GetJobStateExists(context, id) ?
-                        EntityState.Modified :
-                        EntityState.Added;
+                    jobEntry.Property(x => x.StateName).IsModified = true;
+                    jobEntry.Navigation(nameof(HangfireJob.State)).IsModified = true;
                 }
             });
         }

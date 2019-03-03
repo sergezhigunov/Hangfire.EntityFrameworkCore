@@ -18,12 +18,17 @@ namespace Hangfire.EntityFrameworkCore
 
         public DateTime CreatedAt { get; set; }
 
+        public long? StateId { get; set; }
+
+        [MaxLength(20)]
+        public string StateName { get; set; }
+
         public DateTime? ExpireAt { get; set; }
 
         [Required]
         public InvocationData InvocationData { get; set; }
 
-        public virtual HangfireJobState ActualState { get; set; }
+        public virtual HangfireState State { get; set; }
         
         public virtual ICollection<HangfireJobParameter> Parameters { get; set; }
 
