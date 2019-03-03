@@ -14,17 +14,21 @@ namespace Hangfire.EntityFrameworkCore
     internal class CountersAggregator : IServerComponent
 #pragma warning restore CS0618
     {
+        private const int BatchSize = 1000;
+
         private static GetCountersToRemoveFunc GetCountersToRemoveFunc { get; } = EF.CompileQuery(
             (HangfireContext context) => (
                 from x in context.Set<HangfireCounter>()
                 where x.Key == (
                     from y in context.Set<HangfireCounter>()
                     group y by y.Key into g
-                    where g.Count() > 1
+                    let count = g.Count()
+                    where count > 1
+                    orderby count descending
                     select g.Key).
                     FirstOrDefault()
                 select x).
-                Take(100));
+                Take(BatchSize));
 
         private readonly ILog _logger = LogProvider.For<CountersAggregator>();
         private readonly EFCoreStorage _storage;
@@ -45,9 +49,7 @@ namespace Hangfire.EntityFrameworkCore
                 using (var context = _storage.CreateContext())
                 {
                     var counters = context.Set<HangfireCounter>();
-                    var itemsToRemove = GetCountersToRemoveFunc(context).
-                        ToList();
-
+                    var itemsToRemove = GetCountersToRemoveFunc(context). ToList();
                     var count = itemsToRemove.Count();
                     if (count > 1)
                     {
