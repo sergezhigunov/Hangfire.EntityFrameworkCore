@@ -11,6 +11,7 @@ namespace Hangfire.EntityFrameworkCore
     internal class ExpirationManager : IServerComponent
 #pragma warning restore 618
     {
+        private const int BatchSize = 1000;
         private const string LockKey = "locks:expirationmanager";
         private readonly ILog _logger = LogProvider.For<ExpirationManager>();
         private readonly EFCoreStorage _storage;
@@ -37,11 +38,18 @@ namespace Hangfire.EntityFrameworkCore
             _logger.Debug(
                $"Removing outdated records from the '{type.Name}' table...");
 
-            UseLock(() => _storage.UseContextSavingChanges(context =>
+            UseLock(() =>
             {
-                var set = context.Set<T>();
-                set.RemoveRange(set.Where(x => x.ExpireAt < DateTime.UtcNow));
-            }));
+                while(0 != _storage.UseContext(context =>
+                {
+                    var set = context.Set<T>();
+                    var entitiesToRemove = set.
+                        Where(x => x.ExpireAt < DateTime.UtcNow).
+                        Take(BatchSize);
+                    set.RemoveRange(entitiesToRemove);
+                    return context.SaveChanges();
+                }));
+            });
 
             _logger.Trace($"Outdated records removed from the '{type.Name}' table.");
         }
