@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreStorageOptionsFacts
+    public static class EFCoreStorageOptionsFacts
     {
         [Fact]
         public static void Ctor_CreatesInstance()

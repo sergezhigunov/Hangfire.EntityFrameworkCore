@@ -107,9 +107,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void UseContext_InvokesAction()
         {
             bool exposed = false;
-            Action<HangfireContext> action = context => exposed = true;
+            void Action(HangfireContext context) => exposed = true;
 
-            Storage.UseContext(action);
+            Storage.UseContext(Action);
 
             Assert.True(exposed);
         }
@@ -127,9 +127,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void UseContextGeneric_InvokesFunc()
         {
             bool exposed = false;
-            Func<HangfireContext, bool> func = context => exposed = true;
+            bool Func(HangfireContext context) => exposed = true;
 
-            var result = Storage.UseContext(func);
+            var result = Storage.UseContext(Func);
 
             Assert.True(exposed);
             Assert.True(result);

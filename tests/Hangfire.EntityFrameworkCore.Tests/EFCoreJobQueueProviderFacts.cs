@@ -6,7 +6,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreJobQueueProviderFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenStorageParameterIsNull()
+        public static void Ctor_Throws_WhenStorageParameterIsNull()
         {
             EFCoreStorage storage = null;
 

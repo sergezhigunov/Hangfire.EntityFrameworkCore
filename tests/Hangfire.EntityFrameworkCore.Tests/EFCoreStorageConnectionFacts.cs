@@ -14,7 +14,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public class EFCoreStorageConnectionFacts : EFCoreStorageTest
     {
         [Fact]
-        public void Ctor_Throws_WhenStorageParameterIsNull()
+        public static void Ctor_Throws_WhenStorageParameterIsNull()
         {
             EFCoreStorage storage = null;
 
@@ -1408,15 +1408,15 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             UseContext(context =>
             {
-                Func<string, DateTime> getHeartbeatByServerId = serverId => (
+                DateTime GetHeartbeatByServerId(string serverId) => (
                     from server in context.Set<HangfireServer>()
                     where server.Id == serverId
                     select server.Heartbeat).
                     Single();
 
                 DateTime
-                    actualHeartbeat1 = getHeartbeatByServerId(server1),
-                    actualHeartbeat2 = getHeartbeatByServerId(server2);
+                    actualHeartbeat1 = GetHeartbeatByServerId(server1),
+                    actualHeartbeat2 = GetHeartbeatByServerId(server2);
 
                 Assert.NotEqual(datetime, actualHeartbeat1);
                 Assert.Equal(datetime, actualHeartbeat2);

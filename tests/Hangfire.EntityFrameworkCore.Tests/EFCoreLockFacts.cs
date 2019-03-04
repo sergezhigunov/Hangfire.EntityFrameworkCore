@@ -4,10 +4,10 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreLockFacts
+    public static class EFCoreLockFacts
     {
         [Fact]
-        public void Ctor_Throws_WhenProviderParameterIsNull()
+        public static void Ctor_Throws_WhenProviderParameterIsNull()
         {
             IDistributedLockProvider provider = null;
             const string resource = "resource";
@@ -18,7 +18,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void Ctor_CreatesInstance()
+        public static void Ctor_CreatesInstance()
         {
             var providerMock = new Mock<IDistributedLockProvider>();
             const string resource = "resource";
@@ -38,7 +38,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void Dispose_InvokesProviderReleaseMethod()
+        public static void Dispose_InvokesProviderReleaseMethod()
         {
             var providerMock = new Mock<IDistributedLockProvider>();
             const string resource = "resource";

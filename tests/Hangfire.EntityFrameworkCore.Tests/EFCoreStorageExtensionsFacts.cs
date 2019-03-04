@@ -6,24 +6,24 @@ using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
 {
-    public class EFCoreStorageExtensionsFacts
+    public static class EFCoreStorageExtensionsFacts
     {
         [Fact]
-        public void UseEFCoreStorage_Throws_WhenConfigurationParameterIsNull()
+        public static void UseEFCoreStorage_Throws_WhenConfigurationParameterIsNull()
         {
             IGlobalConfiguration configuration = null;
-            Action<DbContextOptionsBuilder> optionsAction = builder => { };
+            void OptionsAction(DbContextOptionsBuilder builder) { }
             var options = new EFCoreStorageOptions();
 
             Assert.Throws<ArgumentNullException>(nameof(configuration),
-                () => configuration.UseEFCoreStorage(optionsAction));
+                () => configuration.UseEFCoreStorage(OptionsAction));
 
             Assert.Throws<ArgumentNullException>(nameof(configuration),
-                () => configuration.UseEFCoreStorage(optionsAction, options));
+                () => configuration.UseEFCoreStorage(OptionsAction, options));
         }
 
         [Fact]
-        public void UseEFCoreStorage_Throws_WhenOptionsActionParameterIsNull()
+        public static void UseEFCoreStorage_Throws_WhenOptionsActionParameterIsNull()
         {
             var configuration = new Mock<IGlobalConfiguration>().Object;
             Action<DbContextOptionsBuilder> optionsAction = null;
@@ -37,45 +37,43 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseEFCoreStorage_Throws_WhenOptionsParameterIsNull()
+        public static void UseEFCoreStorage_Throws_WhenOptionsParameterIsNull()
         {
             var configuration = new Mock<IGlobalConfiguration>().Object;
-            Action<DbContextOptionsBuilder> optionsAction = builder => { };
+            void OptionsAction(DbContextOptionsBuilder builder) { }
             EFCoreStorageOptions options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
-                () => configuration.UseEFCoreStorage(optionsAction, options));
+                () => configuration.UseEFCoreStorage(OptionsAction, options));
         }
 
         [Fact]
-        public void UseEFCoreStorage_CompletesSuccesfully()
+        public static void UseEFCoreStorage_CompletesSuccesfully()
         {
             var configurationMock = new Mock<IGlobalConfiguration>();
             var configuration = configurationMock.Object;
-            bool optionsActionExposed = false;
-            Action<DbContextOptionsBuilder> optionsAction =
-                builder => { optionsActionExposed = true; };
+            bool exposed = false;
+            void OptionsAction(DbContextOptionsBuilder builder) => exposed = true;
             var options = new EFCoreStorageOptions();
 
-            var result = configuration.UseEFCoreStorage(optionsAction, options);
+            var result = configuration.UseEFCoreStorage(OptionsAction, options);
 
             Assert.NotNull(result);
             var genericConfiguration =
                 Assert.IsAssignableFrom<IGlobalConfiguration<EFCoreStorage>>(result);
             Assert.NotNull(genericConfiguration.Entry);
-            Assert.True(optionsActionExposed);
+            Assert.True(exposed);
         }
 
         [Fact]
-        public void UseEFCoreStorage_CompletesSuccesfully_WithDefaultOptions()
+        public static void UseEFCoreStorage_CompletesSuccesfully_WithDefaultOptions()
         {
             var configurationMock = new Mock<IGlobalConfiguration>();
             var configuration = configurationMock.Object;
             bool optionsActionExposed = false;
-            Action<DbContextOptionsBuilder> optionsAction =
-                builder => { optionsActionExposed = true; };
+            void OptionsAction(DbContextOptionsBuilder builder) => optionsActionExposed = true;
 
-            var result = configuration.UseEFCoreStorage(optionsAction);
+            var result = configuration.UseEFCoreStorage(OptionsAction);
 
             Assert.NotNull(result);
             var genericConfiguration =
@@ -85,7 +83,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseQueueProvider_Throws_WhenStorageParameterIsNull()
+        public static void UseQueueProvider_Throws_WhenStorageParameterIsNull()
         {
             EFCoreStorage storage = null;
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
@@ -96,7 +94,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseQueueProvider_Throws_WhenProviderParameterIsNull()
+        public static void UseQueueProvider_Throws_WhenProviderParameterIsNull()
         {
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
             IPersistentJobQueueProvider provider = null;
@@ -107,7 +105,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseQueueProvider_Throws_WhenQueuesParameterIsNull()
+        public static void UseQueueProvider_Throws_WhenQueuesParameterIsNull()
         {
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
@@ -118,7 +116,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseQueueProvider_Throws_WhenQueuesParameterIsEmpty()
+        public static void UseQueueProvider_Throws_WhenQueuesParameterIsEmpty()
         {
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
@@ -129,7 +127,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
-        public void UseQueueProvider_RegistersSpecifiedQueueProviderCorrectly()
+        public static void UseQueueProvider_RegistersSpecifiedQueueProviderCorrectly()
         {
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
