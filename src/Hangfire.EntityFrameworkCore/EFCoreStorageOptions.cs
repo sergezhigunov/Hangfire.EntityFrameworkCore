@@ -1,4 +1,5 @@
 ﻿using System;
+using Hangfire.EntityFrameworkCore.Properties;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -132,7 +133,8 @@ namespace Hangfire.EntityFrameworkCore
         private static void ThrowIfNonPositive(TimeSpan value)
         {
             if (value <= TimeSpan.Zero)
-                throw new ArgumentOutOfRangeException(nameof(value), value, null);
+                throw new ArgumentOutOfRangeException(nameof(value), value,
+                    CoreStrings.ArgumentOutOfRangeExceptionNeedPositiveValue);
         }
     }
 }

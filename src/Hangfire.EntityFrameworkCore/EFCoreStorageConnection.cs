@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using Hangfire.Annotations;
 using Hangfire.Common;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +25,7 @@ namespace Hangfire.EntityFrameworkCore
     using GetListCountFunc = Func<HangfireContext, string, long>;
     using GetListTtlFunc = Func<HangfireContext, string, DateTime?>;
     using GetRangeFromListFunc = Func<HangfireContext, string, int, int, IEnumerable<string>>;
-    using GetRangeFromSetFunc = Func<HangfireContext, string ,int, int, IEnumerable<string>>;
+    using GetRangeFromSetFunc = Func<HangfireContext, string, int, int, IEnumerable<string>>;
     using GetSetCountFunc = Func<HangfireContext, string, long>;
     using GetSetTtlFunc = Func<HangfireContext, string, DateTime?>;
     using GetStateDataFunc = Func<HangfireContext, long, StateData>;
@@ -185,9 +185,10 @@ namespace Hangfire.EntityFrameworkCore
             if (resource == null)
                 throw new ArgumentNullException(nameof(resource));
             if (resource.Length == 0)
-                throw new ArgumentException(null, nameof(resource));
-            if (timeout <= TimeSpan.Zero)
-                throw new ArgumentOutOfRangeException(nameof(resource), timeout, null);
+                throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty, nameof(resource));
+            if (timeout < TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(timeout), timeout,
+                    CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
 
             return new EFCoreLock(_lockProvider, resource, timeout);
         }
@@ -269,7 +270,8 @@ namespace Hangfire.EntityFrameworkCore
             if (queues == null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Length == 0)
-                throw new ArgumentException(null, nameof(queues));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
+                    nameof(queues));
 
             var provider = new EFCoreJobQueueProvider(_storage);
             var queue = provider.GetJobQueue();
@@ -443,7 +445,8 @@ namespace Hangfire.EntityFrameworkCore
         public override int RemoveTimedOutServers(TimeSpan timeOut)
         {
             if (timeOut < TimeSpan.Zero)
-                throw new ArgumentOutOfRangeException(nameof(timeOut), timeOut, null);
+                throw new ArgumentOutOfRangeException(nameof(timeOut), timeOut,
+                    CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
 
             return _storage.UseContextSavingChanges(context =>
             {
@@ -570,7 +573,8 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(id));
 
             if (id.Length == 0)
-                throw new ArgumentException(null, nameof(id));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
+                    nameof(id));
 
             return long.Parse(id, CultureInfo.InvariantCulture);
         }

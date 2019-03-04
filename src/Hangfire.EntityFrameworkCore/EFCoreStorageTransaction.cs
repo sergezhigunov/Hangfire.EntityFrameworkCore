@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hangfire.Annotations;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.States;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -670,7 +671,8 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(queue));
 
             if (queue.Length == 0)
-                throw new ArgumentException(null, nameof(queue));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
+                    nameof(queue));
         }
 
         private static long ValidateJobId(string jobId)
@@ -679,7 +681,8 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(jobId));
 
             if (jobId.Length == 0)
-                throw new ArgumentException(null, nameof(jobId));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
+                    nameof(jobId));
 
             return long.Parse(jobId, CultureInfo.InvariantCulture);
         }

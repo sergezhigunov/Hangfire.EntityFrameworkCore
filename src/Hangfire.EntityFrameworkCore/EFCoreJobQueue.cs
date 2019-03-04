@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using Hangfire.Annotations;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,7 +38,8 @@ namespace Hangfire.EntityFrameworkCore
             if (queues == null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Length == 0)
-                throw new ArgumentException(null, nameof(queues));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
+                    nameof(queues));
 
             var waitHandles = new[]
             {
@@ -79,7 +81,9 @@ namespace Hangfire.EntityFrameworkCore
             if (queue == null)
                 throw new ArgumentNullException(nameof(queue));
             if (queue.Length == 0)
-                throw new ArgumentException(null, nameof(queue));
+                throw new ArgumentException(
+                    CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
+                    nameof(queue));
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
 
@@ -94,7 +98,9 @@ namespace Hangfire.EntityFrameworkCore
                 }
                 catch (DbUpdateException exception)
                 {
-                    throw new InvalidOperationException(null, exception);
+                    throw new InvalidOperationException(
+                        CoreStrings.InvalidOperationExceptionJobDoesNotExists,
+                        exception);
                 }
             });
         }

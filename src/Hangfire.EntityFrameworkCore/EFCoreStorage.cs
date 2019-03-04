@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -115,7 +116,8 @@ namespace Hangfire.EntityFrameworkCore
             if (queues == null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Count == 0)
-                throw new ArgumentException(null, nameof(queues));
+                throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
+                    nameof(queues));
 
             var providers = QueueProviders;
 

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using Hangfire.Annotations;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,9 +31,11 @@ namespace Hangfire.EntityFrameworkCore
             if (resource == null)
                 throw new ArgumentNullException(nameof(resource));
             if (resource.Length == 0)
-                throw new ArgumentException(null, nameof(resource));
-            if (timeout <= TimeSpan.Zero)
-                throw new ArgumentOutOfRangeException(nameof(timeout), timeout, null);
+                throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
+                    nameof(resource));
+            if (timeout < TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(timeout), timeout,
+                    CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
 
             var deadline = DateTime.UtcNow + timeout;
 

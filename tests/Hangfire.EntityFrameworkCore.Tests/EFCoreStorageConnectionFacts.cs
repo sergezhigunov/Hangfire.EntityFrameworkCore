@@ -61,7 +61,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var timeout = new TimeSpan(-1);
             var instance = CreateConnection();
 
-            Assert.Throws<ArgumentOutOfRangeException>(nameof(resource),
+            Assert.Throws<ArgumentOutOfRangeException>(nameof(timeout),
                 () => instance.AcquireDistributedLock(resource, timeout));
         }
 
