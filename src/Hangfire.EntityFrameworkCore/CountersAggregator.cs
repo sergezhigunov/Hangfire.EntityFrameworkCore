@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
@@ -40,8 +41,8 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Execute(CancellationToken cancellationToken)
         {
-            _logger.Debug("Aggregating records in '"+ nameof(HangfireCounter) +"' table...");
-
+            _logger.DebugFormat(CoreStrings.CountersAggregatorExecuteStarting,
+                nameof(HangfireCounter));
             int removedCount;
             do
             {
@@ -78,10 +79,9 @@ namespace Hangfire.EntityFrameworkCore
             }
             while (removedCount > 0);
 
-            _logger.Debug("Records from the '" + nameof(HangfireCounter) + "' table aggregated.");
-
+            _logger.TraceFormat(CoreStrings.CountersAggregatorExecuteCompleted,
+                nameof(HangfireCounter));
             cancellationToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
         }
-
     }
 }

@@ -97,6 +97,70 @@ namespace Hangfire.EntityFrameworkCore.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Records from the &apos;{0}&apos; table aggregated..
+        /// </summary>
+        internal static string CountersAggregatorExecuteCompleted {
+            get {
+                return ResourceManager.GetString("CountersAggregatorExecuteCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Aggregating records in &apos;{0}&apos; table....
+        /// </summary>
+        internal static string CountersAggregatorExecuteStarting {
+            get {
+                return ResourceManager.GetString("CountersAggregatorExecuteStarting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Keep-alive query for message {0} sent.
+        /// </summary>
+        internal static string EFCoreFetchedJobExecuteKeepAliveQueryCompleted {
+            get {
+                return ResourceManager.GetString("EFCoreFetchedJobExecuteKeepAliveQueryCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to execute keep-alive query for message {0}.
+        /// </summary>
+        internal static string EFCoreFetchedJobExecuteKeepAliveQueryFailed {
+            get {
+                return ResourceManager.GetString("EFCoreFetchedJobExecuteKeepAliveQueryFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Outdated records removed from the &apos;{0}&apos; table..
+        /// </summary>
+        internal static string ExpirationManagerRemoveExpiredCompleted {
+            get {
+                return ResourceManager.GetString("ExpirationManagerRemoveExpiredCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing outdated records from the &apos;{0}&apos; table....
+        /// </summary>
+        internal static string ExpirationManagerRemoveExpiredStarting {
+            get {
+                return ResourceManager.GetString("ExpirationManagerRemoveExpiredStarting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An exception was thrown during acquiring distributed lock on the {0} resource within {1} seconds. Outdated records were not removed.
+        ///It will be retried in {2} seconds..
+        /// </summary>
+        internal static string ExpirationManagerUseLockFailed {
+            get {
+                return ResourceManager.GetString("ExpirationManagerUseLockFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The job does not exist..
         /// </summary>
         internal static string InvalidOperationExceptionJobDoesNotExists {

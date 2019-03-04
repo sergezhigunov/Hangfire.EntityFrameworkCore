@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.Storage;
@@ -35,8 +37,7 @@ namespace Hangfire.EntityFrameworkCore
             where T : class, IExpirable
         {
             var type = typeof(T);
-            _logger.Debug(
-               $"Removing outdated records from the '{type.Name}' table...");
+            _logger.DebugFormat(CoreStrings.ExpirationManagerRemoveExpiredStarting, type.Name);
 
             UseLock(() =>
             {
@@ -51,7 +52,7 @@ namespace Hangfire.EntityFrameworkCore
                 }));
             });
 
-            _logger.Trace($"Outdated records removed from the '{type.Name}' table.");
+            _logger.TraceFormat(CoreStrings.ExpirationManagerRemoveExpiredCompleted, type.Name);
         }
 
         private void UseLock(Action action)
@@ -68,12 +69,12 @@ namespace Hangfire.EntityFrameworkCore
                 when (exception.Resource == LockKey)
                 {
                     _logger.Log(LogLevel.Debug, () =>
-                        $@"An exception was thrown during acquiring distributed lock on the {
-                            LockKey
-                        } resource within {
-                            lockTimeout.TotalSeconds
-                        } seconds. Outdated records were not removed.
-It will be retried in {_storage.JobExpirationCheckInterval.TotalSeconds} seconds.",
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            CoreStrings.ExpirationManagerUseLockFailed,
+                            LockKey,
+                            lockTimeout.TotalSeconds,
+                            _storage.JobExpirationCheckInterval.TotalSeconds),
                         exception);
                 }
             }

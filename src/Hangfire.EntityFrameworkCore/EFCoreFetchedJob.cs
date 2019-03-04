@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Threading;
 using Hangfire.Annotations;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -92,11 +93,16 @@ namespace Hangfire.EntityFrameworkCore
                 }
                 catch (Exception exception)
                 {
-                    _logger.DebugException(
-                        $"Unable to execute keep-alive query for message {Id}", exception);
+                    _logger.Log(LogLevel.Debug, () =>
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed,
+                            Id),
+                        exception);
                     return;
                 }
-                _logger.Trace($"Keep-alive query for message {Id} sent");
+                _logger.TraceFormat(
+                    CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryCompleted, Id);
             }
         }
 
