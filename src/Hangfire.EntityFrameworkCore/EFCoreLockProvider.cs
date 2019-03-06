@@ -10,7 +10,7 @@ namespace Hangfire.EntityFrameworkCore
 {
     using GetLockFunc = Func<HangfireContext, string, HangfireLock>;
 
-    internal class EFCoreLockProvider : IDistributedLockProvider
+    internal class EFCoreLockProvider : ILockProvider
     {
         private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
         private readonly EFCoreStorage _storage;

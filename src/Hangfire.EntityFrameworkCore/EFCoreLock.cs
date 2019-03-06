@@ -5,12 +5,12 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal sealed class EFCoreLock : IDisposable
     {
-        private readonly IDistributedLockProvider _provider;
+        private readonly ILockProvider _provider;
         private readonly string _resource;
         private bool _disposed = false;
 
         public EFCoreLock(
-            [NotNull] IDistributedLockProvider provider,
+            [NotNull] ILockProvider provider,
             [NotNull] string resource,
             TimeSpan timeout)
         {

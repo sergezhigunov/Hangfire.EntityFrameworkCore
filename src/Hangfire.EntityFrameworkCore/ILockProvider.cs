@@ -7,7 +7,7 @@ namespace Hangfire.EntityFrameworkCore
     /// <summary>
     /// Provides a mechanism that allows to acquire and release exclusive distributed locks.
     /// </summary>
-    public interface IDistributedLockProvider
+    public interface ILockProvider
     {
         /// <summary>
         /// Acquires an exclusive distributed lock on the specified resource.

@@ -169,7 +169,7 @@ namespace Hangfire.EntityFrameworkCore
             (HangfireContext context, long id, string name) =>
                 context.Set<HangfireJobParameter>().Any(x => x.JobId == id && x.Name == name));
 
-        private readonly IDistributedLockProvider _lockProvider;
+        private readonly ILockProvider _lockProvider;
         private readonly EFCoreStorage _storage;
 
         public EFCoreStorageConnection(EFCoreStorage storage)
