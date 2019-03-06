@@ -415,14 +415,15 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(keyValuePairs));
             ThrowIfDisposed();
 
+            var fields = new HashSet<string>(keyValuePairs.Select(x => x.Key));
+
             _queue.Enqueue(context =>
             {
-                var actualFields = new HashSet<string>(keyValuePairs.Select(x => x.Key));
                 var exisitingFields = new HashSet<string>(GetHashFieldsFunc(context, key));
                 var entries = (
                     from entry in context.ChangeTracker.Entries<HangfireHash>()
                     let entity = entry.Entity
-                    where entity.Key == key && actualFields.Contains(entity.Field)
+                    where entity.Key == key && fields.Contains(entity.Field)
                     select entry).
                     ToDictionary(x => x.Entity.Field);
 
@@ -496,15 +497,18 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(state));
             ThrowIfDisposed();
 
+            var data = state.SerializeData();
+            var createdAt = state.GetCreatedAt() ?? DateTime.UtcNow;
+
             _queue.Enqueue(context =>
             {
                 var stateEntity = context.Add(new HangfireState
                 {
                     JobId = id,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = createdAt,
                     Name = state.Name,
                     Reason = state.Reason,
-                    Data = state.SerializeData(),
+                    Data = data,
                 }).Entity;
 
                 if (setActual)

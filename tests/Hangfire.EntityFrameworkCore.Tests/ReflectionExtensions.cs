@@ -5,18 +5,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
 {
     internal static class ReflectionExtensions
     {
-        public static object GetFieldValue(this object instance, string name)
+        public static T CreateInstance<T>(params object[] args)
         {
-            return GetField(instance.GetType(), name).
-                GetValue(instance);
+            return (T)Activator.CreateInstance(typeof(T),
+                BindingFlags.NonPublic | BindingFlags.Instance, null, args, null);
         }
 
-        private static FieldInfo GetField(Type type, string name)
+        public static object GetFieldValue(this object instance, string name)
         {
-            var result = type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (result == null && type.BaseType != null)
-                result = GetField(type.BaseType, name);
-            return result;
+            return instance.GetType().
+                GetField(name, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(instance);
         }
     }
 }
