@@ -40,7 +40,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 () => instance.Execute(source.Token));
         }
 
-
         [Fact]
         public void Execute_DoWorkCorrectly()
         {

@@ -538,7 +538,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(6, result.Succeeded);
         }
 
-
         [Fact]
         public void HourlyFailedJobs_ReturnsCorrectResult()
         {
@@ -1063,7 +1062,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             job.StateName = state.Name;
             context.SaveChanges();
         }
-
 
         private T UseMonitoringApi<T>(Func<EFCoreStorageMonitoringApi, T> func)
         {

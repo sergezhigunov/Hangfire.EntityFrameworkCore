@@ -10,7 +10,6 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
 {
     public class Startup
     {
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -18,7 +17,7 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
+        public static void ConfigureServices(IServiceCollection services)
         {
             var userPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             var databaseFilePath = Path.Combine(userPath, "hangfire.db");
