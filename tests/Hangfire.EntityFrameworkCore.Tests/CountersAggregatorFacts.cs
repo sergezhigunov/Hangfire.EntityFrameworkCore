@@ -33,6 +33,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 CountersAggregationInterval = new TimeSpan(1),
             });
+            storage.RegisterDatabaseInitializer(context => context.Database.EnsureCreated());
             var instance = new CountersAggregator(storage);
             var source = new CancellationTokenSource(0);
 

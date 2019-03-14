@@ -15,7 +15,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected EFCoreStorage Storage =>
             LazyInitializer.EnsureInitialized(ref _storage,
-                () => new EFCoreStorage(OptionsAction, new EFCoreStorageOptions()));
+                () =>
+                {
+                    var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions());
+                    storage.RegisterDatabaseInitializer(
+                        context => context.Database.EnsureCreated());
+                    return storage;
+                });
 
         protected EFCoreStorageTest()
         {

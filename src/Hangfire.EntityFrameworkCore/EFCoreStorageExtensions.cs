@@ -73,6 +73,29 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         /// <summary>
+        /// Adds a database creator to the job storage.
+        /// </summary>
+        /// <param name="configuration">
+        /// The storage configuration to add the database creator to.
+        /// </param>
+        /// <returns>
+        /// A job storage configuration.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="configuration"/> is <see langword="null"/>.
+        /// </exception>
+        public static IGlobalConfiguration<EFCoreStorage> UseDatabaseCreator(
+            [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            configuration.Entry.RegisterDatabaseInitializer(
+                context => context.Database.EnsureCreated());
+            return configuration;
+        }
+
+        /// <summary>
         /// Adds a job queue provider of the specified queues into the storage.
         /// </summary>
         /// <param name="configuration">

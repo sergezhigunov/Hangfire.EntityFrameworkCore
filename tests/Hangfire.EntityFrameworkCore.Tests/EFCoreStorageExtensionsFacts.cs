@@ -83,6 +83,30 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
+        public static void UseDatabaseCreator_Throws_WhenStorageParameterIsNull()
+        {
+            var configuration = default(IGlobalConfiguration<EFCoreStorage>);
+
+            Assert.Throws<ArgumentNullException>(nameof(configuration),
+                () => configuration.UseDatabaseCreator());
+        }
+
+        [Fact]
+        public static void UseDatabaseCreator_RegistersDatabaseCreatorCorrectly()
+        {
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
+            var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
+            configurationMock.Setup(x => x.Entry).Returns(storage);
+            var configuration = configurationMock.Object;
+
+            var result = configuration.UseDatabaseCreator();
+
+            Assert.Same(storage, result.Entry);
+            var action = Assert.IsType<Action<HangfireContext>>(
+                storage.GetFieldValue("_databaseInitializer"));
+        }
+
+        [Fact]
         public static void UseQueueProvider_Throws_WhenStorageParameterIsNull()
         {
             var configuration = default(IGlobalConfiguration<EFCoreStorage>);

@@ -26,7 +26,8 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
                     builder.UseSqlite($"Data Source={databaseFilePath}"),
                     new EFCoreStorageOptions
                     {
-                    }));
+                    }).
+                UseDatabaseCreator());
             services.AddMvcCore();
         }
 

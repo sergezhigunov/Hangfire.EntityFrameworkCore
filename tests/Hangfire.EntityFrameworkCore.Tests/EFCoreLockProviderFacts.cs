@@ -178,6 +178,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 DistributedLockTimeout = new TimeSpan(0, 0, 1),
             });
+            storage.RegisterDatabaseInitializer(context => context.Database.EnsureCreated());
             return new EFCoreLockProvider(storage);
         }
     }

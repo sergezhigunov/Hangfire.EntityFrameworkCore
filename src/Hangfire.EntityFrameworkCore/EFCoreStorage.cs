@@ -15,6 +15,7 @@ namespace Hangfire.EntityFrameworkCore
         private readonly object _lock = new object();
         private readonly DbContextOptions _contextOptions;
         private readonly EFCoreStorageOptions _options;
+        private Action<HangfireContext> _databaseInitializer;
         private bool _databaseInitialized;
 
         internal EFCoreJobQueueProvider DefaultQueueProvider { get; }
@@ -109,6 +110,9 @@ namespace Hangfire.EntityFrameworkCore
             return QueueProviders.GetValue(queue) ?? DefaultQueueProvider;
         }
 
+        internal void RegisterDatabaseInitializer(Action<HangfireContext> databaseInitializer)
+            => _databaseInitializer = databaseInitializer;
+
         internal void RegisterProvider(IPersistentJobQueueProvider provider, IList<string> queues)
         {
             if (provider == null)
@@ -169,7 +173,7 @@ namespace Hangfire.EntityFrameworkCore
                 lock (_lock)
                     if (!_databaseInitialized)
                     {
-                        context.Database.EnsureCreated();
+                        _databaseInitializer?.Invoke(context);
                         _databaseInitialized = true;
                     }
 
