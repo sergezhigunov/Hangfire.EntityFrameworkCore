@@ -75,8 +75,8 @@ namespace Hangfire.EntityFrameworkCore
         /// <summary>
         /// Adds a job queue provider of the specified queues into the storage.
         /// </summary>
-        /// <param name="storage">
-        /// The storage to add the job queue provider to.
+        /// <param name="configuration">
+        /// The storage configuration to add the job queue provider to.
         /// </param>
         /// <param name="provider">
         /// A job queue provider to add.
@@ -85,10 +85,10 @@ namespace Hangfire.EntityFrameworkCore
         /// A list of provider queues.
         /// </param>
         /// <returns>
-        /// A job storage instance.
+        /// A job storage configuration.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="storage"/> is <see langword="null"/>.
+        /// <paramref name="configuration"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="provider"/> is <see langword="null"/>.
@@ -99,16 +99,16 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentException">
         /// <paramref name="queues"/> is empty.
         /// </exception>
-        public static EFCoreStorage UseQueueProvider(
-            [NotNull] this EFCoreStorage storage,
+        public static IGlobalConfiguration<EFCoreStorage> UseQueueProvider(
+            [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration,
             [NotNull] IPersistentJobQueueProvider provider,
             [NotNull] IList<string> queues)
         {
-            if (storage == null)
-                throw new ArgumentNullException(nameof(storage));
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
 
-            storage.RegisterProvider(provider, queues);
-            return storage;
+            configuration.Entry.RegisterProvider(provider, queues);
+            return configuration;
         }
     }
 }

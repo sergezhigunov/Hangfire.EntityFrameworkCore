@@ -287,7 +287,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
             queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
             var queueProvider = queueProviderMock.Object;
             var queueName = "queue";
-            Storage.UseQueueProvider(queueProvider, new[] { queueName });
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
+            configurationMock.Setup(x => x.Entry).Returns(Storage);
+            var configuration = configurationMock.Object;
+            configuration.UseQueueProvider(queueProvider, new[] { queueName });
             using (var instance = new EFCoreStorageTransaction(Storage))
             {
                 instance.AddToQueue("queue", jobId);

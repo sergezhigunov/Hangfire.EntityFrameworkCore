@@ -85,57 +85,69 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public static void UseQueueProvider_Throws_WhenStorageParameterIsNull()
         {
-            EFCoreStorage storage = null;
+            var configuration = default(IGlobalConfiguration<EFCoreStorage>);
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
             var queues = new[] { EnqueuedState.DefaultQueue, };
 
-            Assert.Throws<ArgumentNullException>(nameof(storage),
-                () => storage.UseQueueProvider(provider, queues));
+            Assert.Throws<ArgumentNullException>(nameof(configuration),
+                () => configuration.UseQueueProvider(provider, queues));
         }
 
         [Fact]
         public static void UseQueueProvider_Throws_WhenProviderParameterIsNull()
         {
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
+            configurationMock.Setup(x => x.Entry).Returns(storage);
+            var configuration = configurationMock.Object;
             IPersistentJobQueueProvider provider = null;
             var queues = new[] { EnqueuedState.DefaultQueue, };
 
             Assert.Throws<ArgumentNullException>(nameof(provider),
-                () => storage.UseQueueProvider(provider, queues));
+                () => configuration.UseQueueProvider(provider, queues));
         }
 
         [Fact]
         public static void UseQueueProvider_Throws_WhenQueuesParameterIsNull()
         {
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
+            configurationMock.Setup(x => x.Entry).Returns(storage);
+            var configuration = configurationMock.Object;
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
             string[] queues = null;
 
             Assert.Throws<ArgumentNullException>(nameof(queues),
-                () => storage.UseQueueProvider(provider, queues));
+                () => configuration.UseQueueProvider(provider, queues));
         }
 
         [Fact]
         public static void UseQueueProvider_Throws_WhenQueuesParameterIsEmpty()
         {
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
+            configurationMock.Setup(x => x.Entry).Returns(storage);
+            var configuration = configurationMock.Object;
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
             var queues = Array.Empty<string>();
 
             Assert.Throws<ArgumentException>(nameof(queues),
-                () => storage.UseQueueProvider(provider, queues));
+                () => configuration.UseQueueProvider(provider, queues));
         }
 
         [Fact]
         public static void UseQueueProvider_RegistersSpecifiedQueueProviderCorrectly()
         {
+            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
             var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
+            configurationMock.Setup(x => x.Entry).Returns(storage);
+            var configuration = configurationMock.Object;
             var provider = new Mock<IPersistentJobQueueProvider>().Object;
             var queues = new[] { "test1", "test2" };
 
-            var result = storage.UseQueueProvider(provider, queues);
+            var result = configuration.UseQueueProvider(provider, queues);
 
-            Assert.Same(storage, result);
+            Assert.Same(storage, result.Entry);
             var providers = storage.QueueProviders;
             Assert.Equal(2, providers.Count);
             Assert.Same(provider, providers["test1"]);
