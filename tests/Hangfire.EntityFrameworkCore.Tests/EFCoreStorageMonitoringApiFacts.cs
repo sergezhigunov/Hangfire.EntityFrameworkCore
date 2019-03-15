@@ -508,7 +508,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         Key = "recurring-jobs",
                         Value = $"recurring-job-{i}",
-                        CreatedAt = startedAt,
                     });
 
                 for (int i = 0; i < 8; i++)

@@ -16,7 +16,7 @@ namespace Hangfire.EntityFrameworkCore
     using GetAllItemsFromListFunc = Func<HangfireContext, string, IEnumerable<string>>;
     using GetAllItemsFromSetFunc = Func<HangfireContext, string, IEnumerable<string>>;
     using GetCounterFunc = Func<HangfireContext, string, long>;
-    using GetFirstByLowestScoreFromSetFunc = Func<HangfireContext, string, decimal, decimal, string>;
+    using GetFirstByLowestScoreFromSetFunc = Func<HangfireContext, string, double, double, string>;
     using GetHashCountFunc = Func<HangfireContext, string, long>;
     using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
     using GetHashTtlFunc = Func<HangfireContext, string, DateTime?>;
@@ -61,7 +61,7 @@ namespace Hangfire.EntityFrameworkCore
                 Sum(x => x.Value));
 
         private static GetFirstByLowestScoreFromSetFunc GetFirstByLowestScoreFromSetFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, decimal from, decimal to) => (
+            (HangfireContext context, string key, double from, double to) => (
                 from x in context.Set<HangfireSet>()
                 where x.Key == key && @from <= x.Score && x.Score <= to
                 orderby x.Score
@@ -123,7 +123,7 @@ namespace Hangfire.EntityFrameworkCore
             (HangfireContext context, string key, int skip, int take) => (
                 from x in context.Set<HangfireSet>()
                 where x.Key == key
-                orderby x.CreatedAt
+                orderby x.Score
                 select x.Value).
                 Skip(skip).
                 Take(take));
@@ -303,8 +303,7 @@ namespace Hangfire.EntityFrameworkCore
                 if (toScore < fromScore)
                     Swap(ref fromScore, ref toScore);
 
-                return GetFirstByLowestScoreFromSetFunc(context, k,
-                    (decimal)fromScore, (decimal)toScore);
+                return GetFirstByLowestScoreFromSetFunc(context, k, fromScore, toScore);
             }, key);
 
         public override long GetHashCount([NotNull] string key) =>

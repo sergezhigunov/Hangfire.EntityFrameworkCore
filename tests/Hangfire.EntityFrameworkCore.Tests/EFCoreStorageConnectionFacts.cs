@@ -525,25 +525,25 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     Key = key1,
                     Value = "1.0",
-                    Score = 1.0m,
+                    Score = 1.0,
                 },
                 new HangfireSet
                 {
                     Key = key1,
                     Value = "-1.0",
-                    Score = -1.0m,
+                    Score = -1.0,
                 },
                 new HangfireSet
                 {
                     Key = key1,
                     Value = "-5.0",
-                    Score = -5.0m,
+                    Score = -5.0,
                 },
                 new HangfireSet
                 {
                     Key = key2,
                     Value = "-2.0",
-                    Score = -2.0m,
+                    Score = -2.0,
                 },
             };
             UseContextSavingChanges(context => context.AddRange(sets));

@@ -148,22 +148,18 @@ namespace Hangfire.EntityFrameworkCore
                         x.Entity.Key == key &&
                         x.Entity.Value == value);
 
-                decimal scoreValue = (decimal)score;
-
                 if (entry != null)
                 {
                     var entity = entry.Entity;
-                    entity.Score = scoreValue;
-                    entity.CreatedAt = DateTime.UtcNow;
+                    entity.Score = score;
                     entry.State = EntityState.Modified;
                 }
                 else
                 {
                     var set = new HangfireSet
                     {
-                        CreatedAt = DateTime.UtcNow,
                         Key = key,
-                        Score = scoreValue,
+                        Score = score,
                         Value = value,
                     };
 

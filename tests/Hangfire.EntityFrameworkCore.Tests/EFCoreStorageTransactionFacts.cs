@@ -357,7 +357,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var record = context.Set<HangfireSet>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal("my-value", record.Value);
-                Assert.Equal(0m, record.Score);
+                Assert.Equal(0, record.Score);
             });
         }
 
@@ -406,7 +406,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 var record = context.Set<HangfireSet>().Single();
                 Assert.Equal(key, record.Key);
                 Assert.Equal(value, record.Value);
-                Assert.Equal(3.2m, record.Score);
+                Assert.Equal(3.2, record.Score);
             });
         }
 
@@ -426,7 +426,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var record = context.Set<HangfireSet>().Single();
-                Assert.Equal(3.2m, record.Score);
+                Assert.Equal(3.2, record.Score);
             });
         }
 
@@ -1296,13 +1296,11 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     Key = "set-1",
                     Value = "1",
-                    CreatedAt = DateTime.UtcNow,
                 },
                 new HangfireSet
                 {
                     Key = "set-2",
                     Value = "1",
-                    CreatedAt = DateTime.UtcNow,
                 },
             };
             UseContextSavingChanges(context => context.AddRange(sets));

@@ -11,9 +11,7 @@ namespace Hangfire.EntityFrameworkCore
         [MaxLength(100)]
         public string Value { get; set; }
 
-        public decimal Score { get; set; }
-
-        public DateTime CreatedAt { get; set; }
+        public double Score { get; set; }
 
         public DateTime? ExpireAt { get; set; }
     }

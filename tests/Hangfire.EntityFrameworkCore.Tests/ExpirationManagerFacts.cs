@@ -112,7 +112,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 {
                     Key = "test",
                     Value = "test",
-                    CreatedAt = now,
                     ExpireAt = expireAt,
                 });
 
