@@ -6,6 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageTags>hangfire;entity-framework-core</PackageTags>
     <PackageProjectUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore.git</RepositoryUrl>
