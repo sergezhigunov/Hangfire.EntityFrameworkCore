@@ -94,15 +94,11 @@ namespace Hangfire.EntityFrameworkCore
                 catch (Exception exception)
                 {
                     _logger.Log(LogLevel.Debug, () =>
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed,
-                            Id),
+                        CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed(Id),
                         exception);
                     return;
                 }
-                _logger.TraceFormat(
-                    CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryCompleted, Id);
+                _logger.Trace(CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryCompleted(Id));
             }
         }
 

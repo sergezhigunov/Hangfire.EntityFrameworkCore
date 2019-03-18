@@ -37,7 +37,7 @@ namespace Hangfire.EntityFrameworkCore
             where T : class, IExpirable
         {
             var type = typeof(T);
-            _logger.DebugFormat(CoreStrings.ExpirationManagerRemoveExpiredStarting, type.Name);
+            _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
 
             UseLock(() =>
             {
@@ -52,7 +52,7 @@ namespace Hangfire.EntityFrameworkCore
                 }));
             });
 
-            _logger.TraceFormat(CoreStrings.ExpirationManagerRemoveExpiredCompleted, type.Name);
+            _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
         }
 
         private void UseLock(Action action)
@@ -69,9 +69,7 @@ namespace Hangfire.EntityFrameworkCore
                 when (exception.Resource == LockKey)
                 {
                     _logger.Log(LogLevel.Debug, () =>
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            CoreStrings.ExpirationManagerUseLockFailed,
+                         CoreStrings.ExpirationManagerUseLockFailed(
                             LockKey,
                             lockTimeout.TotalSeconds,
                             _storage.JobExpirationCheckInterval.TotalSeconds),

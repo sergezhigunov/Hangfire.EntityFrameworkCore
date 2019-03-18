@@ -41,8 +41,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Execute(CancellationToken cancellationToken)
         {
-            _logger.DebugFormat(CoreStrings.CountersAggregatorExecuteStarting,
-                nameof(HangfireCounter));
+            _logger.Debug(CoreStrings.CountersAggregatorExecuteStarting(nameof(HangfireCounter)));
             int removedCount;
             do
             {
@@ -79,8 +78,7 @@ namespace Hangfire.EntityFrameworkCore
             }
             while (removedCount > 0);
 
-            _logger.TraceFormat(CoreStrings.CountersAggregatorExecuteCompleted,
-                nameof(HangfireCounter));
+            _logger.Trace(CoreStrings.CountersAggregatorExecuteCompleted(nameof(HangfireCounter)));
             cancellationToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
         }
     }
