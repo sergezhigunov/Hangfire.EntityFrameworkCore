@@ -6,6 +6,11 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
+    <PackageTags>hangfire;entity-framework-core</PackageTags>
+    <PackageProjectUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/sergezhigunov/Hangfire.EntityFrameworkCore/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.3">
