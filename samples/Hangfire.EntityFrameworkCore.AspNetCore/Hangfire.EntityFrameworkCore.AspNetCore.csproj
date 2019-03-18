@@ -5,14 +5,12 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.6.23" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.6.16" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.0" />
   </ItemGroup>
-
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hangfire.EntityFrameworkCore\Hangfire.EntityFrameworkCore.csproj" />
