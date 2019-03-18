@@ -302,6 +302,7 @@ namespace Hangfire.EntityFrameworkCore
                 jobInfo.Properties = GetJobParametersFunc(context, id).
                     ToDictionary(x => x.Key, x => x.Value);
                 jobInfo.History = GetStateHistoryFunc(context, id).
+                    OrderByDescending(x => x.CreatedAt).
                     ToList();
 
                 return jobInfo;
