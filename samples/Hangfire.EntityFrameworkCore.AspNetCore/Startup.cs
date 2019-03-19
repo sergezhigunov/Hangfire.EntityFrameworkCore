@@ -26,6 +26,12 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
                     builder.UseSqlite($"Data Source={databaseFilePath}"),
                     new EFCoreStorageOptions
                     {
+                        CountersAggregationInterval = new TimeSpan(0, 5, 0),
+                        DistributedLockTimeout = new TimeSpan(0, 10, 0),
+                        JobExpirationCheckInterval = new TimeSpan(0, 30, 0),
+                        QueuePollInterval = new TimeSpan(0, 0, 15),
+                        Schema = "Hangfire",
+                        SlidingInvisibilityTimeout = new TimeSpan(0, 5, 0),
                     }).
                 UseDatabaseCreator());
             services.AddMvcCore();
