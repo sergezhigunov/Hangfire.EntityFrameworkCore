@@ -5,7 +5,7 @@
 
 ## Overview
 
-An Entity Framework Core provider-neutral job storage implementation for [Hangfire](https://www.hangfire.io) developed by Sergey Odinokov.
+An [Entity Framework Core](https://github.com/aspnet/EntityFrameworkCore) provider-neutral job storage implementation for [Hangfire](https://www.hangfire.io) developed by Sergey Odinokov.
 
 ## Installation
 
