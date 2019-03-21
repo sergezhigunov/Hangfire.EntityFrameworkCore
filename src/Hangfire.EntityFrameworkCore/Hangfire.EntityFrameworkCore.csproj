@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://hangfire.io).</Description>
+    <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>This is the first public release</PackageReleaseNotes>
   </PropertyGroup>
 
