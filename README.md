@@ -1,5 +1,8 @@
 # Hangfire.EntityFrameworkCore
 
+[![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Latest version](https://img.shields.io/nuget/v/Hangfire.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Hangfire.EntityFrameworkCore)
+
 ## Overview
 
 An Entity Framework Core provider-neutral job storage implementation for [Hangfire](https://www.hangfire.io) developed by Sergey Odinokov.
