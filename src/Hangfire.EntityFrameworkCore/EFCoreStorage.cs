@@ -51,6 +51,7 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentNullException">
         /// <paramref name="options"/> is <see langword="null"/>.
         /// </exception>
+        [CLSCompliant(false)]
         public EFCoreStorage(
             Action<DbContextOptionsBuilder> optionsAction,
             EFCoreStorageOptions options)

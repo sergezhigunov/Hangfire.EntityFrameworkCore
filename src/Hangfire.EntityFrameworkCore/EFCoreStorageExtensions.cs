@@ -29,6 +29,7 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentNullException">
         /// <paramref name="optionsAction"/> is <see langword="null"/>.
         /// </exception>
+        [CLSCompliant(false)]
         public static IGlobalConfiguration<EFCoreStorage> UseEFCoreStorage(
             [NotNull] this IGlobalConfiguration configuration,
             [NotNull] Action<DbContextOptionsBuilder> optionsAction)
@@ -61,6 +62,7 @@ namespace Hangfire.EntityFrameworkCore
         /// <exception cref="ArgumentNullException">
         /// <paramref name="options"/> is <see langword="null"/>.
         /// </exception>
+        [CLSCompliant(false)]
         public static IGlobalConfiguration<EFCoreStorage> UseEFCoreStorage(
             [NotNull] this IGlobalConfiguration configuration,
             [NotNull] Action<DbContextOptionsBuilder> optionsAction,
