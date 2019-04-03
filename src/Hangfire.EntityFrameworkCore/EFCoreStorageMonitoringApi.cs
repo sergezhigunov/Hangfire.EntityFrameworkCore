@@ -17,7 +17,8 @@ namespace Hangfire.EntityFrameworkCore
     using GetStateDataFunc = Func<HangfireContext, string, int, int, IEnumerable<EFCoreStorageMonitoringApi.JobState>>;
     using GetStateHistoryFunc = Func<HangfireContext, long, IEnumerable<StateHistoryDto>>;
     using GetStateCountFunc = Func<HangfireContext, string, long>;
-    using GetStatisticsFunc = Func<HangfireContext, StatisticsDto>;
+    using GetStatisticsFunc = Func<HangfireContext, IEnumerable<KeyValuePair<string, long>>>;
+    using GetCountFunc = Func<HangfireContext, long>;
     using EnqueuedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<string, EnqueuedJobDto>>>;
     using FetchedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<string, FetchedJobDto>>>;
     using ServersFunc = Func<HangfireContext, IEnumerable<ServerDto>>;
@@ -88,30 +89,40 @@ namespace Hangfire.EntityFrameworkCore
                 context.Set<HangfireJob>().
                 LongCount(x => x.StateName != null && x.StateName == name));
 
-        private static GetStatisticsFunc GetStatisticsFunc { get; } = EF.CompileQuery(
+        private static GetStatisticsFunc GetJobStatisticsFunc { get; } = EF.CompileQuery(
             (HangfireContext context) => (
-                from stub in Enumerable.Repeat(0, 1)
-                let sets = context.Set<HangfireSet>().AsQueryable()
-                let jobs = context.Set<HangfireJob>().AsQueryable()
-                let counters = context.Set<HangfireCounter>().AsQueryable()
-                let deletedCounters = counters.Where(x => x.Key == DeletedCounterName)
-                let succeededCounters = counters.Where(x => x.Key == SucceededCounterName)
-                select new StatisticsDto
+                from x in context.Set<HangfireJob>()
+                where new[]
                 {
-                    Recurring = sets.LongCount(x => x.Key == RecurringJobsSetName),
-                    Servers = context.Set<HangfireServer>().LongCount(),
-                    Enqueued = jobs.LongCount(x =>
-                        x.StateName != null && x.StateName == EnqueuedState.StateName),
-                    Failed = jobs.LongCount(x =>
-                        x.StateName != null && x.StateName == FailedState.StateName),
-                    Processing = jobs.LongCount(x =>
-                        x.StateName != null && x.StateName == ProcessingState.StateName),
-                    Scheduled = jobs.LongCount(x =>
-                        x.StateName != null && x.StateName == ScheduledState.StateName),
-                    Deleted = deletedCounters.Sum(x => x.Value),
-                    Succeeded = succeededCounters.Sum(x => x.Value),
-                }).
-                FirstOrDefault());
+                    EnqueuedState.StateName,
+                    FailedState.StateName,
+                    ProcessingState.StateName,
+                    ScheduledState.StateName,
+                }.
+                Contains(x.StateName)
+                group x by x.StateName into g
+                select new KeyValuePair<string, long>(g.Key, g.LongCount())));
+
+        private static GetStatisticsFunc GetCounterStatisticsFunc { get; } = EF.CompileQuery(
+            (HangfireContext context) => (
+                from x in context.Set<HangfireCounter>()
+                where new[]
+                {
+                    DeletedCounterName,
+                    SucceededCounterName,
+                }.
+                Contains(x.Key)
+                group x by x.Key into g
+                select new KeyValuePair<string, long>(g.Key, g.Sum(x => x.Value))));
+
+        private static GetCountFunc GetServersCountFunc { get; } = EF.CompileQuery(
+            (HangfireContext context) => (
+                from x in context.Set<HangfireServer>()
+                select x).
+                LongCount());
+
+        private static GetCountFunc GetRecurringJobCountFunc { get; } = EF.CompileQuery(
+            (HangfireContext context) => context.Set<HangfireSet>().AsQueryable().LongCount(x => x.Key == RecurringJobsSetName));
 
         private static EnqueuedJobsFunc EnqueuedJobsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, IEnumerable<long> keys) =>
@@ -263,7 +274,26 @@ namespace Hangfire.EntityFrameworkCore
 
         public StatisticsDto GetStatistics()
         {
-            var result = _storage.UseContext(GetStatisticsFunc);
+            var result = _storage.UseContext(context =>
+            {
+                var dictionary = GetJobStatisticsFunc(context).
+                    Concat(GetCounterStatisticsFunc(context)).
+                    ToDictionary(x => x.Key, x => x.Value);
+
+                var recurringCount = GetRecurringJobCountFunc(context);
+                var serversCount = GetServersCountFunc(context);
+                return new StatisticsDto
+                {
+                    Servers = serversCount,
+                    Recurring = recurringCount,
+                    Deleted = dictionary.GetValue(DeletedCounterName),
+                    Succeeded = dictionary.GetValue(SucceededCounterName),
+                    Enqueued = dictionary.GetValue(EnqueuedState.StateName),
+                    Failed = dictionary.GetValue(FailedState.StateName),
+                    Processing = dictionary.GetValue(ProcessingState.StateName),
+                    Scheduled = dictionary.GetValue(ScheduledState.StateName),
+                };
+            });
 
             result.Queues = _storage.DefaultQueueProvider.
                 GetMonitoringApi().
