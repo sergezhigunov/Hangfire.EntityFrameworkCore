@@ -30,7 +30,7 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
                         DistributedLockTimeout = new TimeSpan(0, 10, 0),
                         JobExpirationCheckInterval = new TimeSpan(0, 30, 0),
                         QueuePollInterval = new TimeSpan(0, 0, 15),
-                        Schema = "Hangfire",
+                        Schema = string.Empty,
                         SlidingInvisibilityTimeout = new TimeSpan(0, 5, 0),
                     }).
                 UseDatabaseCreator());
