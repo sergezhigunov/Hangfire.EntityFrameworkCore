@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hangfire.Annotations;
+using Hangfire.Common;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.States;
 using Hangfire.Storage;
@@ -493,7 +494,7 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(state));
             ThrowIfDisposed();
 
-            var data = state.SerializeData();
+            var data = JobHelper.ToJson(state.SerializeData());
             var createdAt = state.GetCreatedAt() ?? DateTime.UtcNow;
 
             _queue.Enqueue(context =>

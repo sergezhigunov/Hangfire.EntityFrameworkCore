@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Threading;
@@ -23,19 +24,28 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     return storage;
                 });
 
+        private protected static string InvocationDataStub { get; } =
+            JobHelper.ToJson(new InvocationData(null, null, null, string.Empty));
+
+        private protected static string EmptyArrayStub { get; } =
+            JobHelper.ToJson(Array.Empty<string>());
+
+        private protected static string EmptyDictionaryStub { get; } =
+            JobHelper.ToJson(new Dictionary<string, string>());
+
         protected EFCoreStorageTest()
         {
         }
 
-        private protected static InvocationData CreateInvocationData(Expression<Action> methodCall)
+        private protected static string CreateInvocationData(Expression<Action> methodCall)
         {
             var job = Job.FromExpression(methodCall);
             return CreateInvocationData(job);
         }
 
-        private protected static InvocationData CreateInvocationData(Job job)
+        private protected static string CreateInvocationData(Job job)
         {
-            return InvocationData.Serialize(job);
+            return JobHelper.ToJson(InvocationData.Serialize(job));
         }
 
         private protected EFCoreStorage CreateStorageStub()

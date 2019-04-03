@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using Hangfire.Annotations;
-using Hangfire.Common;
-using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -45,9 +42,6 @@ namespace Hangfire.EntityFrameworkCore
 
             modelBuilder.Entity<HangfireJob>(entity =>
             {
-                entity.Property(x => x.InvocationData).HasConversion(
-                    x => JobHelper.ToJson(x),
-                    x => JobHelper.FromJson<InvocationData>(x));
                 entity.HasIndex(x => x.StateName);
                 entity.HasIndex(x => x.ExpireAt);
             });
@@ -79,18 +73,12 @@ namespace Hangfire.EntityFrameworkCore
 
             modelBuilder.Entity<HangfireServer>(entity =>
             {
-                entity.Property(x => x.Queues).HasConversion(
-                    x => JobHelper.ToJson(x),
-                    x => JobHelper.FromJson<string[]>(x));
                 entity.HasIndex(x => x.Heartbeat);
             });
 
             modelBuilder.Entity<HangfireState>(entity =>
             {
                 entity.HasIndex(x => x.JobId);
-                entity.Property(x => x.Data).HasConversion(
-                    x => JobHelper.ToJson(x),
-                    x => JobHelper.FromJson<Dictionary<string, string>>(x));
                 entity.HasMany<HangfireJob>().
                     WithOne(x => x.State).
                     HasForeignKey(x => x.StateId);

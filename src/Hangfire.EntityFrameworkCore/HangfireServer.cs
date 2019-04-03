@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Hangfire.EntityFrameworkCore
@@ -16,6 +15,6 @@ namespace Hangfire.EntityFrameworkCore
         public int WorkerCount { get; set; }
 
         [Required]
-        public IList<string> Queues { get; set; }
+        public string Queues { get; set; }
     }
 }

@@ -187,7 +187,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Include(p => p.Parameters).
                     Single();
 
-                var invocationData = hangfireJob.InvocationData;
+                var invocationData = JobHelper.FromJson<InvocationData>(hangfireJob.InvocationData);
 
                 Assert.Equal(jobId, hangfireJob.Id.ToString(CultureInfo.InvariantCulture));
                 Assert.Equal(createdAt, hangfireJob.CreatedAt);
@@ -233,7 +233,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.Null(hangfireJob.State);
                 Assert.Null(hangfireJob.StateName);
 
-                var invocationData = hangfireJob.InvocationData;
+                var invocationData = JobHelper.FromJson<InvocationData>(hangfireJob.InvocationData);
 
                 var job = invocationData.Deserialize();
                 Assert.Equal(typeof(EFCoreStorageTest), job.Type);
@@ -272,7 +272,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var queue = "queue";
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             job.QueuedJobs.Add(new HangfireQueuedJob
             {
@@ -579,13 +579,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var job = new HangfireJob
             {
                 CreatedAt = createdAt,
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             var state = new HangfireState
             {
                 Name = "state",
                 Reason = "reason",
-                Data = new Dictionary<string, string>(),
+                Data = EmptyDictionaryStub,
             };
             job.States.Add(state);
             UseContextSavingChanges(context =>
@@ -618,7 +618,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 Name = "state",
                 Reason = "reason",
-                Data = new Dictionary<string, string>(),
+                Data = EmptyDictionaryStub,
             };
             job.States.Add(state);
             UseContextSavingChanges(context =>
@@ -679,7 +679,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 Parameters = new[]
                 {
                     new HangfireJobParameter
@@ -1227,15 +1227,15 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 InvocationData = CreateInvocationData(() => SampleMethod("Arguments")),
             };
-            var state = new HangfireState
+            var data = new Dictionary<string, string>
             {
+                ["Key"] = "Value",
+            };
+            var state = new HangfireState
+                {
                 Name = stateName,
                 Reason = "Reason",
-                Data = new Dictionary<string, string>
-                {
-                    ["Key"] = "Value",
-                },
-
+                Data = JobHelper.ToJson(data),
             };
             job.States.Add(state);
             UseContextSavingChanges(context =>
@@ -1264,15 +1264,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 InvocationData = CreateInvocationData(() => SampleMethod("Arguments")),
             };
-            var state = new HangfireState
+            var data = new Dictionary<string, string>
             {
+                ["key"] = "Value",
+            };
+            var state = new HangfireState
+                {
                 CreatedAt = DateTime.UtcNow,
                 Name = stateName,
                 Reason = "Reason",
-                Data = new Dictionary<string, string>
-                {
-                    ["key"] = "Value",
-                },
+                Data = JobHelper.ToJson(data),
             };
             job.States.Add(state);
             UseContextSavingChanges(context =>
@@ -1392,14 +1393,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Id = server1,
                     StartedAt = datetime,
                     Heartbeat = datetime,
-                    Queues = Array.Empty<string>(),
+                    Queues = EmptyArrayStub,
                 },
                 new HangfireServer
                 {
                     Id = server2,
                     StartedAt = datetime,
                     Heartbeat = datetime,
-                    Queues = Array.Empty<string>(),
+                    Queues = EmptyArrayStub,
                 },
             };
             UseContextSavingChanges(context => context.AddRange(servers));
@@ -1442,7 +1443,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Id = serverId,
                 StartedAt = startedAt,
                 Heartbeat = DateTime.UtcNow,
-                Queues = Array.Empty<string>(),
+                Queues = EmptyArrayStub,
             };
             UseContextSavingChanges(context => context.Add(server));
 
@@ -1465,14 +1466,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Id = server1,
                     StartedAt = startedAt,
                     Heartbeat = DateTime.UtcNow.AddHours(-1),
-                    Queues = Array.Empty<string>(),
+                    Queues = EmptyArrayStub,
                 },
                 new HangfireServer
                 {
                     Id = server2,
                     StartedAt = startedAt,
                     Heartbeat = DateTime.UtcNow.AddHours(-3),
-                    Queues = Array.Empty<string>(),
+                    Queues = EmptyArrayStub,
                 },
             };
             UseContextSavingChanges(context => context.AddRange(servers));
@@ -1534,7 +1535,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             UseContextSavingChanges(context => context.Add(job));
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
@@ -1563,7 +1564,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var parameterAnotherValue = "another-value";
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             UseContextSavingChanges(context =>
             {
@@ -1596,7 +1597,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var parameterName = "name";
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             UseContextSavingChanges(context => context.Add(job));
             var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
@@ -1711,7 +1712,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 var actualServer = Assert.Single(context.Set<HangfireServer>().
                     Where(x => x.Id == serverId));
-                var actualQueues = actualServer.Queues;
+                var actualQueues = JobHelper.FromJson<string[]>(actualServer.Queues);
                 Assert.Equal(serverId, actualServer.Id);
                 Assert.Equal(expectedContext.WorkerCount, actualServer.WorkerCount);
                 Assert.Equal(expectedContext.Queues, actualQueues);

@@ -67,7 +67,7 @@ namespace Hangfire.EntityFrameworkCore
                     Id = x.Id,
                     Job = Deserialize(x.InvocationData),
                     Reason = s.Reason,
-                    Data = s.Data,
+                    Data = JobHelper.FromJson<Dictionary<string, string>>(s.Data),
                 }).
                 Skip(from).
                 Take(count));
@@ -81,7 +81,7 @@ namespace Hangfire.EntityFrameworkCore
                     CreatedAt = x.CreatedAt,
                     Reason = x.Reason,
                     StateName = x.Name,
-                    Data = x.Data,
+                    Data = JobHelper.FromJson<Dictionary<string, string>>(x.Data),
                 });
 
         private static GetStateCountFunc GetStateCountFunc { get; } = EF.CompileQuery(
@@ -122,7 +122,8 @@ namespace Hangfire.EntityFrameworkCore
                 LongCount());
 
         private static GetCountFunc GetRecurringJobCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => context.Set<HangfireSet>().AsQueryable().LongCount(x => x.Key == RecurringJobsSetName));
+            (HangfireContext context) => context.Set<HangfireSet>().
+                LongCount(x => x.Key == RecurringJobsSetName));
 
         private static EnqueuedJobsFunc EnqueuedJobsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, IEnumerable<long> keys) =>
@@ -140,7 +141,8 @@ namespace Hangfire.EntityFrameworkCore
                             StringComparison.OrdinalIgnoreCase),
                         EnqueuedAt = state == null ? default :
                             JobHelper.DeserializeNullableDateTime(
-                                state.Data.GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
+                                JobHelper.FromJson<Dictionary<string, string>>(state.Data).
+                                    GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
                     }));
 
         private static FetchedJobsFunc FetchedJobsFunc { get; } = EF.CompileQuery(
@@ -165,7 +167,7 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     Name = server.Id,
                     Heartbeat = server.Heartbeat,
-                    Queues = server.Queues,
+                    Queues = JobHelper.FromJson<string[]>(server.Queues),
                     StartedAt = server.StartedAt,
                     WorkersCount = server.WorkerCount,
                 });
@@ -444,8 +446,9 @@ namespace Hangfire.EntityFrameworkCore
             return GetNumberOfJobsByStateName(SucceededState.StateName);
         }
 
-        private static Job Deserialize(InvocationData data)
+        private static Job Deserialize(string json)
         {
+            var data = JobHelper.FromJson<InvocationData>(json);
             try
             {
                 return data.Deserialize();
@@ -505,8 +508,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private Dictionary<DateTime, long> GetTimelineStats(IDictionary<string, DateTime> keyMaps)
         {
-            var counters = _storage.UseContext(context => GetCountersFunc(context, keyMaps.Keys)).
-                ToDictionary(x => x.Key, x => x.Value);
+            var counters = _storage.UseContext(context => GetCountersFunc(context, keyMaps.Keys).
+                ToDictionary(x => x.Key, x => x.Value));
 
             return keyMaps.ToDictionary(x => x.Value,
                 x => counters.TryGetValue(x.Key, out var result) ? result : 0L);

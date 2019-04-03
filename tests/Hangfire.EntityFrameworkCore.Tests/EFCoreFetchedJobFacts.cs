@@ -86,7 +86,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 QueuedJobs = new List<HangfireQueuedJob>
                 {
                     new HangfireQueuedJob
@@ -140,7 +140,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 QueuedJobs = new List<HangfireQueuedJob>
                 {
                     new HangfireQueuedJob
@@ -196,7 +196,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 QueuedJobs = new List<HangfireQueuedJob>
                 {
                     new HangfireQueuedJob

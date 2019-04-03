@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Hangfire.Common;
 using Hangfire.States;
-using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -133,7 +133,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.Equal("Reason", jobState.Reason);
                 Assert.True(createdAtFrom <= jobState.CreatedAt);
                 Assert.True(jobState.CreatedAt <= createdAtTo);
-                var data = jobState.Data;
+                var data = JobHelper.FromJson<Dictionary<string, string>>(jobState.Data);
                 Assert.Single(data);
                 Assert.Equal("Value", data["Name"]);
             });
@@ -1385,7 +1385,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.Equal("Reason", actualState.Reason);
                 Assert.True(createdAtFrom <= actualState.CreatedAt);
                 Assert.True(actualState.CreatedAt <= createdAtTo);
-                var data = actualState.Data;
+                var data = JobHelper.FromJson<Dictionary<string, string>>(actualState.Data);
                 Assert.Single(data);
                 Assert.Equal("Value", data["Name"]);
                 Assert.Equal(actualState.Id, actualJob.StateId);
@@ -1668,7 +1668,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 CreatedAt = DateTime.UtcNow,
                 ExpireAt = expireAt,
             };

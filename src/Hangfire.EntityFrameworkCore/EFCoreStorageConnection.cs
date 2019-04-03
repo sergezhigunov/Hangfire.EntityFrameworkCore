@@ -148,7 +148,7 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     Name = s.Name,
                     Reason = s.Reason,
-                    Data = s.Data,
+                    Data = JobHelper.FromJson<Dictionary<string, string>>(s.Data),
                 }).
                 SingleOrDefault());
 
@@ -204,17 +204,17 @@ namespace Hangfire.EntityFrameworkCore
 
             var timestamp = DateTime.UtcNow;
 
+            var server = new HangfireServer
+            {
+                Id = serverId,
+                StartedAt = timestamp,
+                Heartbeat = timestamp,
+                WorkerCount = context.WorkerCount,
+                Queues = JobHelper.ToJson(context.Queues),
+            };
+
             _storage.UseContextSavingChanges(dbContext =>
             {
-                var server = new HangfireServer
-                {
-                    Id = serverId,
-                    StartedAt = timestamp,
-                    Heartbeat = timestamp,
-                    WorkerCount = context.WorkerCount,
-                    Queues = context.Queues,
-                };
-
                 if (!dbContext.Set<HangfireServer>().Any(x => x.Id == serverId))
                     dbContext.Add(server);
                 else
@@ -239,7 +239,7 @@ namespace Hangfire.EntityFrameworkCore
             {
                 CreatedAt = createdAt,
                 ExpireAt = createdAt + expireIn,
-                InvocationData = invocationData,
+                InvocationData = JobHelper.ToJson(invocationData),
                 Parameters = parameters.
                     Select(x => new HangfireJobParameter
                     {
@@ -532,8 +532,9 @@ namespace Hangfire.EntityFrameworkCore
             return _storage.UseContext(context => func(context, key));
         }
 
-        private static JobData CreateJobData(InvocationData data, DateTime createdAt, string state)
+        private static JobData CreateJobData(string json, DateTime createdAt, string state)
         {
+            var data = JobHelper.FromJson<InvocationData>(json);
             var result = new JobData
             {
                 State = state,

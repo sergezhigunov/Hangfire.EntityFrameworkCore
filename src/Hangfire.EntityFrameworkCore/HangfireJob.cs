@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Hangfire.Storage;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -26,7 +25,7 @@ namespace Hangfire.EntityFrameworkCore
         public DateTime? ExpireAt { get; set; }
 
         [Required]
-        public InvocationData InvocationData { get; set; }
+        public string InvocationData { get; set; }
 
         public virtual HangfireState State { get; set; }
         

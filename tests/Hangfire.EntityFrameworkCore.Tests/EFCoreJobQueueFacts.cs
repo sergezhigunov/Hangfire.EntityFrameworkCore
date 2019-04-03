@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using Hangfire.Storage;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
@@ -67,7 +66,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string queue = "queue";
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
                 QueuedJobs = new List<HangfireQueuedJob>
                 {
                     new HangfireQueuedJob
@@ -155,7 +154,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var job = new HangfireJob
             {
-                InvocationData = new InvocationData(null, null, null, string.Empty),
+                InvocationData = InvocationDataStub,
             };
             UseContextSavingChanges(context => context.Add(job));
             var instance = new EFCoreJobQueue(Storage);

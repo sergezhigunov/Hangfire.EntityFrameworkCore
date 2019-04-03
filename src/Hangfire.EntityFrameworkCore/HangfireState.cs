@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Hangfire.EntityFrameworkCore
@@ -20,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore
         public DateTime CreatedAt { get; set; }
 
         [Required]
-        public IDictionary<string, string> Data { get; set; }
+        public string Data { get; set; }
 
         public virtual HangfireJob Job { get; set; }
     }

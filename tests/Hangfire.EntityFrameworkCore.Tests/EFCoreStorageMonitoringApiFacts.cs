@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         {
                             CreatedAt = DateTime.UtcNow,
                             Name = DeletedState.StateName,
-                            Data = data,
+                            Data = JobHelper.ToJson(data),
                         },
                     },
                 }).
@@ -166,15 +166,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Select(x =>
                 {
                     var createdAt = now - new TimeSpan(0, 0, x);
-                    var state = new HangfireState
+                    var data = new Dictionary<string, string>
                     {
+                        ["EnqueuedAt"] = JobHelper.SerializeDateTime(createdAt),
+                    };
+                    var state = new HangfireState
+                        {
                         CreatedAt = createdAt,
                         Name = EnqueuedState.StateName,
                         Reason = "Reason",
-                        Data = new Dictionary<string, string>
-                        {
-                            ["EnqueuedAt"] = JobHelper.SerializeDateTime(createdAt),
-                        },
+                        Data = JobHelper.ToJson(data),
                     };
                     var job = new HangfireJob
                     {
@@ -286,7 +287,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = FailedState.StateName,
-                        Data = data,
+                        Data = JobHelper.ToJson(data),
                         Reason = "Reason",
                     };
                     job.States.Add(state);
@@ -394,15 +395,16 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Select(x =>
                 {
                     var createdAt = now - new TimeSpan(0, 0, x);
-                    var state = new HangfireState
+                    var data = new Dictionary<string, string>
                     {
+                        ["EnqueuedAt"] = JobHelper.SerializeDateTime(createdAt),
+                    };
+                    var state = new HangfireState
+                        {
                         CreatedAt = createdAt,
                         Name = EnqueuedState.StateName,
                         Reason = "Reason",
-                        Data = new Dictionary<string, string>
-                        {
-                            ["EnqueuedAt"] = JobHelper.SerializeDateTime(createdAt),
-                        },
+                        Data = JobHelper.ToJson(data),
                     };
                     var job = new HangfireJob
                     {
@@ -516,7 +518,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         Id = $"server-id-{i}",
                         StartedAt = startedAt,
                         Heartbeat = startedAt,
-                        Queues = Array.Empty<string>(),
+                        Queues = EmptyArrayStub,
                     });
 
                 for (int i = 0; i < 9; i++)
@@ -623,7 +625,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var createdAt = DateTime.UtcNow;
             var stateCreatedAt = createdAt.AddSeconds(1);
-            var stateData = new Dictionary<string, string>
+            var data = new Dictionary<string, string>
             {
                 ["Name"] = "Value",
             };
@@ -637,7 +639,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Name = "State",
                 Reason = "Reason",
                 CreatedAt = stateCreatedAt,
-                Data = stateData,
+                Data = JobHelper.ToJson(data),
             };
             var job = new HangfireJob
             {
@@ -672,7 +674,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal("State", historyItem.StateName);
             Assert.Equal("Reason", historyItem.Reason);
             Assert.Equal(stateCreatedAt, historyItem.CreatedAt);
-            Assert.Equal(stateData, historyItem.Data);
+            Assert.Equal(data, historyItem.Data);
             Assert.NotNull(result.Properties);
             Assert.Equal(parameters, result.Properties);
         }
@@ -714,7 +716,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = ProcessingState.StateName,
-                        Data = data,
+                        Data = JobHelper.ToJson(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -824,7 +826,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = ScheduledState.StateName,
-                        Data = data,
+                        Data = JobHelper.ToJson(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -894,14 +896,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     StartedAt = startedAt1,
                     Heartbeat = heartbeat,
                     WorkerCount = workerCount,
-                    Queues = queues,
+                    Queues = JobHelper.ToJson(queues),
                 },
                 new HangfireServer
                 {
                     Id = serverId2,
                     StartedAt = startedAt2,
                     Heartbeat = heartbeat,
-                    Queues = Array.Empty<string>(),
+                    Queues = EmptyArrayStub,
                 },
             };
 
@@ -967,7 +969,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = SucceededState.StateName,
-                        Data = data,
+                        Data = JobHelper.ToJson(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -1040,11 +1042,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string stateName,
             IDictionary<string, string> data = null)
         {
+            data = data ?? new Dictionary<string, string>();
             var state = new HangfireState
             {
                 CreatedAt = DateTime.UtcNow,
                 Name = stateName,
-                Data = data ?? new Dictionary<string, string>(),
+                Data = JobHelper.ToJson(data),
             };
             var job = new HangfireJob
             {
