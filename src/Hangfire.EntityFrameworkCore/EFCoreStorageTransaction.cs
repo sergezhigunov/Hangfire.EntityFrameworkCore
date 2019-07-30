@@ -482,7 +482,7 @@ namespace Hangfire.EntityFrameworkCore
                     })).
                     Entity;
 
-                entity.Value = entity.Value + value;
+                entity.Value += value;
                 entity.ExpireAt = expireAt;
             });
         }
