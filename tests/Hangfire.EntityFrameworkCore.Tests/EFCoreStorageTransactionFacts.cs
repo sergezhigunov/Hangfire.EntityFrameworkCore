@@ -633,8 +633,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 var records = context.Set<HangfireHash>().
                     ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom < records["hash-1"]);
-                Assert.True(records["hash-1"] < expiredTo);
+                Assert.True(expiredFrom <= records["hash-1"]);
+                Assert.True(records["hash-1"] <= expiredTo);
                 Assert.Null(records["hash-2"]);
             });
         }
@@ -685,8 +685,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 var records = context.Set<HangfireList>().
                     ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom < records["list-1"]);
-                Assert.True(records["list-1"] < expiredTo);
+                Assert.True(expiredFrom <= records["list-1"]);
+                Assert.True(records["list-1"] <= expiredTo);
                 Assert.Null(records["list-2"]);
             });
         }
@@ -737,8 +737,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseContext(context =>
             {
                 var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom < records["set-1"]);
-                Assert.True(records["set-1"] < expiredTo);
+                Assert.True(expiredFrom <= records["set-1"]);
+                Assert.True(records["set-1"] <= expiredTo);
                 Assert.Null(records["set-2"]);
             });
         }
