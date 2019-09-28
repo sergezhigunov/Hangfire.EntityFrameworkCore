@@ -11,7 +11,6 @@
     <RepositoryUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Features>$(Features);flow-analysis</Features>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">

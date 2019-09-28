@@ -13,6 +13,12 @@ This is the first public release.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hangfire.Core" Version="[1.6.16,2.0)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Update="Properties\CoreStrings.resx">
     </EmbeddedResource>
   </ItemGroup>
@@ -22,10 +28,6 @@ This is the first public release.</PackageReleaseNotes>
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>CoreStrings.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <ItemGroup>
