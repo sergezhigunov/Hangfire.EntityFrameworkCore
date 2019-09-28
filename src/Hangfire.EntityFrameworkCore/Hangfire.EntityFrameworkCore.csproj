@@ -3,13 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
-    <PackageReleaseNotes>0.1.1
+    <PackageReleaseNotes>0.1.2
+• Fixed – A few errors caused by EFCore 3 breaking changes.
+
+0.1.1
 • Changed – Set minimum inclusive EFCore version 2.0.0.
 • Changed – Set maximum exclusive Hangfire.Core version 2.0.
 • Fixed – Optimize storage monitoring statistics.
 
 0.1.0
-This is the first public release.</PackageReleaseNotes>
+This is the first public release.
+</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
