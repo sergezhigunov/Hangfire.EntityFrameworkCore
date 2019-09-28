@@ -44,17 +44,36 @@ namespace Hangfire.EntityFrameworkCore
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
-        public IList<string> GetEnqueuedJobIds([NotNull] string queue, int from, int perPage) =>
-            UseContext(GetEnqueuedJobIdsFunc, queue, from, perPage).
+        public IList<string> GetEnqueuedJobIds([NotNull] string queue, int from, int perPage)
+        {
+            if (queue is null)
+                throw new ArgumentNullException(nameof(queue));
+
+            return _storage.
+                UseContext(context =>
+                    GetEnqueuedJobIdsFunc(context, queue, from, perPage).
+                    ToList()).
                 Select(x => x.ToString(CultureInfo.InvariantCulture)).
                 ToList();
+        }
 
-        public IList<string> GetFetchedJobIds([NotNull] string queue, int from, int perPage) =>
-            UseContext(GetFetchedJobIdsFunc, queue, from, perPage).
+        public IList<string> GetFetchedJobIds([NotNull] string queue, int from, int perPage)
+        {
+            if (queue is null)
+                throw new ArgumentNullException(nameof(queue));
+
+            return _storage.
+                UseContext(context =>
+                    GetFetchedJobIdsFunc(context, queue, from, perPage).
+                    ToList()).
                 Select(x => x.ToString(CultureInfo.InvariantCulture)).
                 ToList();
+        }
 
-        public IList<string> GetQueues() => _storage.UseContext(GetQueuesFunc).ToList();
+        public IList<string> GetQueues() =>
+            _storage.UseContext(context =>
+                GetQueuesFunc(context).
+                ToList());
 
         public QueueStatisticsDto GetQueueStatistics([NotNull] string queue)
         {
@@ -75,10 +94,6 @@ namespace Hangfire.EntityFrameworkCore
             return _storage.UseContext(context => func(context, queue));
         }
 
-        private T UseContext<T>(Func<HangfireContext, string, int, int, T> func,
-            string queue, int from, int perPage) =>
-            UseContext((c, q) => func(c, queue, from, perPage), queue);
-
         private static Expression<GetCountFunc> GetCountExpression(QueuedJobPredicate predicate)
             => (HangfireContext context, string queue) => context.Set<HangfireQueuedJob>().
                 Where(predicate).
@@ -88,7 +103,7 @@ namespace Hangfire.EntityFrameworkCore
         private static Expression<GetJobIdsFunc> GetJobIdsExpression(QueuedJobPredicate predicate)
             => (HangfireContext context, string queue, int from, int perPage) => (
                 from x in context.Set<HangfireQueuedJob>().Where(predicate)
-                where  x.Queue == queue
+                where x.Queue == queue
                 orderby x.Id ascending
                 select x.Id).
                 Skip(from).

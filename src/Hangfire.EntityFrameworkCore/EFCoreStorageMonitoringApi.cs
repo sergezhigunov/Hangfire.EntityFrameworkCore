@@ -19,8 +19,8 @@ namespace Hangfire.EntityFrameworkCore
     using GetStateCountFunc = Func<HangfireContext, string, long>;
     using GetStatisticsFunc = Func<HangfireContext, IEnumerable<KeyValuePair<string, long>>>;
     using GetCountFunc = Func<HangfireContext, long>;
-    using EnqueuedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<string, EnqueuedJobDto>>>;
-    using FetchedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<string, FetchedJobDto>>>;
+    using EnqueuedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<EFCoreStorageMonitoringApi.EnqueuedJobState>>;
+    using FetchedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
     using ServersFunc = Func<HangfireContext, IEnumerable<ServerDto>>;
 
     internal class EFCoreStorageMonitoringApi : IMonitoringApi
@@ -131,19 +131,13 @@ namespace Hangfire.EntityFrameworkCore
                 let id = job.Id
                 where keys.Contains(id)
                 let state = job.State
-                select new KeyValuePair<string, EnqueuedJobDto>(
-                    id.ToString(CultureInfo.InvariantCulture),
-                    new EnqueuedJobDto
-                    {
-                        Job = Deserialize(job.InvocationData),
-                        State = job.StateName,
-                        InEnqueuedState = EnqueuedState.StateName.Equals(job.StateName,
-                            StringComparison.OrdinalIgnoreCase),
-                        EnqueuedAt = state == null ? default :
-                            JobHelper.DeserializeNullableDateTime(
-                                JobHelper.FromJson<Dictionary<string, string>>(state.Data).
-                                    GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
-                    }));
+                select new EnqueuedJobState
+                {
+                    Id = id,
+                    StateName = job.StateName,
+                    InvocationData = job.InvocationData,
+                    StateData = state.Data,
+                });
 
         private static FetchedJobsFunc FetchedJobsFunc { get; } = EF.CompileQuery(
             (HangfireContext context, IEnumerable<long> keys) =>
@@ -151,8 +145,8 @@ namespace Hangfire.EntityFrameworkCore
                 let id = job.Id
                 where keys.Contains(id)
                 let state = job.State
-                select new KeyValuePair<string, FetchedJobDto>(
-                    id.ToString(CultureInfo.InvariantCulture),
+                select new KeyValuePair<long, FetchedJobDto>(
+                    id,
                     new FetchedJobDto
                     {
                         Job = Deserialize(job.InvocationData),
@@ -270,8 +264,14 @@ namespace Hangfire.EntityFrameworkCore
             var keys = ids.Select(x =>
                 long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture));
 
-            return new JobList<FetchedJobDto>(_storage.UseContext(context =>
-                FetchedJobsFunc(context, keys)));
+            var items = _storage.UseContext(context =>
+                FetchedJobsFunc(context, keys).
+                ToList());
+
+            return new JobList<FetchedJobDto>(
+                items.Select(x => new KeyValuePair<string, FetchedJobDto>(
+                    x.Key.ToString(CultureInfo.InvariantCulture),
+                    x.Value)));
         }
 
         public StatisticsDto GetStatistics()
@@ -416,7 +416,10 @@ namespace Hangfire.EntityFrameworkCore
                 });
         }
 
-        public IList<ServerDto> Servers() => _storage.UseContext(ServersFunc).ToList();
+        public IList<ServerDto> Servers() =>
+            _storage.UseContext(context =>
+                ServersFunc(context).
+                ToList());
 
         public IDictionary<DateTime, long> SucceededByDatesCount()
         {
@@ -468,8 +471,25 @@ namespace Hangfire.EntityFrameworkCore
             var keys = ids.Select(
                 x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture));
 
-            return new JobList<EnqueuedJobDto>(_storage.UseContext(context =>
-                EnqueuedJobsFunc(context, keys)));
+            var items = _storage.UseContext(context =>
+                EnqueuedJobsFunc(context, keys).
+                ToList());
+
+            return new JobList<EnqueuedJobDto>(
+                items.Select(x => new KeyValuePair<string, EnqueuedJobDto>(
+                    x.Id.ToString(CultureInfo.InvariantCulture),
+                    new EnqueuedJobDto
+                    {
+                        Job = Deserialize(x.InvocationData),
+                        State = x.StateName,
+                        InEnqueuedState = EnqueuedState.StateName.Equals(
+                            x.StateName,
+                            StringComparison.OrdinalIgnoreCase),
+                        EnqueuedAt = x.StateData == null ? default :
+                            JobHelper.DeserializeNullableDateTime(
+                                JobHelper.FromJson<Dictionary<string, string>>(x.StateData).
+                                    GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
+                    })));
         }
 
         private JobList<T> GetJobs<T>(int from, int count, string stateName,
@@ -508,7 +528,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private Dictionary<DateTime, long> GetTimelineStats(IDictionary<string, DateTime> keyMaps)
         {
-            var counters = _storage.UseContext(context => GetCountersFunc(context, keyMaps.Keys).
+            var counters = _storage.UseContext(context =>
+                GetCountersFunc(context, keyMaps.Keys).
                 ToDictionary(x => x.Key, x => x.Value));
 
             return keyMaps.ToDictionary(x => x.Value,
@@ -524,6 +545,14 @@ namespace Hangfire.EntityFrameworkCore
             public Job Job { get; internal set; }
             public string Reason { get; internal set; }
             public IDictionary<string, string> Data { get; internal set; }
+        }
+
+        internal class EnqueuedJobState
+        {
+            public long Id { get; set; }
+            public string StateName { get; set; }
+            public string InvocationData { get; set; }
+            public string StateData { get; set; }
         }
     }
 }

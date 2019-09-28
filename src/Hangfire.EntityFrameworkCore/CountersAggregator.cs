@@ -20,14 +20,9 @@ namespace Hangfire.EntityFrameworkCore
         private static GetCountersToRemoveFunc GetCountersToRemoveFunc { get; } = EF.CompileQuery(
             (HangfireContext context) => (
                 from x in context.Set<HangfireCounter>()
-                where x.Key == (
-                    from y in context.Set<HangfireCounter>()
-                    group y by y.Key into g
-                    let count = g.Count()
-                    where count > 1
-                    orderby count descending
-                    select g.Key).
-                    FirstOrDefault()
+                where context.Set<HangfireCounter>().
+                    Any(y => y.Key == x.Key && y.Id != x.Id)
+                orderby x.Key
                 select x).
                 Take(BatchSize));
 
@@ -48,30 +43,32 @@ namespace Hangfire.EntityFrameworkCore
                 removedCount = 0;
                 using (var context = _storage.CreateContext())
                 {
-                    var counters = context.Set<HangfireCounter>();
-                    var itemsToRemove = GetCountersToRemoveFunc(context). ToList();
-                    var count = itemsToRemove.Count();
-                    if (count > 1)
-                    {
-                        var key = itemsToRemove.First().Key;
-                        context.RemoveRange(itemsToRemove);
-                        context.Add(new HangfireCounter
-                        {
-                            Key = key,
-                            Value = itemsToRemove.Sum(x => x.Value),
-                            ExpireAt = itemsToRemove.Max(x => x.ExpireAt),
-                        });
-                        removedCount += count;
+                    var lookup = GetCountersToRemoveFunc(context).
+                        ToLookup(x => x.Key);
 
-                        try
+                    foreach (var items in lookup)
+                    {
+                        var count = items.Count();
+                        if (count > 1)
                         {
-                            context.SaveChanges();
+                            context.RemoveRange(items);
+                            context.Add(new HangfireCounter
+                            {
+                                Key = items.Key,
+                                Value = items.Sum(x => x.Value),
+                                ExpireAt = items.Max(x => x.ExpireAt),
+                            });
+                            removedCount += count;
                         }
-                        catch (DbUpdateConcurrencyException)
-                        {
-                            // Someone else has removed at least one record. Database wins.
-                            continue;
-                        }
+                    }
+                    try
+                    {
+                        context.SaveChanges();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        // Someone else has removed at least one record. Database wins.
+                        continue;
                     }
                 }
                 cancellationToken.ThrowIfCancellationRequested();

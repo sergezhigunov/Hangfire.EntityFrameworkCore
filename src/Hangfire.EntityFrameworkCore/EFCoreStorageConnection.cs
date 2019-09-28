@@ -280,17 +280,34 @@ namespace Hangfire.EntityFrameworkCore
 
         public override Dictionary<string, string> GetAllEntriesFromHash([NotNull] string key)
         {
-            var result = UseContext(GetAllEntriesFromHashFunc, key).
-                ToDictionary(x => x.Key, x => x.Value);
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
+
+            var result = _storage.UseContext(context =>
+                GetAllEntriesFromHashFunc(context, key).
+                ToDictionary(x => x.Key, x => x.Value));
 
             return result.Count != 0 ? result : null;
         }
 
-        public override List<string> GetAllItemsFromList([NotNull] string key) =>
-            UseContext(GetAllItemsFromListFunc, key).ToList();
+        public override List<string> GetAllItemsFromList([NotNull] string key)
+        {
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
 
-        public override HashSet<string> GetAllItemsFromSet([NotNull] string key) =>
-            new HashSet<string>(UseContext(GetAllItemsFromSetFunc, key));
+            return _storage.UseContext(context =>
+                GetAllItemsFromListFunc(context, key).
+                ToList());
+        }
+
+        public override HashSet<string> GetAllItemsFromSet([NotNull] string key)
+        {
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
+
+            return _storage.UseContext(context =>
+                new HashSet<string>(GetAllItemsFromSetFunc(context, key)));
+        }
 
         public override long GetCounter([NotNull] string key) => UseContext(GetCounterFunc, key);
 
@@ -366,7 +383,7 @@ namespace Hangfire.EntityFrameworkCore
 
                 return GetRangeFromSetFunc(context, key, startingFrom, take).ToList();
             }, key);
-        
+
 
         public override long GetSetCount([NotNull] string key) =>
             UseContext(GetSetCountFunc, key);
