@@ -30,20 +30,20 @@ namespace Hangfire.EntityFrameworkCore
 
             modelBuilder.Entity<HangfireCounter>(entity =>
             {
-                entity.HasIndex(x => new { x.Key, x.Value });
-                entity.HasIndex(x => x.ExpireAt);
+                entity.HasIndex(nameof(HangfireCounter.Key), nameof(HangfireCounter.Value));
+                entity.HasIndex(nameof(HangfireCounter.ExpireAt));
             });
 
             modelBuilder.Entity<HangfireHash>(entity =>
             {
                 entity.HasKey(x => new { x.Key, x.Field });
-                entity.HasIndex(x => x.ExpireAt);
+                entity.HasIndex(nameof(HangfireHash.ExpireAt));
             });
 
             modelBuilder.Entity<HangfireJob>(entity =>
             {
-                entity.HasIndex(x => x.StateName);
-                entity.HasIndex(x => x.ExpireAt);
+                entity.HasIndex(nameof(HangfireJob.StateName));
+                entity.HasIndex(nameof(HangfireJob.ExpireAt));
             });
 
             modelBuilder.Entity<HangfireJobParameter>(entity =>
@@ -54,31 +54,31 @@ namespace Hangfire.EntityFrameworkCore
             modelBuilder.Entity<HangfireList>(entity =>
             {
                 entity.HasKey(x => new { x.Key, x.Position });
-                entity.HasIndex(x => x.ExpireAt);
+                entity.HasIndex(nameof(HangfireList.ExpireAt));
             });
 
             modelBuilder.Entity<HangfireLock>();
 
             modelBuilder.Entity<HangfireQueuedJob>(entity =>
             {
-                entity.HasIndex(x => new { x.Queue, x.FetchedAt });
+                entity.HasIndex(nameof(HangfireQueuedJob.Queue), nameof(HangfireQueuedJob.FetchedAt));
             });
 
             modelBuilder.Entity<HangfireSet>(entity =>
             {
                 entity.HasKey(x => new { x.Key, x.Value });
-                entity.HasIndex(x => new { x.Key, x.Score });
-                entity.HasIndex(x => x.ExpireAt);
+                entity.HasIndex(nameof(HangfireSet.Key), nameof(HangfireSet.Score));
+                entity.HasIndex(nameof(HangfireSet.ExpireAt));
             });
 
             modelBuilder.Entity<HangfireServer>(entity =>
             {
-                entity.HasIndex(x => x.Heartbeat);
+                entity.HasIndex(nameof(HangfireServer.Heartbeat));
             });
 
             modelBuilder.Entity<HangfireState>(entity =>
             {
-                entity.HasIndex(x => x.JobId);
+                entity.HasIndex(nameof(HangfireState.JobId));
                 entity.HasMany<HangfireJob>().
                     WithOne(x => x.State).
                     HasForeignKey(x => x.StateId);
