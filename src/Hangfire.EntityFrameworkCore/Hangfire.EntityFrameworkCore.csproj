@@ -3,7 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
-    <PackageReleaseNotes>0.1.2
+    <PackageReleaseNotes>
+0.1.3
+• Fixed – An unexpected MissingMethodException by using another `EntityTypeBuilder.HasIndex` method overload existing in EFCore 3.0.
+
+0.1.2
 • Fixed – A few errors caused by EFCore 3 breaking changes.
 
 0.1.1
