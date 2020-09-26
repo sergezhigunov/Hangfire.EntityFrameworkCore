@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +16,12 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
 
         public IConfiguration Configuration { get; }
 
-        public static void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
-            var userPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            var databaseFilePath = Path.Combine(userPath, "hangfire.db");
+            var connectionString = Configuration.GetConnectionString("HangfireConnection");
             services.AddHangfire(configuration =>
                 configuration.UseEFCoreStorage(builder =>
-                    builder.UseSqlite($"Data Source={databaseFilePath}"),
+                    builder.UseSqlite(connectionString),
                     new EFCoreStorageOptions
                     {
                         CountersAggregationInterval = new TimeSpan(0, 5, 0),
