@@ -62,7 +62,10 @@ namespace Hangfire.EntityFrameworkCore
         public EFCoreStorageTransaction(
             EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
             _queue = new Queue<Action<HangfireContext>>();
             _afterCommitQueue = new Queue<Action>();
         }
@@ -74,9 +77,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void AddRangeToSet([NotNull] string key, [NotNull] IList<string> items)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (items == null)
+            if (items is null)
                 throw new ArgumentNullException(nameof(items));
             ThrowIfDisposed();
 
@@ -144,9 +147,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void AddToSet([NotNull] string key, [NotNull] string value, double score)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (value == null)
+            if (value is null)
                 throw new ArgumentNullException(nameof(value));
             ThrowIfDisposed();
 
@@ -263,7 +266,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void InsertToList([NotNull] string key, string value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -306,7 +309,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveFromList([NotNull] string key, string value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -322,9 +325,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveFromSet([NotNull] string key, [NotNull] string value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (value == null)
+            if (value is null)
                 throw new ArgumentNullException(nameof(value));
             ThrowIfDisposed();
 
@@ -351,7 +354,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveHash([NotNull] string key)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -380,7 +383,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveSet([NotNull] string key)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -415,9 +418,9 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string key,
             [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (keyValuePairs == null)
+            if (keyValuePairs is null)
                 throw new ArgumentNullException(nameof(keyValuePairs));
             ThrowIfDisposed();
 
@@ -455,7 +458,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void TrimList([NotNull] string key, int keepStartingFrom, int keepEndingAt)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -475,7 +478,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private void AddCounter([NotNull] string key, long value, DateTime? expireAt)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -499,7 +502,7 @@ namespace Hangfire.EntityFrameworkCore
         private void AddJobState([NotNull] string jobId, [NotNull] IState state, bool setActual)
         {
             var id = ValidateJobId(jobId);
-            if (state == null)
+            if (state is null)
                 throw new ArgumentNullException(nameof(state));
             ThrowIfDisposed();
 
@@ -578,7 +581,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetHashExpiration(string key, DateTime? expireAt)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -609,7 +612,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetListExpiration(string key, DateTime? expireAt)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -640,7 +643,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private void SetSetExpiration(string key, DateTime? expireAt)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             ThrowIfDisposed();
 
@@ -677,7 +680,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private static void ValidateQueue(string queue)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             if (queue.Length == 0)
@@ -687,7 +690,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private static long ValidateJobId(string jobId)
         {
-            if (jobId == null)
+            if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
 
             if (jobId.Length == 0)

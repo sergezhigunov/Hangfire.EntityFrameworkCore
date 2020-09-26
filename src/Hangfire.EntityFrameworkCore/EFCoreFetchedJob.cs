@@ -29,8 +29,13 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] EFCoreStorage storage,
             [NotNull] HangfireQueuedJob queuedJob)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _queuedJob = queuedJob ?? throw new ArgumentNullException(nameof(queuedJob));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+            if (queuedJob is null)
+                throw new ArgumentNullException(nameof(queuedJob));
+
+            _storage = storage;
+            _queuedJob = queuedJob;
             var keepAliveInterval = new TimeSpan(storage.SlidingInvisibilityTimeout.Ticks / 5);
             _timer = new Timer(ExecuteKeepAliveQuery, null, keepAliveInterval, keepAliveInterval);
         }

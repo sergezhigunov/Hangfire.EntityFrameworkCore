@@ -8,7 +8,10 @@ namespace Hangfire.EntityFrameworkCore
 
         public EFCoreJobQueueProvider(EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public IPersistentJobQueue GetJobQueue()

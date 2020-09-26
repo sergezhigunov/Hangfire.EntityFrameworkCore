@@ -41,7 +41,10 @@ namespace Hangfire.EntityFrameworkCore
 
         public EFCoreJobQueueMonitoringApi(EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public IList<string> GetEnqueuedJobIds([NotNull] string queue, int from, int perPage)
@@ -88,7 +91,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private T UseContext<T>(Func<HangfireContext, string, T> func, string queue)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             return _storage.UseContext(context => func(context, queue));

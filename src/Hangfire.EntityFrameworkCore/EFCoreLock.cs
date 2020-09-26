@@ -14,7 +14,10 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string resource,
             TimeSpan timeout)
         {
-            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null)
+                throw new ArgumentNullException(nameof(provider));
+
+            _provider = provider;
             _provider.Acquire(resource, timeout);
             _resource = resource;
         }

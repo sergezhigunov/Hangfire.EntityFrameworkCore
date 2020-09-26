@@ -68,7 +68,7 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] Action<DbContextOptionsBuilder> optionsAction,
             [NotNull] EFCoreStorageOptions options)
         {
-            if (configuration == null)
+            if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
             return configuration.UseStorage(new EFCoreStorage(optionsAction, options));
@@ -89,7 +89,7 @@ namespace Hangfire.EntityFrameworkCore
         public static IGlobalConfiguration<EFCoreStorage> UseDatabaseCreator(
             [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration)
         {
-            if (configuration == null)
+            if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
             configuration.Entry.RegisterDatabaseInitializer(
@@ -129,7 +129,7 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] IPersistentJobQueueProvider provider,
             [NotNull] IList<string> queues)
         {
-            if (configuration == null)
+            if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
             configuration.Entry.RegisterProvider(provider, queues);

@@ -7,32 +7,19 @@ namespace Hangfire.EntityFrameworkCore
     {
         internal static DateTime? GetCreatedAt(this IState state)
         {
-            if (state == null)
+            if (state is null)
                 throw new ArgumentNullException(nameof(state));
 
-            switch (state)
+            return state switch
             {
-                case ScheduledState scheduled:
-                    return scheduled.ScheduledAt;
-
-                case EnqueuedState enqueued:
-                    return enqueued.EnqueuedAt;
-
-                case ProcessingState processing:
-                    return processing.StartedAt;
-
-                case SucceededState succeeded:
-                    return succeeded.SucceededAt;
-
-                case FailedState failed:
-                    return failed.FailedAt;
-
-                case DeletedState deleted:
-                    return deleted.DeletedAt;
-
-                default:
-                    return default;
-            }
+                ScheduledState scheduled => scheduled.ScheduledAt,
+                EnqueuedState enqueued => enqueued.EnqueuedAt,
+                ProcessingState processing => processing.StartedAt,
+                SucceededState succeeded => succeeded.SucceededAt,
+                FailedState failed => failed.FailedAt,
+                DeletedState deleted => deleted.DeletedAt,
+                _ => default(DateTime?),
+            };
         }
     }
 }

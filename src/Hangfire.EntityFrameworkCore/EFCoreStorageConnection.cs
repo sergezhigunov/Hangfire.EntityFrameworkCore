@@ -174,7 +174,10 @@ namespace Hangfire.EntityFrameworkCore
 
         public EFCoreStorageConnection(EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
             _lockProvider = new EFCoreLockProvider(_storage);
         }
 
@@ -182,7 +185,7 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string resource,
             TimeSpan timeout)
         {
-            if (resource == null)
+            if (resource is null)
                 throw new ArgumentNullException(nameof(resource));
             if (resource.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty, nameof(resource));
@@ -197,9 +200,9 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string serverId,
             [NotNull] ServerContext context)
         {
-            if (serverId == null)
+            if (serverId is null)
                 throw new ArgumentNullException(nameof(serverId));
-            if (context == null)
+            if (context is null)
                 throw new ArgumentNullException(nameof(context));
 
             var timestamp = DateTime.UtcNow;
@@ -228,9 +231,9 @@ namespace Hangfire.EntityFrameworkCore
             DateTime createdAt,
             TimeSpan expireIn)
         {
-            if (job == null)
+            if (job is null)
                 throw new ArgumentNullException(nameof(job));
-            if (parameters == null)
+            if (parameters is null)
                 throw new ArgumentNullException(nameof(parameters));
 
             var invocationData = InvocationData.Serialize(job);
@@ -267,7 +270,7 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string[] queues,
             CancellationToken cancellationToken)
         {
-            if (queues == null)
+            if (queues is null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
@@ -331,7 +334,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override JobData GetJobData([NotNull] string jobId)
         {
-            if (jobId == null)
+            if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
 
             if (!TryParseJobId(jobId, out var id))
@@ -342,9 +345,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override string GetJobParameter([NotNull] string id, [NotNull] string name)
         {
-            if (id == null)
+            if (id is null)
                 throw new ArgumentNullException(nameof(id));
-            if (name == null)
+            if (name is null)
                 throw new ArgumentNullException(nameof(name));
 
             if (!TryParseJobId(id, out var jobId))
@@ -393,7 +396,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override StateData GetStateData([NotNull] string jobId)
         {
-            if (jobId == null)
+            if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
 
             if (!TryParseJobId(jobId, out var id))
@@ -404,9 +407,9 @@ namespace Hangfire.EntityFrameworkCore
 
         public override string GetValueFromHash([NotNull] string key, [NotNull] string name)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (name == null)
+            if (name is null)
                 throw new ArgumentNullException(nameof(name));
 
             return _storage.UseContext(context => GetValueFromHashFunc(context, key, name));
@@ -414,7 +417,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void Heartbeat([NotNull] string serverId)
         {
-            if (serverId == null)
+            if (serverId is null)
                 throw new ArgumentNullException(nameof(serverId));
 
             _storage.UseContext(context =>
@@ -438,7 +441,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public override void RemoveServer([NotNull] string serverId)
         {
-            if (serverId == null)
+            if (serverId is null)
                 throw new ArgumentNullException(nameof(serverId));
 
             _storage.UseContext(context =>
@@ -493,10 +496,10 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string name,
             string value)
         {
-            if (name == null)
+            if (name is null)
                 throw new ArgumentNullException(nameof(name));
-            long jobId = ValidateId(id);
 
+            long jobId = ValidateId(id);
             var parameter = new HangfireJobParameter
             {
                 JobId = jobId,
@@ -517,9 +520,9 @@ namespace Hangfire.EntityFrameworkCore
             [NotNull] string key,
             [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
-            if (keyValuePairs == null)
+            if (keyValuePairs is null)
                 throw new ArgumentNullException(nameof(keyValuePairs));
 
             var hashes = keyValuePairs.Select(x => new HangfireHash
@@ -543,7 +546,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private T UseContext<T>(Func<HangfireContext, string, T> func, string key)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
 
             return _storage.UseContext(context => func(context, key));
@@ -586,9 +589,8 @@ namespace Hangfire.EntityFrameworkCore
 
         private static long ValidateId(string id)
         {
-            if (id == null)
+            if (id is null)
                 throw new ArgumentNullException(nameof(id));
-
             if (id.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                     nameof(id));

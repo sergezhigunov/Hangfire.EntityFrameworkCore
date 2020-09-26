@@ -127,7 +127,12 @@ namespace Hangfire.EntityFrameworkCore
         public string Schema
         {
             get => _schema;
-            set => _schema = value ?? throw new ArgumentNullException(nameof(value));
+            set
+            {
+                if (value is null)
+                    throw new ArgumentNullException(nameof(value));
+                _schema = value;
+            }
         }
 
         private static void ThrowIfNonPositive(TimeSpan value)

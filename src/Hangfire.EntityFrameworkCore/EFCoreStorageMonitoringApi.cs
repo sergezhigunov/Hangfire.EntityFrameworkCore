@@ -171,7 +171,10 @@ namespace Hangfire.EntityFrameworkCore
         public EFCoreStorageMonitoringApi(
             EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public JobList<DeletedJobDto> DeletedJobs(int from, int count)
@@ -192,7 +195,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public long EnqueuedCount([NotNull] string queue)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             var provider = _storage.GetQueueProvider(queue);
@@ -203,7 +206,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             var provider = _storage.GetQueueProvider(queue);
@@ -239,7 +242,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public long FetchedCount([NotNull] string queue)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             var provider = _storage.GetQueueProvider(queue);
@@ -250,7 +253,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             var provider = _storage.GetQueueProvider(queue);
@@ -318,7 +321,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public JobDetailsDto JobDetails([NotNull] string jobId)
         {
-            if (jobId == null)
+            if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
 
             if (!TryParseJobId(jobId, out var id))
@@ -328,7 +331,7 @@ namespace Hangfire.EntityFrameworkCore
             {
                 var jobInfo = GetJobDetailsFunc(context, id);
 
-                if (jobInfo == null)
+                if (jobInfo is null)
                     return null;
 
                 jobInfo.Properties = GetJobParametersFunc(context, id).
@@ -435,7 +438,7 @@ namespace Hangfire.EntityFrameworkCore
                     SucceededAt = JobHelper.DeserializeNullableDateTime(
                         data?.GetValue(nameof(SucceededJobDto.SucceededAt))),
                     Result = data?.GetValue(nameof(SucceededJobDto.Result)),
-                    TotalDuration = data == null ? default :
+                    TotalDuration = data is null ? default :
                         data.TryGetValue("PerformanceDuration", out var duration) &&
                             data.TryGetValue("Latency", out var latency) ?
                             long.Parse(duration, CultureInfo.InvariantCulture) +
@@ -485,7 +488,7 @@ namespace Hangfire.EntityFrameworkCore
                         InEnqueuedState = EnqueuedState.StateName.Equals(
                             x.StateName,
                             StringComparison.OrdinalIgnoreCase),
-                        EnqueuedAt = x.StateData == null ? default :
+                        EnqueuedAt = x.StateData is null ? default :
                             JobHelper.DeserializeNullableDateTime(
                                 JobHelper.FromJson<Dictionary<string, string>>(x.StateData).
                                     GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),

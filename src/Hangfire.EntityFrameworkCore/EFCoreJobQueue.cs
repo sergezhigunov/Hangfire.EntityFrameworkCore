@@ -30,12 +30,15 @@ namespace Hangfire.EntityFrameworkCore
 
         public EFCoreJobQueue([NotNull] EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public IFetchedJob Dequeue([NotNull] string[] queues, CancellationToken cancellationToken)
         {
-            if (queues == null)
+            if (queues is null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
@@ -78,13 +81,13 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Enqueue([NotNull] string queue, [NotNull] string jobId)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
             if (queue.Length == 0)
                 throw new ArgumentException(
                     CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
                     nameof(queue));
-            if (jobId == null)
+            if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
 
             var id = long.Parse(jobId, CultureInfo.InvariantCulture);

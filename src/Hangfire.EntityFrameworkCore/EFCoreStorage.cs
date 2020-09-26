@@ -56,9 +56,12 @@ namespace Hangfire.EntityFrameworkCore
             Action<DbContextOptionsBuilder> optionsAction,
             EFCoreStorageOptions options)
         {
-            if (optionsAction == null)
+            if (optionsAction is null)
                 throw new ArgumentNullException(nameof(optionsAction));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            if (options is null)
+                throw new ArgumentNullException(nameof(options));
+
+            _options = options;
             var contextOptionsBuilder = new DbContextOptionsBuilder<HangfireContext>();
             optionsAction.Invoke(contextOptionsBuilder);
             _contextOptions = contextOptionsBuilder.Options;
@@ -105,7 +108,7 @@ namespace Hangfire.EntityFrameworkCore
 
         internal IPersistentJobQueueProvider GetQueueProvider(string queue)
         {
-            if (queue == null)
+            if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
 
             return QueueProviders.GetValue(queue) ?? DefaultQueueProvider;
@@ -116,9 +119,9 @@ namespace Hangfire.EntityFrameworkCore
 
         internal void RegisterProvider(IPersistentJobQueueProvider provider, IList<string> queues)
         {
-            if (provider == null)
+            if (provider is null)
                 throw new ArgumentNullException(nameof(provider));
-            if (queues == null)
+            if (queues is null)
                 throw new ArgumentNullException(nameof(queues));
             if (queues.Count == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
@@ -132,11 +135,11 @@ namespace Hangfire.EntityFrameworkCore
 
         internal void UseContext(Action<HangfireContext> action)
         {
-            if (action == null)
+            if (action is null)
                 throw new ArgumentNullException(nameof(action));
 
-            using (var context = CreateContext())
-                action(context);
+            using var context = CreateContext();
+            action(context);
         }
 
         internal void UseContextSavingChanges(Action<HangfireContext> action)
@@ -150,11 +153,11 @@ namespace Hangfire.EntityFrameworkCore
 
         internal T UseContext<T>(Func<HangfireContext, T> func)
         {
-            if (func == null)
+            if (func is null)
                 throw new ArgumentNullException(nameof(func));
 
-            using (var context = CreateContext())
-                return func(context);
+            using var context = CreateContext();
+            return func(context);
         }
 
         internal T UseContextSavingChanges<T>(Func<HangfireContext, T> func)

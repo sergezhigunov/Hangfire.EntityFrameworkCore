@@ -12,7 +12,10 @@ namespace Hangfire.EntityFrameworkCore
         public HangfireContext([NotNull] DbContextOptions options, [NotNull] string schema)
             : base(options)
         {
-            Schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            if (schema is null)
+                throw new ArgumentNullException(nameof(schema));
+
+            Schema = schema;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

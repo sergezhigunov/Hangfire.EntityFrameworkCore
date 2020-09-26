@@ -23,12 +23,15 @@ namespace Hangfire.EntityFrameworkCore
         public EFCoreLockProvider(
             [NotNull] EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public void Acquire([NotNull] string resource, TimeSpan timeout)
         {
-            if (resource == null)
+            if (resource is null)
                 throw new ArgumentNullException(nameof(resource));
             if (resource.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
@@ -67,7 +70,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Release([NotNull] string resource)
         {
-            if (resource == null)
+            if (resource is null)
                 throw new ArgumentNullException(nameof(resource));
 
             _storage.UseContext(context =>
@@ -116,7 +119,7 @@ namespace Hangfire.EntityFrameworkCore
                 var @lock = GetLockFunc(context, resource);
 
                 // If the lock has been removed we should try to insert again
-                if (@lock == null)
+                if (@lock is null)
                     return false;
 
                 // If the lock has been expired, we should update its creation timestamp

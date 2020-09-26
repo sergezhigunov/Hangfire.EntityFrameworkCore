@@ -19,7 +19,10 @@ namespace Hangfire.EntityFrameworkCore
 
         public ExpirationManager(EFCoreStorage storage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            if (storage is null)
+                throw new ArgumentNullException(nameof(storage));
+
+            _storage = storage;
         }
 
         public void Execute(CancellationToken cancellationToken)
@@ -57,23 +60,21 @@ namespace Hangfire.EntityFrameworkCore
         private void UseLock(Action action)
         {
             var lockTimeout = _storage.DistributedLockTimeout;
-            using (var connection = _storage.GetConnection())
+            using var connection = _storage.GetConnection();
+            try
             {
-                try
-                {
-                    using (var @lock = connection.AcquireDistributedLock(LockKey, lockTimeout))
-                        action.Invoke();
-                }
-                catch (DistributedLockTimeoutException exception)
-                when (exception.Resource == LockKey)
-                {
-                    _logger.Log(LogLevel.Debug, () =>
-                         CoreStrings.ExpirationManagerUseLockFailed(
-                            LockKey,
-                            lockTimeout.TotalSeconds,
-                            _storage.JobExpirationCheckInterval.TotalSeconds),
-                        exception);
-                }
+                using (connection.AcquireDistributedLock(LockKey, lockTimeout))
+                    action.Invoke();
+            }
+            catch (DistributedLockTimeoutException exception)
+            when (exception.Resource == LockKey)
+            {
+                _logger.Log(LogLevel.Debug, () =>
+                     CoreStrings.ExpirationManagerUseLockFailed(
+                        LockKey,
+                        lockTimeout.TotalSeconds,
+                        _storage.JobExpirationCheckInterval.TotalSeconds),
+                    exception);
             }
         }
     }
