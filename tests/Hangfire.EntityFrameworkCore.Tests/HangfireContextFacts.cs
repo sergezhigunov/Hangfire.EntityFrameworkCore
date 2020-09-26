@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests
@@ -28,6 +29,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         [Theory]
         [InlineData("")]
+        [InlineData("hangfire")]
         [InlineData("Hangfire")]
         public void Ctor_CreatesInstance(string schema)
         {
@@ -38,9 +40,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
             using (var context = new HangfireContext(options, schema))
             {
                 Assert.Same(schema, context.Schema);
-                Assert.NotNull(context.Model);
-                var relational = context.Model.Relational();
-                Assert.Equal(schema, relational.DefaultSchema ?? string.Empty);
+                var model = context.Model;
+                Assert.NotNull(model);
+
+                var actualSchema = context.Model
+#if NETCOREAPP3_1
+                    .GetDefaultSchema()
+#else
+                    .Relational().DefaultSchema
+#endif
+                    ?? string.Empty;
+                Assert.Equal(schema, actualSchema);
             }
         }
     }
