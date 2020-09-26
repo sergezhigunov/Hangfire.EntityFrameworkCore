@@ -1,9 +1,11 @@
 ﻿using System;
+using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Hangfire.EntityFrameworkCore.AspNetCore
 {
@@ -32,22 +34,20 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
                         SlidingInvisibilityTimeout = new TimeSpan(0, 5, 0),
                     }).
                 UseDatabaseCreator());
-            services.AddMvcCore();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
+            app.UseHangfireServer();
             app.UseHangfireDashboard(string.Empty,
                 new DashboardOptions
                 {
                     AppPath = null,
+                    Authorization = Array.Empty<IDashboardAuthorizationFilter>(),
                 });
-            app.UseHangfireServer();
-            app.UseMvc();
-
             RecurringJob.AddOrUpdate(() => DoNothing(), Cron.Minutely);
         }
 
