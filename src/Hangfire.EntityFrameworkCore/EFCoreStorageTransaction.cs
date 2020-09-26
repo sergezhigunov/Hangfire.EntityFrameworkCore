@@ -119,10 +119,19 @@ namespace Hangfire.EntityFrameworkCore
 
             var provider = _storage.GetQueueProvider(queue);
             var persistentQueue = provider.GetJobQueue();
-            if (persistentQueue is EFCoreJobQueue storageJobQueue)
-                _queue.Enqueue(context => storageJobQueue.Enqueue(context, queue, id));
-            else
-                _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
+            switch (persistentQueue)
+            {
+                case EFCoreJobQueue storageJobQueue:
+                    _queue.Enqueue(context => context.Add(new HangfireQueuedJob
+                    {
+                        JobId = id,
+                        Queue = queue,
+                    }));
+                    break;
+                default:
+                    _queue.Enqueue(context => persistentQueue.Enqueue(queue, jobId));
+                    break;
+            }
             if (persistentQueue is EFCoreJobQueue)
                 _afterCommitQueue.Enqueue(
                     () => EFCoreJobQueue.NewItemInQueueEvent.Set());

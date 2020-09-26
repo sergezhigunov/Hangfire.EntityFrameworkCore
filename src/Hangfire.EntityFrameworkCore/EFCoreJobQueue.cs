@@ -91,7 +91,11 @@ namespace Hangfire.EntityFrameworkCore
 
             _storage.UseContext(context =>
             {
-                Enqueue(context, queue, id);
+                context.Add(new HangfireQueuedJob
+                {
+                    JobId = id,
+                    Queue = queue,
+                });
                 try
                 {
                     context.SaveChanges();
@@ -102,18 +106,6 @@ namespace Hangfire.EntityFrameworkCore
                         CoreStrings.InvalidOperationExceptionJobDoesNotExists,
                         exception);
                 }
-            });
-        }
-
-        internal void Enqueue(
-            HangfireContext context,
-            string queue,
-            long jobId)
-        {
-            context.Add(new HangfireQueuedJob
-            {
-                JobId = jobId,
-                Queue = queue,
             });
         }
     }

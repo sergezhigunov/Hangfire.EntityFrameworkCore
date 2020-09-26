@@ -16,8 +16,8 @@ namespace Hangfire.EntityFrameworkCore
         private readonly EFCoreStorage _storage;
         private readonly Timer _timer;
         private readonly HangfireQueuedJob _queuedJob;
-        private bool _disposed = false;
-        private bool _completed = false;
+        private bool _disposed;
+        private bool _completed;
 
         public long Id => _queuedJob.Id;
         public long JobId => _queuedJob.JobId;

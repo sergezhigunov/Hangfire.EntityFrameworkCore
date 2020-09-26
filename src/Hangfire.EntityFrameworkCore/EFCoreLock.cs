@@ -7,7 +7,7 @@ namespace Hangfire.EntityFrameworkCore
     {
         private readonly ILockProvider _provider;
         private readonly string _resource;
-        private bool _disposed = false;
+        private bool _disposed;
 
         public EFCoreLock(
             [NotNull] ILockProvider provider,
