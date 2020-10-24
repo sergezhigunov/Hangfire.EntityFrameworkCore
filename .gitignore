@@ -263,3 +263,4 @@ __pycache__/
 # SQLite files
 *.db
 *.db-journal
+*.db-wal
