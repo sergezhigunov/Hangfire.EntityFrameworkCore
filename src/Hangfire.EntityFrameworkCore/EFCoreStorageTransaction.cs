@@ -188,7 +188,6 @@ namespace Hangfire.EntityFrameworkCore
                     var action = _queue.Dequeue();
                     action.Invoke(context);
                 }
-                context.SaveChanges();
             });
 
             while (_afterCommitQueue.Count > 0)
