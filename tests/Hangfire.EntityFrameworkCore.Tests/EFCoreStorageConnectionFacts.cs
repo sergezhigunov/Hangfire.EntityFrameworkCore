@@ -1687,8 +1687,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private void UseConnection(Action<EFCoreStorageConnection> action)
         {
-            using (var instance = CreateConnection())
-                action(instance);
+            using var instance = CreateConnection();
+            action(instance);
         }
 
         private T UseConnection<T>(Func<EFCoreStorageConnection, T> func)

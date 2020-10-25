@@ -12,7 +12,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void UseEFCoreStorage_Throws_WhenConfigurationParameterIsNull()
         {
             IGlobalConfiguration configuration = null;
-            void OptionsAction(DbContextOptionsBuilder builder) { }
+            static void OptionsAction(DbContextOptionsBuilder builder) { }
             var options = new EFCoreStorageOptions();
 
             Assert.Throws<ArgumentNullException>(nameof(configuration),
@@ -40,7 +40,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void UseEFCoreStorage_Throws_WhenOptionsParameterIsNull()
         {
             var configuration = new Mock<IGlobalConfiguration>().Object;
-            void OptionsAction(DbContextOptionsBuilder builder) { }
+            static void OptionsAction(DbContextOptionsBuilder builder) { }
             EFCoreStorageOptions options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),

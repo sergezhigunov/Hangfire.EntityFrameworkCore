@@ -67,9 +67,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = null;
             var state = new Mock<IState>().Object;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(jobId),
-                    () => instance.AddJobState(jobId, state));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(jobId),
+                () => instance.AddJobState(jobId, state));
         }
 
         [Fact]
@@ -77,9 +77,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = string.Empty;
             var state = new Mock<IState>().Object;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(jobId),
-                    () => instance.AddJobState(jobId, state));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentException>(nameof(jobId),
+                () => instance.AddJobState(jobId, state));
         }
 
         [Fact]
@@ -87,9 +87,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = "1";
             IState state = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(state),
-                    () => instance.AddJobState(jobId, state));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(state),
+                () => instance.AddJobState(jobId, state));
         }
 
         [Fact]
@@ -140,9 +140,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var items = Array.Empty<string>();
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.AddRangeToSet(key, items));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.AddRangeToSet(key, items));
         }
 
         [Fact]
@@ -150,9 +150,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = "key";
             IList<string> items = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(items),
-                    () => instance.AddRangeToSet(key, items));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(items),
+                () => instance.AddRangeToSet(key, items));
         }
 
         [Fact]
@@ -223,9 +223,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string queue = null;
             string jobId = "1";
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(queue),
-                    () => instance.AddToQueue(queue, jobId));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(queue),
+                () => instance.AddToQueue(queue, jobId));
         }
 
         [Fact]
@@ -233,9 +233,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string queue = string.Empty;
             string jobId = "1";
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(queue),
-                    () => instance.AddToQueue(queue, jobId));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentException>(nameof(queue),
+                () => instance.AddToQueue(queue, jobId));
         }
 
         [Fact]
@@ -243,9 +243,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string queue = "queue";
             string jobId = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(jobId),
-                    () => instance.AddToQueue(queue, jobId));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentNullException>(nameof(jobId),
+                () => instance.AddToQueue(queue, jobId));
         }
 
         [Fact]
@@ -253,9 +253,9 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string queue = "queue";
             string jobId = string.Empty;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(jobId),
-                    () => instance.AddToQueue(queue, jobId));
+            using var instance = CreateTransaction();
+            Assert.Throws<ArgumentException>(nameof(jobId),
+                () => instance.AddToQueue(queue, jobId));
         }
 
         [Fact]
@@ -302,13 +302,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string key = null;
             string value = "value";
             double score = 0;
-            using (var instance = CreateTransaction())
-            {
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.AddToSet(key, value));
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.AddToSet(key, value, score));
-            }
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.AddToSet(key, value));
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.AddToSet(key, value, score));
         }
 
         [Fact]
@@ -317,13 +316,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string key = "key";
             string value = null;
             double score = 0;
-            using (var instance = CreateTransaction())
-            {
-                Assert.Throws<ArgumentNullException>(nameof(value),
-                    () => instance.AddToSet(key, value));
-                Assert.Throws<ArgumentNullException>(nameof(value),
-                    () => instance.AddToSet(key, value, score));
-            }
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(value),
+                () => instance.AddToSet(key, value));
+            Assert.Throws<ArgumentNullException>(nameof(value),
+                () => instance.AddToSet(key, value, score));
         }
 
         [Fact]
@@ -477,13 +475,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-            {
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.DecrementCounter(key));
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.DecrementCounter(key, expireIn));
-            }
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.DecrementCounter(key));
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.DecrementCounter(key, expireIn));
         }
 
         [Fact]
@@ -539,9 +536,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(jobId),
-                    () => instance.ExpireJob(jobId, expireIn));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(jobId),
+                () => instance.ExpireJob(jobId, expireIn));
         }
 
         [Fact]
@@ -549,9 +547,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = string.Empty;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(jobId),
-                    () => instance.ExpireJob(jobId, expireIn));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentException>(nameof(jobId),
+                () => instance.ExpireJob(jobId, expireIn));
         }
 
         [Fact]
@@ -591,9 +590,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.ExpireHash(key, expireIn));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.ExpireHash(key, expireIn));
         }
 
         [Fact]
@@ -644,9 +644,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.ExpireList(key, expireIn));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.ExpireList(key, expireIn));
         }
 
         [Fact]
@@ -696,9 +697,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.ExpireSet(key, expireIn));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.ExpireSet(key, expireIn));
         }
 
         [Fact]
@@ -748,13 +750,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var expireIn = new TimeSpan(1, 0, 0);
-            using (var instance = CreateTransaction())
-            {
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.IncrementCounter(key));
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.IncrementCounter(key, expireIn));
-            }
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.IncrementCounter(key));
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.IncrementCounter(key, expireIn));
         }
 
         [Fact]
@@ -810,9 +811,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             string value = "value";
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.InsertToList(key, value));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.InsertToList(key, value));
         }
 
         [Fact]
@@ -857,18 +859,20 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void PersistJob_Throws_WhenJobIdParameterIsNull()
         {
             string jobId = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(jobId),
-                    () => instance.PersistJob(jobId));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(jobId),
+                () => instance.PersistJob(jobId));
         }
 
         [Fact]
         public void PersistJob_Throws_WhenJobIdParameterIsEmpty()
         {
             string jobId = string.Empty;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(jobId),
-                    () => instance.PersistJob(jobId));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentException>(nameof(jobId),
+                () => instance.PersistJob(jobId));
         }
 
         [Fact]
@@ -904,9 +908,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void PersistHash_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.PersistHash(key));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.PersistHash(key));
         }
 
         [Fact]
@@ -953,9 +958,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void PersistList_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.PersistList(key));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.PersistList(key));
         }
 
         [Fact]
@@ -1004,9 +1010,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void PersistSet_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.PersistSet(key));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.PersistSet(key));
         }
 
         [Fact]
@@ -1054,9 +1061,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             string value = "value";
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.RemoveFromList(key, value));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.RemoveFromList(key, value));
         }
 
         [Fact]
@@ -1136,9 +1144,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             string value = "value";
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.RemoveFromSet(key, value));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.RemoveFromSet(key, value));
         }
 
         [Fact]
@@ -1146,9 +1155,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = "key";
             string value = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(value),
-                    () => instance.RemoveFromSet(key, value));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(value),
+                () => instance.RemoveFromSet(key, value));
         }
 
         [Fact]
@@ -1209,9 +1219,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void RemoveHash_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.RemoveHash(key));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.RemoveHash(key));
         }
 
         [Fact]
@@ -1252,9 +1263,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void RemoveSet_Throws_WhenKeyParameterIsNull()
         {
             string key = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.RemoveSet(key));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.RemoveSet(key));
         }
 
         [Fact]
@@ -1297,9 +1309,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = null;
             var state = new Mock<IState>().Object;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(jobId),
-                    () => instance.SetJobState(jobId, state));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(jobId),
+                () => instance.SetJobState(jobId, state));
         }
 
         [Fact]
@@ -1307,9 +1320,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = string.Empty;
             var state = new Mock<IState>().Object;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentException>(nameof(jobId),
-                    () => instance.SetJobState(jobId, state));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentException>(nameof(jobId),
+                () => instance.SetJobState(jobId, state));
         }
 
         [Fact]
@@ -1317,9 +1331,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string jobId = "1";
             IState state = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(state),
-                    () => instance.SetJobState(jobId, state));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(state),
+                () => instance.SetJobState(jobId, state));
         }
 
         [Fact]
@@ -1372,9 +1387,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = null;
             var keyValuePairs = new Dictionary<string, string>();
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.SetRangeInHash(key, keyValuePairs));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.SetRangeInHash(key, keyValuePairs));
         }
 
         [Fact]
@@ -1382,9 +1398,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             string key = "key";
             Dictionary<string, string> keyValuePairs = null;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(keyValuePairs),
-                    () => instance.SetRangeInHash(key, keyValuePairs));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(keyValuePairs),
+                () => instance.SetRangeInHash(key, keyValuePairs));
         }
 
         [Fact]
@@ -1462,9 +1479,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string key = null;
             const int keepStartingFrom = 0;
             const int keepEndingAt = 1;
-            using (var instance = CreateTransaction())
-                Assert.Throws<ArgumentNullException>(nameof(key),
-                    () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
+            using var instance = CreateTransaction();
+
+            Assert.Throws<ArgumentNullException>(nameof(key),
+                () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
         }
 
         [Fact]
@@ -1652,12 +1670,10 @@ namespace Hangfire.EntityFrameworkCore.Tests
             bool commit,
             Action<EFCoreStorageTransaction> action)
         {
-            using (var transaction = CreateTransaction())
-            {
-                action(transaction);
-                if (commit)
-                    transaction.Commit();
-            }
+            using var transaction = CreateTransaction();
+            action(transaction);
+            if (commit)
+                transaction.Commit();
         }
     }
 }

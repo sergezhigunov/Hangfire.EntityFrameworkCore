@@ -43,8 +43,8 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var builder = new DbContextOptionsBuilder<HangfireContext>();
             OptionsAction(builder);
-            using (var context = CreateContext(builder))
-                action(context);
+            using var context = CreateContext(builder);
+            action(context);
         }
 
         private static HangfireContext CreateContext(DbContextOptionsBuilder<HangfireContext> builder)

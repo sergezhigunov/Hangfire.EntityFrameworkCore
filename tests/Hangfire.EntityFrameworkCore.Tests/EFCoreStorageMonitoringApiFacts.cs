@@ -1042,7 +1042,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             string stateName,
             IDictionary<string, string> data = null)
         {
-            data = data ?? new Dictionary<string, string>();
+            data ??= new Dictionary<string, string>();
             var state = new HangfireState
             {
                 CreatedAt = DateTime.UtcNow,

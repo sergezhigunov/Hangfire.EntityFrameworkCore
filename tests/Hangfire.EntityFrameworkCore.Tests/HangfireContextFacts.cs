@@ -37,21 +37,20 @@ namespace Hangfire.EntityFrameworkCore.Tests
             OptionsAction(builder);
             DbContextOptions options = builder.Options;
 
-            using (var context = new HangfireContext(options, schema))
-            {
-                Assert.Same(schema, context.Schema);
-                var model = context.Model;
-                Assert.NotNull(model);
+            using var context = new HangfireContext(options, schema);
+            Assert.Same(schema, context.Schema);
+            var model = context.Model;
+            Assert.NotNull(model);
 
-                var actualSchema = context.Model
+            var actualSchema = context.Model
 #if NETCOREAPP3_1
-                    .GetDefaultSchema()
+                .GetDefaultSchema()
 #else
-                    .Relational().DefaultSchema
+                .Relational()
+                .DefaultSchema
 #endif
-                    ?? string.Empty;
-                Assert.Equal(schema, actualSchema);
-            }
+                ?? string.Empty;
+            Assert.Equal(schema, actualSchema);
         }
     }
 }
