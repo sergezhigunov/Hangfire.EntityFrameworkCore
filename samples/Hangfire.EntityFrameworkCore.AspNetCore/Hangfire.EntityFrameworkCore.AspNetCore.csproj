@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5</TargetFramework>
     <DockerfileContext>..\..</DockerfileContext>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>

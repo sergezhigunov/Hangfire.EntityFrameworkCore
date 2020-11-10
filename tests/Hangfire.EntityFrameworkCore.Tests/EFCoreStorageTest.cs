@@ -58,6 +58,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
             builder => { };
 
         [SuppressMessage("Usage", "xUnit1013")]
-        public static void SampleMethod(string value) { }
+        public static void SampleMethod(string _) { }
     }
 }

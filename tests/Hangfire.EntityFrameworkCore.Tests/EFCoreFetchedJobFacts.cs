@@ -39,25 +39,23 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
             };
 
-            using (var instance = new EFCoreFetchedJob(Storage, queuedJob))
-            {
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.Same(Storage, Assert.IsType<EFCoreStorage>(
-                    instance.GetFieldValue("_storage")));
-                Assert.Same(queuedJob,
-                    Assert.IsType<HangfireQueuedJob>(
-                        instance.GetFieldValue("_queuedJob")));
-                Assert.Equal(queuedJob.Id, instance.Id);
-                Assert.Equal(queuedJob.JobId, instance.JobId);
-                Assert.Equal(queuedJob.Queue, instance.Queue);
-                Assert.Equal
-                    (queuedJob.JobId.ToString(CultureInfo.InvariantCulture),
-                    ((IFetchedJob)instance).JobId);
-            }
+            using var instance = new EFCoreFetchedJob(Storage, queuedJob);
 
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.Same(Storage, Assert.IsType<EFCoreStorage>(
+                instance.GetFieldValue("_storage")));
+            Assert.Same(queuedJob,
+                Assert.IsType<HangfireQueuedJob>(
+                    instance.GetFieldValue("_queuedJob")));
+            Assert.Equal(queuedJob.Id, instance.Id);
+            Assert.Equal(queuedJob.JobId, instance.JobId);
+            Assert.Equal(queuedJob.Queue, instance.Queue);
+            Assert.Equal
+                (queuedJob.JobId.ToString(CultureInfo.InvariantCulture),
+                ((IFetchedJob)instance).JobId);
         }
 
         [Fact]
@@ -69,16 +67,15 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Storage, item))
-            {
-                instance.RemoveFromQueue();
+            using var instance = new EFCoreFetchedJob(Storage, item);
 
-                UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-            }
+            instance.RemoveFromQueue();
+
+            UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
         }
 
         [Fact]
@@ -97,20 +94,19 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single()))
-            {
-                instance.RemoveFromQueue();
+            using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());
 
-                UseContext(context =>
-                {
-                    Assert.Single(context.Set<HangfireJob>());
-                    Assert.Empty(context.Set<HangfireQueuedJob>());
-                });
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-            }
+            instance.RemoveFromQueue();
+
+            UseContext(context =>
+            {
+                Assert.Single(context.Set<HangfireJob>());
+                Assert.Empty(context.Set<HangfireQueuedJob>());
+            });
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
         }
 
         [Fact]
@@ -123,16 +119,15 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Storage, queuedJob))
-            {
-                instance.Requeue();
+            using var instance = new EFCoreFetchedJob(Storage, queuedJob);
 
-                UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-            }
+            instance.Requeue();
+
+            UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
         }
 
         [Fact]
@@ -151,20 +146,19 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single()))
-            {
-                instance.Requeue();
+            using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());
 
-                UseContext(context =>
-                {
-                    var item = Assert.Single(context.Set<HangfireQueuedJob>());
-                    Assert.Null(item.FetchedAt);
-                });
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.False(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-            }
+            instance.Requeue();
+
+            UseContext(context =>
+            {
+                var item = Assert.Single(context.Set<HangfireQueuedJob>());
+                Assert.Null(item.FetchedAt);
+            });
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.False(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
         }
 
         [Fact]
@@ -177,18 +171,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Queue = "queue",
                 FetchedAt = DateTime.UtcNow,
             };
-            using (var instance = new EFCoreFetchedJob(Storage, queuedJob))
-            {
-                instance.Dispose();
+            using var instance = new EFCoreFetchedJob(Storage, queuedJob);
 
-                UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
+            instance.Dispose();
 
-                instance.Dispose();
-            }
+            UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
+
+            instance.Dispose();
         }
 
         [Fact]
@@ -207,22 +200,21 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
             UseContextSavingChanges(context => context.Add(job));
-            using (var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single()))
+            using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());
+
+            instance.Dispose();
+
+            UseContext(context =>
             {
-                instance.Dispose();
+                var item = Assert.Single(context.Set<HangfireQueuedJob>());
+                Assert.Null(item.FetchedAt);
+            });
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_completed")));
+            Assert.True(Assert.IsType<bool>(
+                instance.GetFieldValue("_disposed")));
 
-                UseContext(context =>
-                {
-                    var item = Assert.Single(context.Set<HangfireQueuedJob>());
-                    Assert.Null(item.FetchedAt);
-                });
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_completed")));
-                Assert.True(Assert.IsType<bool>(
-                    instance.GetFieldValue("_disposed")));
-
-                instance.Dispose();
-            }
+            instance.Dispose();
         }
     }
 }

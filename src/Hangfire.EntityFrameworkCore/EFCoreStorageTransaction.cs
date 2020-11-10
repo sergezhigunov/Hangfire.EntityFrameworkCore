@@ -87,11 +87,11 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entries = context.ChangeTracker.Entries<HangfireSet>().
-                    Where(x => x.Entity.Key == key && values.Contains(x.Entity.Value)).
-                    ToDictionary(x => x.Entity.Value);
+                var entries = context
+                    .FindEntries<HangfireSet>(
+                        x => x.Key == key && values.Contains(x.Value))
+                    .ToDictionary(x => x.Entity.Value);
                 var exisitingValues = new HashSet<string>(GetSetValuesFunc(context, key));
-
                 foreach (var value in values)
                 {
                     if (!entries.TryGetValue(value, out var entry))
@@ -155,12 +155,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entry = context.ChangeTracker.
-                    Entries<HangfireSet>().
-                    FirstOrDefault(x =>
-                        x.Entity.Key == key &&
-                        x.Entity.Value == value);
-
+                var entry = context.FindEntry<HangfireSet>(x => x.Key == key && x.Value == value);
                 if (entry != null)
                 {
                     var entity = entry.Entity;
@@ -169,17 +164,15 @@ namespace Hangfire.EntityFrameworkCore
                 }
                 else
                 {
-                    var set = new HangfireSet
+                    context.Attach(new HangfireSet
                     {
                         Key = key,
                         Score = score,
                         Value = value,
-                    };
-
-                    if (SetExistsFunc(context, key, value))
-                        context.Update(set);
-                    else
-                        context.Add(set);
+                    }).State =
+                        SetExistsFunc(context, key, value) ?
+                        EntityState.Modified :
+                        EntityState.Added;
                 }
             });
         }
@@ -195,7 +188,6 @@ namespace Hangfire.EntityFrameworkCore
                     var action = _queue.Dequeue();
                     action.Invoke(context);
                 }
-                context.SaveChanges();
             });
 
             while (_afterCommitQueue.Count > 0)
@@ -272,12 +264,10 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var maxPosition = context.ChangeTracker.
-                    Entries<HangfireList>().
-                    Where(x => x.Entity.Key == key).
-                    Max(x => (int?)x.Entity.Position) ??
-                    GetMaxListPositionFunc(context, key) ?? -1;
-
+                var maxPosition = context.FindEntries<HangfireList>(x => x.Key == key)
+                    .Max(x => (int?)x.Entity.Position)
+                    ?? GetMaxListPositionFunc(context, key)
+                    ?? -1;
                 context.Add(new HangfireList
                 {
                     Key = key,
@@ -333,10 +323,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entry = context.ChangeTracker.
-                    Entries<HangfireSet>().
-                    SingleOrDefault(x => x.Entity.Key == key && x.Entity.Value == value);
-
+                var entry = context.FindEntry<HangfireSet>(x => x.Key == key && x.Value == value);
                 if (SetExistsFunc(context, key, value))
                 {
                     if (entry == null)
@@ -360,11 +347,8 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entries = (
-                    from entry in context.ChangeTracker.Entries<HangfireHash>()
-                    where entry.Entity.Key == key
-                    select entry).
-                    ToDictionary(x => x.Entity.Field);
+                var entries = context.FindEntries<HangfireHash>(x => x.Key == key)
+                .ToDictionary(x => x.Entity.Field);
 
                 var fields = GetHashFieldsFunc(context, key);
 
@@ -389,13 +373,9 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entries = context.ChangeTracker.
-                    Entries<HangfireSet>().
-                    Where(x => x.Entity.Key == key).
-                    ToDictionary(x => x.Entity.Value);
-
+                var entries = context.FindEntries<HangfireSet>(x => x.Key == key)
+                    .ToDictionary(x => x.Entity.Value);
                 var values = GetSetValuesFunc(context, key);
-
                 foreach (var value in values)
                     if (entries.TryGetValue(value, out var entry) &&
                         entry.State != EntityState.Deleted)
@@ -429,12 +409,8 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var exisitingFields = new HashSet<string>(GetHashFieldsFunc(context, key));
-                var entries = (
-                    from entry in context.ChangeTracker.Entries<HangfireHash>()
-                    let entity = entry.Entity
-                    where entity.Key == key && fields.Contains(entity.Field)
-                    select entry).
-                    ToDictionary(x => x.Entity.Field);
+                var entries = context.FindEntries<HangfireHash>(x => x.Key == key && fields.Contains(x.Field))
+                    .ToDictionary(x => x.Entity.Field);
 
                 foreach (var item in keyValuePairs)
                 {
@@ -464,14 +440,14 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var list = GetListsFunc(context, key).OrderBy(x => x.Position).ToList();
+                var list = GetListsFunc(context, key)
+                    .OrderBy(x => x.Position)
+                    .ToList();
                 var newList = list.
                     Where((item, index) => keepStartingFrom <= index && index <= keepEndingAt).
                     ToList();
-
                 for (int i = newList.Count; i < list.Count; i++)
                     context.Remove(list[i]);
-
                 CopyNonKeyValues(newList, list);
             });
         }
@@ -484,15 +460,14 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entity = (context.ChangeTracker.
-                    Entries<HangfireCounter>().
-                    FirstOrDefault(x => x.Entity.Key == key &&
-                        (x.State == EntityState.Added || x.State == EntityState.Modified)) ??
-                    context.Add(new HangfireCounter
-                    {
-                        Key = key,
-                    })).
-                    Entity;
+                var entity = (
+                    context.FindEntries<HangfireCounter>(x => x.Key == key)
+                        .FirstOrDefault(x => x.State == EntityState.Added)
+                        ?? context.Add(new HangfireCounter
+                        {
+                            Key = key,
+                        }))
+                    .Entity;
 
                 entity.Value += value;
                 entity.ExpireAt = expireAt;
@@ -511,20 +486,19 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var stateEntity = context.Add(new HangfireState
-                {
-                    JobId = id,
-                    CreatedAt = createdAt,
-                    Name = state.Name,
-                    Reason = state.Reason,
-                    Data = data,
-                }).Entity;
-
+                var stateEntity = context
+                    .Add(new HangfireState
+                    {
+                        JobId = id,
+                        CreatedAt = createdAt,
+                        Name = state.Name,
+                        Reason = state.Reason,
+                        Data = data,
+                    })
+                    .Entity;
                 if (setActual)
                 {
-                    var jobEntry = context.ChangeTracker.
-                        Entries<HangfireJob>().
-                        SingleOrDefault(x => x.Entity.Id == id) ??
+                    var jobEntry = context.FindEntry<HangfireJob>(x => x.Id == id) ??
                         context.Attach(new HangfireJob
                         {
                             Id = id,
@@ -560,10 +534,7 @@ namespace Hangfire.EntityFrameworkCore
 
             _queue.Enqueue(context =>
             {
-                var entry = context.ChangeTracker.
-                    Entries<HangfireJob>().
-                    FirstOrDefault(x => x.Entity.Id == id);
-
+                var entry = context.FindEntry<HangfireJob>(x => x.Id == id);
                 if (entry != null)
                     entry.Entity.ExpireAt = expireAt;
                 else
@@ -574,7 +545,6 @@ namespace Hangfire.EntityFrameworkCore
                         ExpireAt = expireAt,
                     });
                 }
-
                 entry.Property(x => x.ExpireAt).IsModified = true;
             });
         }
@@ -588,13 +558,8 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var fields = new HashSet<string>(GetHashFieldsFunc(context, key));
-                var entries = (
-                    from entry in context.ChangeTracker.Entries<HangfireHash>()
-                    let entity = entry.Entity
-                    where entity.Key == key && fields.Contains(entity.Field)
-                    select entry).
-                    ToDictionary(x => x.Entity.Field);
-
+                var entries = context.FindEntries<HangfireHash>(x => x.Key == key && fields.Contains(x.Field))
+                    .ToDictionary(x => x.Entity.Field);
                 foreach (var field in fields)
                 {
                     if (!entries.TryGetValue(field, out var entry))
@@ -619,13 +584,8 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var positions = new HashSet<int>(GetListPositionsFunc(context, key));
-                var entries = (
-                    from entry in context.ChangeTracker.Entries<HangfireList>()
-                    let entity = entry.Entity
-                    where entity.Key == key && positions.Contains(entity.Position)
-                    select entry).
-                    ToDictionary(x => x.Entity.Position);
-
+                var entries = context.FindEntries<HangfireList>(x => x.Key == key && positions.Contains(x.Position))
+                    .ToDictionary(x => x.Entity.Position);
                 foreach (var position in positions)
                 {
                     if (!entries.TryGetValue(position, out var entry))
@@ -634,7 +594,6 @@ namespace Hangfire.EntityFrameworkCore
                             Key = key,
                             Position = position,
                         });
-
                     entry.Entity.ExpireAt = expireAt;
                     entry.Property(x => x.ExpireAt).IsModified = true;
                 }
@@ -650,13 +609,8 @@ namespace Hangfire.EntityFrameworkCore
             _queue.Enqueue(context =>
             {
                 var values = new HashSet<string>(GetSetValuesFunc(context, key));
-                var entries = (
-                    from entry in context.ChangeTracker.Entries<HangfireSet>()
-                    let entity = entry.Entity
-                    where entity.Key == key && values.Contains(entity.Value)
-                    select entry).
-                    ToDictionary(x => x.Entity.Value);
-
+                var entries = context.FindEntries<HangfireSet>(x => x.Key == key && values.Contains(x.Value))
+                    .ToDictionary(x => x.Entity.Value);
                 foreach (var value in values)
                 {
                     if (!entries.TryGetValue(value, out var entry))
@@ -665,7 +619,6 @@ namespace Hangfire.EntityFrameworkCore
                             Key = key,
                             Value = value,
                         });
-
                     entry.Entity.ExpireAt = expireAt;
                     entry.Property(x => x.ExpireAt).IsModified = true;
                 }
@@ -682,7 +635,6 @@ namespace Hangfire.EntityFrameworkCore
         {
             if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
-
             if (queue.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                     nameof(queue));
@@ -692,7 +644,6 @@ namespace Hangfire.EntityFrameworkCore
         {
             if (jobId is null)
                 throw new ArgumentNullException(nameof(jobId));
-
             if (jobId.Length == 0)
                 throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                     nameof(jobId));
