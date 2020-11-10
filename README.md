@@ -43,11 +43,11 @@ There is an [example](samples/Hangfire.EntityFrameworkCore.AspNetCore/Startup.cs
 
 ### Migrations
 
-Currently, automatic migrations are not implemented. The migrations support [planned](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/issues/1) and will be implemented on future [releases](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/milestone/1).
+Currently, automatic migrations are not implemented. The migrations support [planned](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/issues/1) and will be implemented on future releases.
 
 ### Queue providers
 
-There is only [built-in SQL-based internal queue provider](src/Hangfire.EntityFrameworkCore/EFCoreJobQueueProvider.cs) supported. [Additional providers support](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/issues/2) will be implemented in [future](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/milestone/1).
+There is only [built-in SQL-based internal queue provider](src/Hangfire.EntityFrameworkCore/EFCoreJobQueueProvider.cs) supported. [Additional providers support](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/issues/2) will be implemented in future.
 
 ## License
 
