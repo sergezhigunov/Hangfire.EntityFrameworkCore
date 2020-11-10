@@ -41,7 +41,11 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
-            app.UseHangfireServer();
+            app.UseHangfireServer(
+                new BackgroundJobServerOptions
+                {
+                    WorkerCount = 1,
+                });
             app.UseHangfireDashboard(string.Empty,
                 new DashboardOptions
                 {
