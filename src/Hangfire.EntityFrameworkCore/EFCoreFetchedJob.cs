@@ -96,9 +96,7 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     SetFetchedAt(DateTime.UtcNow);
                 }
-#pragma warning disable CA1031
                 catch (Exception exception)
-#pragma warning restore CA1031
                 {
                     _logger.Log(LogLevel.Debug, () =>
                         CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed(Id),

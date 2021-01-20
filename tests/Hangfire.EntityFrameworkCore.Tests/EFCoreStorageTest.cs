@@ -57,7 +57,6 @@ namespace Hangfire.EntityFrameworkCore.Tests
         private protected static Action<DbContextOptionsBuilder> OptionsActionStub { get; } =
             builder => { };
 
-        [SuppressMessage("Usage", "xUnit1013")]
         public static void SampleMethod(string _) { }
     }
 }

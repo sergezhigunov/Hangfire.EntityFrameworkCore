@@ -1021,7 +1021,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.Equal(3, result);
         }
 
-        private void AddJobWithQueueItemToContext(HangfireContext context, string queue)
+        private static void AddJobWithQueueItemToContext(HangfireContext context, string queue)
         {
             var job = new HangfireJob
             {
@@ -1037,7 +1037,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             context.Add(queueItem);
         }
 
-        private void AddJobWithStateToContext(
+        private static void AddJobWithStateToContext(
             HangfireContext context,
             string stateName,
             IDictionary<string, string> data = null)
