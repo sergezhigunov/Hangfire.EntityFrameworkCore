@@ -11,17 +11,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetCountersFunc = Func<HangfireContext, ICollection<string>, IEnumerable<KeyValuePair<string, long>>>;
-    using GetJobDetailsFunc = Func<HangfireContext, long, JobDetailsDto>;
-    using GetJobParametersFunc = Func<HangfireContext, long, IEnumerable<KeyValuePair<string, string>>>;
-    using GetStateDataFunc = Func<HangfireContext, string, int, int, IEnumerable<EFCoreStorageMonitoringApi.JobState>>;
-    using GetStateHistoryFunc = Func<HangfireContext, long, IEnumerable<StateHistoryDto>>;
-    using GetStateCountFunc = Func<HangfireContext, string, long>;
-    using GetStatisticsFunc = Func<HangfireContext, IEnumerable<KeyValuePair<string, long>>>;
-    using GetCountFunc = Func<HangfireContext, long>;
-    using EnqueuedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<EFCoreStorageMonitoringApi.EnqueuedJobState>>;
-    using FetchedJobsFunc = Func<HangfireContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
-    using ServersFunc = Func<HangfireContext, IEnumerable<ServerDto>>;
+    using GetCountersFunc = Func<DbContext, ICollection<string>, IEnumerable<KeyValuePair<string, long>>>;
+    using GetJobDetailsFunc = Func<DbContext, long, JobDetailsDto>;
+    using GetJobParametersFunc = Func<DbContext, long, IEnumerable<KeyValuePair<string, string>>>;
+    using GetStateDataFunc = Func<DbContext, string, int, int, IEnumerable<EFCoreStorageMonitoringApi.JobState>>;
+    using GetStateHistoryFunc = Func<DbContext, long, IEnumerable<StateHistoryDto>>;
+    using GetStateCountFunc = Func<DbContext, string, long>;
+    using GetStatisticsFunc = Func<DbContext, IEnumerable<KeyValuePair<string, long>>>;
+    using GetCountFunc = Func<DbContext, long>;
+    using EnqueuedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<EFCoreStorageMonitoringApi.EnqueuedJobState>>;
+    using FetchedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
+    using ServersFunc = Func<DbContext, IEnumerable<ServerDto>>;
 
     internal class EFCoreStorageMonitoringApi : IMonitoringApi
     {
@@ -32,14 +32,14 @@ namespace Hangfire.EntityFrameworkCore
         private const string RecurringJobsSetName = "recurring-jobs";
 
         private static GetCountersFunc GetCountersFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, IEnumerable<string> keys) =>
+            (DbContext context, IEnumerable<string> keys) =>
                 from x in context.Set<HangfireCounter>()
                 where keys.Contains(x.Key)
                 group x.Value by x.Key into x
                 select new KeyValuePair<string, long>(x.Key, x.Sum()));
 
         private static GetJobDetailsFunc GetJobDetailsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) => (
+            (DbContext context, long id) => (
                 from x in context.Set<HangfireJob>()
                 where x.Id == id
                 select new JobDetailsDto
@@ -51,13 +51,13 @@ namespace Hangfire.EntityFrameworkCore
                 SingleOrDefault());
 
         private static GetJobParametersFunc GetJobParametersFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) =>
+            (DbContext context, long id) =>
                 from x in context.Set<HangfireJobParameter>()
                 where x.JobId == id
                 select new KeyValuePair<string, string>(x.Name, x.Value));
 
         private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string name, int from, int count) => (
+            (DbContext context, string name, int from, int count) => (
                 from x in context.Set<HangfireJob>()
                 where x.StateName == name
                 let s = x.State
@@ -73,7 +73,7 @@ namespace Hangfire.EntityFrameworkCore
                 Take(count));
 
         private static GetStateHistoryFunc GetStateHistoryFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) =>
+            (DbContext context, long id) =>
                 from x in context.Set<HangfireState>()
                 where x.JobId == id
                 select new StateHistoryDto
@@ -85,12 +85,12 @@ namespace Hangfire.EntityFrameworkCore
                 });
 
         private static GetStateCountFunc GetStateCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string name) =>
+            (DbContext context, string name) =>
                 context.Set<HangfireJob>().
                 LongCount(x => x.StateName != null && x.StateName == name));
 
         private static GetStatisticsFunc GetJobStatisticsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => (
+            (DbContext context) => (
                 from x in context.Set<HangfireJob>()
                 where new[]
                 {
@@ -104,7 +104,7 @@ namespace Hangfire.EntityFrameworkCore
                 select new KeyValuePair<string, long>(g.Key, g.LongCount())));
 
         private static GetStatisticsFunc GetCounterStatisticsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => (
+            (DbContext context) => (
                 from x in context.Set<HangfireCounter>()
                 where new[]
                 {
@@ -116,17 +116,17 @@ namespace Hangfire.EntityFrameworkCore
                 select new KeyValuePair<string, long>(g.Key, g.Sum(x => x.Value))));
 
         private static GetCountFunc GetServersCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => (
+            (DbContext context) => (
                 from x in context.Set<HangfireServer>()
                 select x).
                 LongCount());
 
         private static GetCountFunc GetRecurringJobCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => context.Set<HangfireSet>().
+            (DbContext context) => context.Set<HangfireSet>().
                 LongCount(x => x.Key == RecurringJobsSetName));
 
         private static EnqueuedJobsFunc EnqueuedJobsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, IEnumerable<long> keys) =>
+            (DbContext context, IEnumerable<long> keys) =>
                 from job in context.Set<HangfireJob>()
                 let id = job.Id
                 where keys.Contains(id)
@@ -140,7 +140,7 @@ namespace Hangfire.EntityFrameworkCore
                 });
 
         private static FetchedJobsFunc FetchedJobsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, IEnumerable<long> keys) =>
+            (DbContext context, IEnumerable<long> keys) =>
                 from job in context.Set<HangfireJob>()
                 let id = job.Id
                 where keys.Contains(id)
@@ -155,7 +155,7 @@ namespace Hangfire.EntityFrameworkCore
                     }));
 
         private static ServersFunc ServersFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) =>
+            (DbContext context) =>
                 from server in context.Set<HangfireServer>()
                 select new ServerDto
                 {

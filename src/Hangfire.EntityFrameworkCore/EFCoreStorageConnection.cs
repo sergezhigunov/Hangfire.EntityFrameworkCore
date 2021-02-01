@@ -12,56 +12,56 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetAllEntriesFromHashFunc = Func<HangfireContext, string, IEnumerable<KeyValuePair<string, string>>>;
-    using GetAllItemsFromListFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetAllItemsFromSetFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetCounterFunc = Func<HangfireContext, string, long>;
-    using GetFirstByLowestScoreFromSetFunc = Func<HangfireContext, string, double, double, string>;
-    using GetHashCountFunc = Func<HangfireContext, string, long>;
-    using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetHashTtlFunc = Func<HangfireContext, string, DateTime?>;
-    using GetJobDataFunc = Func<HangfireContext, long, JobData>;
-    using GetJobParameterFunc = Func<HangfireContext, long, string, string>;
-    using GetListCountFunc = Func<HangfireContext, string, long>;
-    using GetListTtlFunc = Func<HangfireContext, string, DateTime?>;
-    using GetRangeFromListFunc = Func<HangfireContext, string, int, int, IEnumerable<string>>;
-    using GetRangeFromSetFunc = Func<HangfireContext, string, int, int, IEnumerable<string>>;
-    using GetSetCountFunc = Func<HangfireContext, string, long>;
-    using GetSetTtlFunc = Func<HangfireContext, string, DateTime?>;
-    using GetStateDataFunc = Func<HangfireContext, long, StateData>;
-    using GetTimedOutServersFunc = Func<HangfireContext, DateTime, IEnumerable<string>>;
-    using GetValueFromHashFunc = Func<HangfireContext, string, string, string>;
-    using JobParameterExistsFunc = Func<HangfireContext, long, string, bool>;
+    using GetAllEntriesFromHashFunc = Func<DbContext, string, IEnumerable<KeyValuePair<string, string>>>;
+    using GetAllItemsFromListFunc = Func<DbContext, string, IEnumerable<string>>;
+    using GetAllItemsFromSetFunc = Func<DbContext, string, IEnumerable<string>>;
+    using GetCounterFunc = Func<DbContext, string, long>;
+    using GetFirstByLowestScoreFromSetFunc = Func<DbContext, string, double, double, string>;
+    using GetHashCountFunc = Func<DbContext, string, long>;
+    using GetHashFieldsFunc = Func<DbContext, string, IEnumerable<string>>;
+    using GetHashTtlFunc = Func<DbContext, string, DateTime?>;
+    using GetJobDataFunc = Func<DbContext, long, JobData>;
+    using GetJobParameterFunc = Func<DbContext, long, string, string>;
+    using GetListCountFunc = Func<DbContext, string, long>;
+    using GetListTtlFunc = Func<DbContext, string, DateTime?>;
+    using GetRangeFromListFunc = Func<DbContext, string, int, int, IEnumerable<string>>;
+    using GetRangeFromSetFunc = Func<DbContext, string, int, int, IEnumerable<string>>;
+    using GetSetCountFunc = Func<DbContext, string, long>;
+    using GetSetTtlFunc = Func<DbContext, string, DateTime?>;
+    using GetStateDataFunc = Func<DbContext, long, StateData>;
+    using GetTimedOutServersFunc = Func<DbContext, DateTime, IEnumerable<string>>;
+    using GetValueFromHashFunc = Func<DbContext, string, string, string>;
+    using JobParameterExistsFunc = Func<DbContext, long, string, bool>;
 
     internal class EFCoreStorageConnection : JobStorageConnection
     {
         private static GetAllEntriesFromHashFunc GetAllEntriesFromHashFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from x in context.Set<HangfireHash>()
                 where x.Key == key
                 select new KeyValuePair<string, string>(x.Field, x.Value));
 
         private static GetAllItemsFromListFunc GetAllItemsFromListFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from x in context.Set<HangfireList>()
                 where x.Key == key
                 orderby x.Position descending
                 select x.Value);
 
         private static GetAllItemsFromSetFunc GetAllItemsFromSetFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from x in context.Set<HangfireSet>()
                 where x.Key == key
                 select x.Value);
 
         private static GetCounterFunc GetCounterFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 context.Set<HangfireCounter>().
                 Where(x => x.Key == key).
                 Sum(x => x.Value));
 
         private static GetFirstByLowestScoreFromSetFunc GetFirstByLowestScoreFromSetFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, double from, double to) => (
+            (DbContext context, string key, double from, double to) => (
                 from x in context.Set<HangfireSet>()
                 where x.Key == key && @from <= x.Score && x.Score <= to
                 orderby x.Score
@@ -69,49 +69,49 @@ namespace Hangfire.EntityFrameworkCore
                 FirstOrDefault());
 
         private static GetHashCountFunc GetHashCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 context.Set<HangfireHash>().LongCount(x => x.Key == key));
 
         private static GetHashFieldsFunc GetHashFieldsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from x in context.Set<HangfireHash>()
                 where x.Key == key
                 select x.Field);
 
         private static GetHashTtlFunc GetHashTtlFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) => (
+            (DbContext context, string key) => (
                 from x in context.Set<HangfireHash>()
                 where x.Key == key
                 select x.ExpireAt).
                 Min());
 
         private static GetJobDataFunc GetJobDataFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) => (
+            (DbContext context, long id) => (
                 from x in context.Set<HangfireJob>()
                 where x.Id == id
                 select CreateJobData(x.InvocationData, x.CreatedAt, x.State.Name)).
                 FirstOrDefault());
 
         private static GetJobParameterFunc GetJobParameterFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id, string name) => (
+            (DbContext context, long id, string name) => (
                 from x in context.Set<HangfireJobParameter>()
                 where x.JobId == id && x.Name == name
                 select x.Value).
                 SingleOrDefault());
 
         private static GetListCountFunc GetListCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 context.Set<HangfireList>().LongCount(x => x.Key == key));
 
         private static GetListTtlFunc GetListTtlFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) => (
+            (DbContext context, string key) => (
                 from x in context.Set<HangfireList>()
                 where x.Key == key
                 select x.ExpireAt).
                 Min());
 
         private static GetRangeFromListFunc GetRangeFromListFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, int from, int to) =>
+            (DbContext context, string key, int from, int to) =>
                 from x in context.Set<HangfireList>()
                 where x.Key == key
                 let position = x.Position
@@ -120,7 +120,7 @@ namespace Hangfire.EntityFrameworkCore
                 select x.Value);
 
         private static GetRangeFromSetFunc GetRangeFromSetFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, int skip, int take) => (
+            (DbContext context, string key, int skip, int take) => (
                 from x in context.Set<HangfireSet>()
                 where x.Key == key
                 orderby x.Score
@@ -129,18 +129,18 @@ namespace Hangfire.EntityFrameworkCore
                 Take(take));
 
         private static GetSetCountFunc GetSetCountFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 context.Set<HangfireSet>().LongCount(x => x.Key == key));
 
         private static GetSetTtlFunc GetSetTtlFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) => (
+            (DbContext context, string key) => (
                 from x in context.Set<HangfireSet>()
                 where x.Key == key
                 select x.ExpireAt).
                 Min());
 
         private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id) => (
+            (DbContext context, long id) => (
                 from x in context.Set<HangfireJob>()
                 where x.Id == id
                 let s = x.State
@@ -153,20 +153,20 @@ namespace Hangfire.EntityFrameworkCore
                 SingleOrDefault());
 
         private static GetTimedOutServersFunc GetTimedOutServersFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, DateTime outdate) =>
+            (DbContext context, DateTime outdate) =>
                 from x in context.Set<HangfireServer>()
                 where x.Heartbeat <= outdate
                 select x.Id);
 
         private static GetValueFromHashFunc GetValueFromHashFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, string name) => (
+            (DbContext context, string key, string name) => (
                 from hash in context.Set<HangfireHash>()
                 where hash.Key == key && hash.Field == name
                 select hash.Value).
                 SingleOrDefault());
 
         private static JobParameterExistsFunc JobParameterExistsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, long id, string name) =>
+            (DbContext context, long id, string name) =>
                 context.Set<HangfireJobParameter>().Any(x => x.JobId == id && x.Name == name));
 
         private readonly ILockProvider _lockProvider;
@@ -544,7 +544,7 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        private T UseContext<T>(Func<HangfireContext, string, T> func, string key)
+        private T UseContext<T>(Func<DbContext, string, T> func, string key)
         {
             if (key is null)
                 throw new ArgumentNullException(nameof(key));

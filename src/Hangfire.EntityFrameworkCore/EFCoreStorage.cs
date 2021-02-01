@@ -16,6 +16,7 @@ namespace Hangfire.EntityFrameworkCore
         private readonly DbContextOptions _contextOptions;
         private readonly EFCoreStorageOptions _options;
         private Action<HangfireContext> _databaseInitializer;
+        private Func<DbContext> _dbContextBuilder;
         private bool _databaseInitialized;
 
         internal EFCoreJobQueueProvider DefaultQueueProvider { get; }
@@ -65,6 +66,31 @@ namespace Hangfire.EntityFrameworkCore
             var contextOptionsBuilder = new DbContextOptionsBuilder<HangfireContext>();
             optionsAction.Invoke(contextOptionsBuilder);
             _contextOptions = contextOptionsBuilder.Options;
+            DefaultQueueProvider = new EFCoreJobQueueProvider(this);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
+        /// </summary>
+        /// <param name="dbContextBuilder">
+        /// A factory func that returns a new DbContext for storing jobs.
+        /// </param>
+        /// <param name="options">
+        /// Any specific storage options.
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="dbContextBuilder"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="options"/> is <see langword="null"/>.
+        /// </exception>
+        [CLSCompliant(false)]
+        public EFCoreStorage(
+            Func<DbContext> dbContextBuilder,
+            EFCoreStorageOptions options)
+        {
+            _dbContextBuilder = dbContextBuilder ?? throw new ArgumentNullException(nameof(dbContextBuilder));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             DefaultQueueProvider = new EFCoreJobQueueProvider(this);
         }
 
@@ -133,7 +159,7 @@ namespace Hangfire.EntityFrameworkCore
                 providers[queue] = provider;
         }
 
-        internal void UseContext(Action<HangfireContext> action)
+        internal void UseContext(Action<DbContext> action)
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
@@ -142,7 +168,7 @@ namespace Hangfire.EntityFrameworkCore
             action(context);
         }
 
-        internal void UseContextSavingChanges(Action<HangfireContext> action)
+        internal void UseContextSavingChanges(Action<DbContext> action)
         {
             UseContext(context =>
             {
@@ -151,7 +177,7 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        internal T UseContext<T>(Func<HangfireContext, T> func)
+        internal T UseContext<T>(Func<DbContext, T> func)
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
@@ -160,7 +186,7 @@ namespace Hangfire.EntityFrameworkCore
             return func(context);
         }
 
-        internal T UseContextSavingChanges<T>(Func<HangfireContext, T> func)
+        internal T UseContextSavingChanges<T>(Func<DbContext, T> func)
         {
             return UseContext(context =>
             {
@@ -170,8 +196,13 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        internal HangfireContext CreateContext()
+        internal DbContext CreateContext()
         {
+            if (_dbContextBuilder != null)
+            {
+                return _dbContextBuilder();
+            }
+
             var context = new HangfireContext(_contextOptions, _options.Schema);
             if (!_databaseInitialized)
                 lock (_lock)

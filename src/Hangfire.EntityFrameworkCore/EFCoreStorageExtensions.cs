@@ -75,6 +75,43 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         /// <summary>
+        /// Creates and registers the <see cref="EFCoreStorage"/> in the global configuration with
+        /// the specific options.
+        /// </summary>
+        /// <param name="configuration">
+        /// The <see cref="IGlobalConfiguration"/> to add storage to.
+        /// </param>
+        /// <param name="contextBuilder">
+        /// Factory function for creating a new DbContext.
+        /// </param>
+        /// <param name="options">
+        /// A specific storage options.
+        /// </param>
+        /// <returns>
+        /// Global configuration.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="configuration"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="contextBuilder"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="options"/> is <see langword="null"/>.
+        /// </exception>
+        [CLSCompliant(false)]
+        public static IGlobalConfiguration<EFCoreStorage> UseEFCoreStorage(
+            [NotNull] this IGlobalConfiguration configuration,
+            [NotNull] Func<DbContext> contextBuilder,
+            [NotNull] EFCoreStorageOptions options)
+        {
+            if (configuration is null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            return configuration.UseStorage(new EFCoreStorage(contextBuilder, options));
+        }
+
+        /// <summary>
         /// Adds a database creator to the job storage.
         /// </summary>
         /// <param name="configuration">
