@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetCountFunc = Func<HangfireContext, string, long>;
-    using GetQueuesFunc = Func<HangfireContext, IEnumerable<string>>;
-    using GetJobIdsFunc = Func<HangfireContext, string, int, int, IEnumerable<long>>;
+    using GetCountFunc = Func<DbContext, string, long>;
+    using GetQueuesFunc = Func<DbContext, IEnumerable<string>>;
+    using GetJobIdsFunc = Func<DbContext, string, int, int, IEnumerable<long>>;
     using QueuedJobPredicate = Expression<Func<HangfireQueuedJob, bool>>;
 
     internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
@@ -34,7 +34,7 @@ namespace Hangfire.EntityFrameworkCore
             GetJobIdsExpression(FetchedPredicate));
 
         private static GetQueuesFunc GetQueuesFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) =>
+            (DbContext context) =>
                 context.Set<HangfireQueuedJob>().
                 Select(x => x.Queue).
                 Distinct());
@@ -89,7 +89,7 @@ namespace Hangfire.EntityFrameworkCore
                 queue);
         }
 
-        private T UseContext<T>(Func<HangfireContext, string, T> func, string queue)
+        private T UseContext<T>(Func<DbContext, string, T> func, string queue)
         {
             if (queue is null)
                 throw new ArgumentNullException(nameof(queue));
@@ -98,13 +98,13 @@ namespace Hangfire.EntityFrameworkCore
         }
 
         private static Expression<GetCountFunc> GetCountExpression(QueuedJobPredicate predicate)
-            => (HangfireContext context, string queue) => context.Set<HangfireQueuedJob>().
+            => (DbContext context, string queue) => context.Set<HangfireQueuedJob>().
                 Where(predicate).
                 Where(x => x.Queue == queue).
                 LongCount();
 
         private static Expression<GetJobIdsFunc> GetJobIdsExpression(QueuedJobPredicate predicate)
-            => (HangfireContext context, string queue, int from, int perPage) => (
+            => (DbContext context, string queue, int from, int perPage) => (
                 from x in context.Set<HangfireQueuedJob>().Where(predicate)
                 where x.Queue == queue
                 orderby x.Id ascending

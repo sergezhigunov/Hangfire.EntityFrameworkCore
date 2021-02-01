@@ -97,7 +97,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void UseContext_Throws_WhenActionParameterIsNull()
         {
-            Action<HangfireContext> action = null;
+            Action<DbContext> action = null;
 
             Assert.Throws<ArgumentNullException>(nameof(action),
                 () => Storage.UseContext(action));
@@ -107,7 +107,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void UseContext_InvokesAction()
         {
             bool exposed = false;
-            void Action(HangfireContext context) => exposed = true;
+            void Action(DbContext context) => exposed = true;
 
             Storage.UseContext(Action);
 
@@ -117,7 +117,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         [Fact]
         public void UseContextGeneric_Throws_WhenFuncParameterIsNull()
         {
-            Func<HangfireContext, bool> func = null;
+            Func<DbContext, bool> func = null;
 
             Assert.Throws<ArgumentNullException>(nameof(func),
                 () => Storage.UseContext(func));
@@ -127,7 +127,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public void UseContextGeneric_InvokesFunc()
         {
             bool exposed = false;
-            bool Func(HangfireContext context) => exposed = true;
+            bool Func(DbContext context) => exposed = true;
 
             var result = Storage.UseContext(Func);
 

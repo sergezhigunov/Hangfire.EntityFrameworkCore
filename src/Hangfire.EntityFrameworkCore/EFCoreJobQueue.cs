@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using DequeueFunc = Func<HangfireContext, string[], DateTime, HangfireQueuedJob>;
+    using DequeueFunc = Func<DbContext, string[], DateTime, HangfireQueuedJob>;
 
     internal sealed class EFCoreJobQueue : IPersistentJobQueue
     {
@@ -18,7 +18,7 @@ namespace Hangfire.EntityFrameworkCore
         internal static AutoResetEvent NewItemInQueueEvent { get; } = new AutoResetEvent(true);
 
         private static DequeueFunc DequeueFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string[] queues, DateTime expireAt) => (
+            (DbContext context, string[] queues, DateTime expireAt) => (
                 from x in context.Set<HangfireQueuedJob>()
                 where queues.Contains(x.Queue)
                 where

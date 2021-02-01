@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetLockFunc = Func<HangfireContext, string, HangfireLock>;
+    using GetLockFunc = Func<DbContext, string, HangfireLock>;
 
     internal class EFCoreLockProvider : ILockProvider
     {
@@ -16,7 +16,7 @@ namespace Hangfire.EntityFrameworkCore
         private readonly EFCoreStorage _storage;
 
         private static GetLockFunc GetLockFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string id) =>
+            (DbContext context, string id) =>
                 context.Set<HangfireLock>().
                 SingleOrDefault(x => x.Id == id));
 

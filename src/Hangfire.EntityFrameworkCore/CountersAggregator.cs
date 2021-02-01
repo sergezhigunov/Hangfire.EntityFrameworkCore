@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetCountersToRemoveFunc = Func<HangfireContext, IEnumerable<HangfireCounter>>;
+    using GetCountersToRemoveFunc = Func<DbContext, IEnumerable<HangfireCounter>>;
 
 #pragma warning disable CS0618
     internal class CountersAggregator : IServerComponent
@@ -18,7 +18,7 @@ namespace Hangfire.EntityFrameworkCore
         private const int BatchSize = 1000;
 
         private static GetCountersToRemoveFunc GetCountersToRemoveFunc { get; } = EF.CompileQuery(
-            (HangfireContext context) => (
+            (DbContext context) => (
                 from x in context.Set<HangfireCounter>()
                 where context.Set<HangfireCounter>().
                     Any(y => y.Key == x.Key && y.Id != x.Id)

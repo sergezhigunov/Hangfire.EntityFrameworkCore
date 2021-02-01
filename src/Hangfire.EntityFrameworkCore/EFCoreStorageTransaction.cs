@@ -11,51 +11,51 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
-    using GetHashFieldsFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetSetValuesFunc = Func<HangfireContext, string, IEnumerable<string>>;
-    using GetListsFunc = Func<HangfireContext, string, IEnumerable<HangfireList>>;
-    using GetListPositionsFunc = Func<HangfireContext, string, IEnumerable<int>>;
-    using GetMaxListPositionFunc = Func<HangfireContext, string, int?>;
-    using SetExistsFunc = Func<HangfireContext, string, string, bool>;
+    using GetHashFieldsFunc = Func<DbContext, string, IEnumerable<string>>;
+    using GetSetValuesFunc = Func<DbContext, string, IEnumerable<string>>;
+    using GetListsFunc = Func<DbContext, string, IEnumerable<HangfireList>>;
+    using GetListPositionsFunc = Func<DbContext, string, IEnumerable<int>>;
+    using GetMaxListPositionFunc = Func<DbContext, string, int?>;
+    using SetExistsFunc = Func<DbContext, string, string, bool>;
 
     internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
         private static GetHashFieldsFunc GetHashFieldsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from x in context.Set<HangfireHash>()
                 where x.Key == key
                 select x.Field);
 
         private static GetListPositionsFunc GetListPositionsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from item in context.Set<HangfireList>()
                 where item.Key == key
                 select item.Position);
 
         private static GetListsFunc GetListsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from item in context.Set<HangfireList>()
                 where item.Key == key
                 select item);
 
         private static GetMaxListPositionFunc GetMaxListPositionFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 context.Set<HangfireList>().
                     Where(x => x.Key == key).
                     Max(x => (int?)x.Position));
 
         private static GetSetValuesFunc GetSetValuesFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key) =>
+            (DbContext context, string key) =>
                 from set in context.Set<HangfireSet>()
                 where set.Key == key
                 select set.Value);
 
         private static SetExistsFunc SetExistsFunc { get; } = EF.CompileQuery(
-            (HangfireContext context, string key, string value) =>
+            (DbContext context, string key, string value) =>
                 context.Set<HangfireSet>().Any(x => x.Key == key && x.Value == value));
 
         private readonly EFCoreStorage _storage;
-        private readonly Queue<Action<HangfireContext>> _queue;
+        private readonly Queue<Action<DbContext>> _queue;
         private readonly Queue<Action> _afterCommitQueue;
         private bool _disposed;
 
@@ -66,7 +66,7 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(storage));
 
             _storage = storage;
-            _queue = new Queue<Action<HangfireContext>>();
+            _queue = new Queue<Action<DbContext>>();
             _afterCommitQueue = new Queue<Action>();
         }
 

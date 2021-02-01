@@ -33,7 +33,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Assert.IsType<EFCoreStorage>(
                     instance.GetFieldValue("_storage")));
             Assert.NotNull(
-                Assert.IsType<Queue<Action<HangfireContext>>>(
+                Assert.IsType<Queue<Action<DbContext>>>(
                     instance.GetFieldValue("_queue")));
             Assert.NotNull(
                 Assert.IsType<Queue<Action>>(
@@ -46,7 +46,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         {
             var options = new DbContextOptions<HangfireContext>();
             var instance = CreateTransaction();
-            var queue = Assert.IsType<Queue<Action<HangfireContext>>>(
+            var queue = Assert.IsType<Queue<Action<DbContext>>>(
                 instance.GetFieldValue("_queue"));
             var afterCommitQueue = Assert.IsType<Queue<Action>>(
                 instance.GetFieldValue("_afterCommitQueue"));
@@ -54,7 +54,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             afterCommitQueue.Enqueue(() => { });
 
             instance.Dispose();
-            Assert.Empty(Assert.IsType<Queue<Action<HangfireContext>>>(
+            Assert.Empty(Assert.IsType<Queue<Action<DbContext>>>(
                 instance.GetFieldValue("_queue")));
             Assert.Empty(Assert.IsType<Queue<Action>>(
                 instance.GetFieldValue("_afterCommitQueue")));
@@ -285,7 +285,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 instance.AddToQueue("queue", jobId);
 
-                var queue = Assert.IsType<Queue<Action<HangfireContext>>>(
+                var queue = Assert.IsType<Queue<Action<DbContext>>>(
                     instance.GetFieldValue("_queue"));
                 var afterCommitQueue = Assert.IsType<Queue<Action>>(
                     instance.GetFieldValue("_afterCommitQueue"));
@@ -439,7 +439,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             UseTransaction(false,
                 instance =>
                 {
-                    var queue = Assert.IsType<Queue<Action<HangfireContext>>>(
+                    var queue = Assert.IsType<Queue<Action<DbContext>>>(
                         instance.GetFieldValue("_queue"));
                     var afterCommitQueue = Assert.IsType<Queue<Action>>(
                         instance.GetFieldValue("_afterCommitQueue"));

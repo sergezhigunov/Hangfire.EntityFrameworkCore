@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext", "samples\Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext\Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext.csproj", "{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{95A098CE-E498-4CE0-BCE3-1FD035C9737D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95A098CE-E498-4CE0-BCE3-1FD035C9737D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95A098CE-E498-4CE0-BCE3-1FD035C9737D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -66,6 +72,7 @@ Global
 		{F7D92D2A-1160-41A8-ADD0-F22278A2D253} = {84613FF6-885E-473A-8F25-52C36C3829FA}
 		{E5F2C235-6A0F-4E27-8E5A-356523DC81CB} = {BDFF1E5A-0E91-4EE1-B4AF-582F5028E631}
 		{95A098CE-E498-4CE0-BCE3-1FD035C9737D} = {26FDFC07-B0D8-475E-B6EA-3B2DD0809AEE}
+		{5CF3DCB4-A828-40BA-A500-A5E9FFFE4A2B} = {26FDFC07-B0D8-475E-B6EA-3B2DD0809AEE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7D5DE096-6570-4A45-8E30-D23115C9B2BB}
