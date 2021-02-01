@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext
+namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext
 {
     internal static class Program
     {

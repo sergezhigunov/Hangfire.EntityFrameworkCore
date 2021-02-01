@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext.Migrations
+namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext.Migrations
 {
     public partial class Initial : Migration
     {
