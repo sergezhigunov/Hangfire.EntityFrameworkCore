@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Hangfire.EntityFrameworkCore.AspNetCoreInternalDbContext
+namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext
 {
     public class SampleDbContext : DbContext
     {
