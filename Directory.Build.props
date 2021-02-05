@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <Copyright>Copyright (c) 2019 Sergey Zhigunov</Copyright>
+    <Copyright>Copyright (c) 2019 Sergey Zhigunov and contributors</Copyright>
     <Authors>Sergey Zhigunov</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <LangVersion>9.0</LangVersion>
