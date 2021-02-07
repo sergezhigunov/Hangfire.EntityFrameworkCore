@@ -26,7 +26,7 @@ public void Configuration(IAppBuilder app)
     GlobalConfiguration.Configuration.UseEFCoreStorage(
         // Configure Entity Framework Core to connect database, e.g. SQL Server
         builder => builder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Database=Hangfire"),
-        // Optionally configure Entity Framework Core Storage 
+        // Optionally configure Entity Framework Core Storage
         new EFCoreStorageOptions()).
         // Optionally register database creator
         UseDatabaseCreator();
@@ -44,6 +44,40 @@ There is an [example](samples/Hangfire.EntityFrameworkCore.AspNetCore/Startup.cs
 ### Migrations
 
 Currently, automatic migrations are not implemented. The migrations support [planned](https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore/issues/1) and will be implemented on future releases.
+
+### Using your own DbContext
+
+As of the `0.3.0` version you have the ability to attach the tables required for this library to your own DbContext. Since the tables are attached to your own DbContext this means that the migrations are also attached to this DbContext and managed by the regular `dotnet ef` migration flow.
+
+There is an example of this configuration found [here](samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Startup.cs), however the important sections are listed below.
+
+In `Startup.cs` in `ConfigureServices`:
+
+```csharp
+services.AddDbContextFactory<SampleDbContext>(builder => builder.UseSqlite(connectionString));
+services.AddHangfire((serviceProvider, configuration) =>
+    configuration.UseEFCoreStorage(
+        () => serviceProvider.GetRequiredService<IDbContextFactory<SampleDbContext>>().CreateDbContext(),
+        new EFCoreStorageOptions
+        {
+            CountersAggregationInterval = new TimeSpan(0, 5, 0),
+            DistributedLockTimeout = new TimeSpan(0, 10, 0),
+            JobExpirationCheckInterval = new TimeSpan(0, 30, 0),
+            QueuePollInterval = new TimeSpan(0, 0, 15),
+            Schema = string.Empty,
+            SlidingInvisibilityTimeout = new TimeSpan(0, 5, 0),
+        }));
+```
+
+And then in the `OnModelCreating` method of the DbContext class:
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.OnHangfireModelCreating();
+}
+```
 
 ### Queue providers
 
