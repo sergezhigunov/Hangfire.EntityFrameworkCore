@@ -54,6 +54,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
             return context;
         }
 
+        private protected DbContext CreateInMemoryContext()
+        {
+            var optionsBuilder = new DbContextOptionsBuilder().UseSqlite(Connection);
+            return new HangfireContext(optionsBuilder.Options, string.Empty);
+        }
+
         private protected void UseContextSavingChanges(Action<HangfireContext> action)
         {
             UseContext(context =>

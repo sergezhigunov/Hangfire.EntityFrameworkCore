@@ -107,6 +107,10 @@ namespace Hangfire.EntityFrameworkCore
         {
             if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
+            if (contextBuilder is null)
+                throw new ArgumentNullException(nameof(contextBuilder));
+            if (options is null)
+                throw new ArgumentNullException(nameof(options));
 
             return configuration.UseStorage(new EFCoreStorage(contextBuilder, options));
         }

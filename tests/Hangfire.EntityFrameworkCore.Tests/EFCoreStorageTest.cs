@@ -13,6 +13,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
     public abstract class EFCoreStorageTest : DbContextOptionsTest
     {
         private EFCoreStorage _storage;
+        private EFCoreStorage _factoryStorage;
 
         private protected EFCoreStorage Storage =>
             LazyInitializer.EnsureInitialized(ref _storage,
@@ -23,6 +24,12 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         context => context.Database.EnsureCreated());
                     return storage;
                 });
+
+        private protected EFCoreStorage FactoryStorage =>
+            LazyInitializer.EnsureInitialized(ref _factoryStorage,
+                () => new EFCoreStorage(
+                    CreateInMemoryContext,
+                    new EFCoreStorageOptions()));
 
         private protected static string InvocationDataStub { get; } =
             JobHelper.ToJson(new InvocationData(null, null, null, string.Empty));
