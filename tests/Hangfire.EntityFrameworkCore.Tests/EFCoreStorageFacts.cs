@@ -95,6 +95,14 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
+        public void CreateContext_FactoryCreatesInstance()
+        {
+            var instance = FactoryStorage.CreateContext();
+            Assert.NotNull(instance);
+            instance.Dispose();
+        }
+
+        [Fact]
         public void UseContext_Throws_WhenActionParameterIsNull()
         {
             Action<DbContext> action = null;

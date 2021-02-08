@@ -83,6 +83,56 @@ namespace Hangfire.EntityFrameworkCore.Tests
         }
 
         [Fact]
+        public static void UseEFCoreStorageFactory_Throws_WhenConfigurationParameterIsNull()
+        {
+            IGlobalConfiguration configuration = null;
+            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+            EFCoreStorageOptions options = new Mock<EFCoreStorageOptions>().Object;
+
+            Assert.Throws<ArgumentNullException>(nameof(configuration),
+                () => configuration.UseEFCoreStorage(contextBuilder, options));
+        }
+
+        [Fact]
+        public static void UseEFCoreStorageFactory_Throws_WhenContextBuilderParameterIsNull()
+        {
+            IGlobalConfiguration configuration = new Mock<IGlobalConfiguration>().Object;
+            Func<DbContext> contextBuilder = null;
+            EFCoreStorageOptions options = new Mock<EFCoreStorageOptions>().Object;
+
+            Assert.Throws<ArgumentNullException>(nameof(contextBuilder),
+                () => configuration.UseEFCoreStorage(contextBuilder, options));
+        }
+
+        [Fact]
+        public static void UseEFCoreStorageFactory_Throws_WhenOptionsParameterIsNull()
+        {
+            IGlobalConfiguration configuration = new Mock<IGlobalConfiguration>().Object;
+            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+            EFCoreStorageOptions options = null;
+
+            Assert.Throws<ArgumentNullException>(nameof(options),
+                () => configuration.UseEFCoreStorage(contextBuilder, options));
+        }
+
+        [Fact]
+        public static void UseEFCoreStorageFactory_CompletesSuccessfully()
+        {
+            var configurationMock = new Mock<IGlobalConfiguration>();
+            var configuration = configurationMock.Object;
+            var options = new EFCoreStorageOptions();
+
+            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+
+            var result = configuration.UseEFCoreStorage(contextBuilder, options);
+
+            Assert.NotNull(result);
+            var genericConfiguration =
+                Assert.IsAssignableFrom<IGlobalConfiguration<EFCoreStorage>>(result);
+            Assert.NotNull(genericConfiguration.Entry);
+        }
+
+        [Fact]
         public static void UseDatabaseCreator_Throws_WhenStorageParameterIsNull()
         {
             var configuration = default(IGlobalConfiguration<EFCoreStorage>);
