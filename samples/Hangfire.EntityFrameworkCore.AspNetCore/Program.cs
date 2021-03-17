@@ -7,9 +7,9 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
     internal static class Program
     {
         private static async Task Main(string[] args)
-            => await CreateWebHostBuilder(args).Build().RunAsync();
+            => await CreatebHostBuilder(args).Build().RunAsync();
 
-        private static IHostBuilder CreateWebHostBuilder(string[] args)
+        private static IHostBuilder CreatebHostBuilder(string[] args)
             => Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(builder => builder
                     .UseStartup<Startup>());
