@@ -365,3 +365,4 @@ FodyWeavers.xsd
 *.db
 *.db-journal
 *.db-wal
+*.db-shm
