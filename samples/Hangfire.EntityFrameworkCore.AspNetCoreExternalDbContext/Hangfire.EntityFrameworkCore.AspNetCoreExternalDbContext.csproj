@@ -4,13 +4,13 @@
     <TargetFramework>net5.0</TargetFramework>
     <DockerfileContext>..\..</DockerfileContext>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="**\*.db" />
     <None Remove="**\*.db-journal" />
     <None Remove="**\*.db-wal" />
+    <None Remove="**\*.db-shm" />
   </ItemGroup>
 
   <ItemGroup>

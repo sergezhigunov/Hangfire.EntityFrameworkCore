@@ -10,6 +10,7 @@
     <None Remove="**\*.db" />
     <None Remove="**\*.db-journal" />
     <None Remove="**\*.db-wal" />
+    <None Remove="**\*.db-shm" />
   </ItemGroup>
 
   <ItemGroup>
