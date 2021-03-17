@@ -9,12 +9,20 @@ namespace Hangfire.EntityFrameworkCore
     public static class ModelBuilderExtensions
     {
         /// <summary>
-        /// Configures the Hangfire Ef Core model
+        /// Configures the Hangfire EF Core model.
         /// </summary>
-        /// <param name="modelBuilder">The model builder to configure with.</param>
+        /// <param name="modelBuilder">
+        /// The model builder to configure with.
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="modelBuilder"/> is <see langword="null"/>.
+        /// </exception>
         [CLSCompliant(false)]
         public static void OnHangfireModelCreating(this ModelBuilder modelBuilder)
         {
+            if (modelBuilder is null)
+                throw new ArgumentNullException(nameof(modelBuilder));
+
             modelBuilder.Entity<HangfireCounter>(entity =>
             {
                 entity.HasIndex(nameof(HangfireCounter.Key), nameof(HangfireCounter.Value));

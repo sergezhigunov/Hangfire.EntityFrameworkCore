@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/sergezhigunov/Hangfire.EntityFrameworkCore.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <AnalysisLevel>5.0</AnalysisLevel>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>

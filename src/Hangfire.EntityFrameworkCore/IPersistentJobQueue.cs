@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using Hangfire.Annotations;
 using Hangfire.Storage;
+using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
 
 namespace Hangfire.EntityFrameworkCore
 {
     /// <summary>
     /// Represents a first-in, first-out collection of Hangfire jobs.
     /// </summary>
+    [SuppressMessage("Naming", "CA1711")]
     public interface IPersistentJobQueue
     {
         /// <summary>
