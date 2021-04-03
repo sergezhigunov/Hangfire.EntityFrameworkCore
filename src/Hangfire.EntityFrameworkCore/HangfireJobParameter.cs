@@ -6,7 +6,7 @@ namespace Hangfire.EntityFrameworkCore
     {
         public long JobId { get; set; }
 
-        [MaxLength(40)]
+        [MaxLength(256)]
         public string Name { get; set; }
 
         public string Value { get; set; }

@@ -5,7 +5,7 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireList : IExpirable
     {
-        [MaxLength(100)]
+        [MaxLength(256)]
         public string Key { get; set; }
 
         public int Position { get; set; }

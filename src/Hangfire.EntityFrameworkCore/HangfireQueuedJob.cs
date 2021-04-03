@@ -10,7 +10,7 @@ namespace Hangfire.EntityFrameworkCore
         public long JobId { get; set; }
 
         [Required]
-        [MaxLength(50)]
+        [MaxLength(256)]
         public string Queue { get; set; }
 
         [ConcurrencyCheck]

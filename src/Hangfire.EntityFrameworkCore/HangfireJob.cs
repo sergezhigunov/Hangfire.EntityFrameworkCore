@@ -19,7 +19,7 @@ namespace Hangfire.EntityFrameworkCore
 
         public long? StateId { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(256)]
         public string StateName { get; set; }
 
         public DateTime? ExpireAt { get; set; }
@@ -28,7 +28,7 @@ namespace Hangfire.EntityFrameworkCore
         public string InvocationData { get; set; }
 
         public virtual HangfireState State { get; set; }
-        
+
         public virtual ICollection<HangfireJobParameter> Parameters { get; set; }
 
         public virtual ICollection<HangfireQueuedJob> QueuedJobs { get; set; }
