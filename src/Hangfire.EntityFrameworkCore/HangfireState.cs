@@ -10,10 +10,9 @@ namespace Hangfire.EntityFrameworkCore
         public long JobId { get; set; }
 
         [Required]
-        [MaxLength(20)]
+        [MaxLength(256)]
         public string Name { get; set; }
 
-        [MaxLength(100)]
         public string Reason { get; set; }
 
         public DateTime CreatedAt { get; set; }

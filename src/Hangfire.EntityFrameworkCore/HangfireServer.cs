@@ -5,7 +5,7 @@ namespace Hangfire.EntityFrameworkCore
 {
     internal class HangfireServer
     {
-        [MaxLength(100)]
+        [MaxLength(256)]
         public string Id { get; set; }
 
         public DateTime StartedAt { get; set; }

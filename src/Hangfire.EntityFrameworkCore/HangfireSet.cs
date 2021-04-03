@@ -8,7 +8,7 @@ namespace Hangfire.EntityFrameworkCore
         [MaxLength(100)]
         public string Key { get; set; }
 
-        [MaxLength(100)]
+        [MaxLength(256)]
         public string Value { get; set; }
 
         public double Score { get; set; }

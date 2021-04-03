@@ -8,7 +8,7 @@ namespace Hangfire.EntityFrameworkCore
         public long Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(256)]
         public string Key { get; set; }
 
         public long Value { get; set; }
