@@ -5,7 +5,7 @@
     <Authors>Sergey Zhigunov</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <LangVersion>9.0</LangVersion>
-    <VersionPrefix>0.3.0</VersionPrefix>
+    <VersionPrefix>0.3.1</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>

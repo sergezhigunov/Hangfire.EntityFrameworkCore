@@ -4,6 +4,9 @@
    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>
+0.3.1
+• Changed – Increase database string fields max length up to 256 (by @jack775544)
+
 0.3.0
 • Added – External DbContext support (by @jack775544)
 
