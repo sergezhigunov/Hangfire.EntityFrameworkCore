@@ -9,11 +9,11 @@ namespace Hangfire.EntityFrameworkCore
     /// </summary>
     public class EFCoreStorageOptions
     {
-        private TimeSpan _distributedLockTimeout = new TimeSpan(0, 10, 0);
-        private TimeSpan _queuePollInterval = new TimeSpan(0, 0, 15);
-        private TimeSpan _countersAggregationInterval = new TimeSpan(0, 5, 0);
-        private TimeSpan _jobExpirationCheckInterval = new TimeSpan(0, 30, 0);
-        private TimeSpan _slidingInvisibilityTimeout = new TimeSpan(0, 5, 0);
+        private TimeSpan _distributedLockTimeout = new(0, 10, 0);
+        private TimeSpan _queuePollInterval = new(0, 0, 15);
+        private TimeSpan _countersAggregationInterval = new(0, 5, 0);
+        private TimeSpan _jobExpirationCheckInterval = new(0, 30, 0);
+        private TimeSpan _slidingInvisibilityTimeout = new(0, 5, 0);
         private string _schema = string.Empty;
 
         /// <summary>

@@ -12,7 +12,7 @@ namespace Hangfire.EntityFrameworkCore
 
     internal class EFCoreLockProvider : ILockProvider
     {
-        private static readonly TimeSpan s_maxSleepDuration = new TimeSpan(0, 0, 1);
+        private static readonly TimeSpan _maxSleepDuration = new(0, 0, 1);
         private readonly EFCoreStorage _storage;
 
         private static GetLockFunc GetLockFunc { get; } = EF.CompileQuery(
@@ -59,10 +59,10 @@ namespace Hangfire.EntityFrameworkCore
 
                 if (remaining <= TimeSpan.Zero)
                     break;
-                else if (remaining < s_maxSleepDuration)
+                else if (remaining < _maxSleepDuration)
                     Thread.Sleep(remaining);
                 else
-                    Thread.Sleep(s_maxSleepDuration);
+                    Thread.Sleep(_maxSleepDuration);
             }
 
             throw new DistributedLockTimeoutException(resource);

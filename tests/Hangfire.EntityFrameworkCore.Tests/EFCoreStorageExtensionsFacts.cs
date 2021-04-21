@@ -86,7 +86,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void UseEFCoreStorageFactory_Throws_WhenConfigurationParameterIsNull()
         {
             IGlobalConfiguration configuration = null;
-            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+            static DbContext contextBuilder() => new Mock<DbContext>().Object;
             EFCoreStorageOptions options = new Mock<EFCoreStorageOptions>().Object;
 
             Assert.Throws<ArgumentNullException>(nameof(configuration),
@@ -108,7 +108,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static void UseEFCoreStorageFactory_Throws_WhenOptionsParameterIsNull()
         {
             IGlobalConfiguration configuration = new Mock<IGlobalConfiguration>().Object;
-            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+            static DbContext contextBuilder() => new Mock<DbContext>().Object;
             EFCoreStorageOptions options = null;
 
             Assert.Throws<ArgumentNullException>(nameof(options),
@@ -121,8 +121,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             var configurationMock = new Mock<IGlobalConfiguration>();
             var configuration = configurationMock.Object;
             var options = new EFCoreStorageOptions();
-
-            Func<DbContext> contextBuilder = () => new Mock<DbContext>().Object;
+            static DbContext contextBuilder() => new Mock<DbContext>().Object;
 
             var result = configuration.UseEFCoreStorage(contextBuilder, options);
 

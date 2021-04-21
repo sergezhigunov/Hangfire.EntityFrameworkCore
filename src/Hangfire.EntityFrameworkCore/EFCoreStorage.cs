@@ -12,11 +12,11 @@ namespace Hangfire.EntityFrameworkCore
     /// </summary>
     public class EFCoreStorage : JobStorage
     {
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
         private readonly DbContextOptions _contextOptions;
         private readonly EFCoreStorageOptions _options;
+        private readonly Func<DbContext> _dbContextBuilder;
         private Action<HangfireContext> _databaseInitializer;
-        private Func<DbContext> _dbContextBuilder;
         private bool _databaseInitialized;
 
         internal EFCoreJobQueueProvider DefaultQueueProvider { get; }

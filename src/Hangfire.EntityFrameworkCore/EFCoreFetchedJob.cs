@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using Hangfire.EntityFrameworkCore.Properties;
@@ -13,7 +12,7 @@ namespace Hangfire.EntityFrameworkCore
     internal sealed class EFCoreFetchedJob : IFetchedJob
     {
         private readonly ILog _logger = LogProvider.GetLogger(typeof(EFCoreFetchedJob));
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
         private readonly EFCoreStorage _storage;
         private readonly Timer _timer;
         private readonly HangfireQueuedJob _queuedJob;
@@ -87,7 +86,6 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
-        [SuppressMessage("Design", "CA1031")]
         private void ExecuteKeepAliveQuery(object state)
         {
             lock (_lock)
