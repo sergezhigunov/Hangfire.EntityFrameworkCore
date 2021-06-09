@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using Hangfire.EntityFrameworkCore.Properties;
@@ -86,6 +87,7 @@ namespace Hangfire.EntityFrameworkCore
             });
         }
 
+        [SuppressMessage("Design", "CA1031")]
         private void ExecuteKeepAliveQuery(object state)
         {
             lock (_lock)
