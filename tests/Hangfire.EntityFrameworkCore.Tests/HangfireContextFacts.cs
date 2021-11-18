@@ -42,7 +42,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             Assert.NotNull(model);
 
             var actualSchema = context.Model
-#if NET461 || NETCOREAPP2_1
+#if NET48
                 .Relational()
                 .DefaultSchema
 #else

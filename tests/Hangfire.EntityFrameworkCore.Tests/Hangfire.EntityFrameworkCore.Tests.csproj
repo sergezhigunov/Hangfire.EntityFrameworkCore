@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net461;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net48;net5.0;net6.0</TargetFrameworks>
   </PropertyGroup>
 
   <Choose>
     <When Condition=" '$(TargetFramework)'=='net6.0' ">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0-preview.2.21154.2" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0-preview.2.21154.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
       </ItemGroup>
     </When>
     <When Condition=" '$(TargetFramework)'=='net5.0' ">
