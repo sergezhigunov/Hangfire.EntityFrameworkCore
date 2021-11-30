@@ -4,6 +4,12 @@
    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>
+0.4.0
+• Added – .NET 6 support
+• Changed – Set minimal inclusive Hangfire.Core version 1.7.0.
+• Fixed – A few errors caused by EFCore 6.0 breaking changes.
+• Fixed – Unexpected DbUpdateConcurrencyException on ExpirationManager execution.
+
 0.3.1
 • Changed – Increase database string fields max length up to 256 (by @jack775544)
 
