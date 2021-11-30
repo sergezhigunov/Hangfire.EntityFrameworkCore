@@ -5,6 +5,7 @@ using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.Storage;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore
 {
@@ -45,12 +46,23 @@ namespace Hangfire.EntityFrameworkCore
             {
                 while(0 != _storage.UseContext(context =>
                 {
-                    var set = context.Set<T>();
-                    var entitiesToRemove = set.
-                        Where(x => x.ExpireAt < DateTime.UtcNow).
-                        Take(BatchSize);
-                    set.RemoveRange(entitiesToRemove);
-                    return context.SaveChanges();
+                    var expiredEntities = context
+                        .Set<T>()
+                        .Where(x => x.ExpireAt < DateTime.UtcNow)
+                        .Take(BatchSize)
+                        .ToList();
+                    if (expiredEntities.Count == 0)
+                        return 0;
+                    context.RemoveRange(expiredEntities);
+                    try
+                    {
+                        return context.SaveChanges();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        // Someone else already has removed item, database wins. Just try again.
+                        return -1;
+                    }
                 }));
             });
 
