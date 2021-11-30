@@ -8,7 +8,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
         public static T CreateInstance<T>(params object[] args)
         {
             return (T)Activator.CreateInstance(typeof(T),
-                BindingFlags.NonPublic | BindingFlags.Instance, null, args, null);
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, args, null);
         }
 
         public static object GetFieldValue(this object instance, string name)

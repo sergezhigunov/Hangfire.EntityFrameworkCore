@@ -49,7 +49,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         {
                             CreatedAt = DateTime.UtcNow,
                             Name = DeletedState.StateName,
-                            Data = JobHelper.ToJson(data),
+                            Data = SerializationHelper.Serialize(data),
                         },
                     },
                 }).
@@ -175,7 +175,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         CreatedAt = createdAt,
                         Name = EnqueuedState.StateName,
                         Reason = "Reason",
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                     };
                     var job = new HangfireJob
                     {
@@ -287,7 +287,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = FailedState.StateName,
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                         Reason = "Reason",
                     };
                     job.States.Add(state);
@@ -404,7 +404,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                         CreatedAt = createdAt,
                         Name = EnqueuedState.StateName,
                         Reason = "Reason",
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                     };
                     var job = new HangfireJob
                     {
@@ -639,7 +639,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 Name = "State",
                 Reason = "Reason",
                 CreatedAt = stateCreatedAt,
-                Data = JobHelper.ToJson(data),
+                Data = SerializationHelper.Serialize(data),
             };
             var job = new HangfireJob
             {
@@ -716,7 +716,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = ProcessingState.StateName,
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -826,7 +826,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = ScheduledState.StateName,
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -887,7 +887,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 "queue1",
                 "queue1",
             };
-            var queuesJson = JobHelper.ToJson(queues);
+            var queuesJson = SerializationHelper.Serialize(queues);
             var servers = new[]
             {
                 new HangfireServer
@@ -896,7 +896,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     StartedAt = startedAt1,
                     Heartbeat = heartbeat,
                     WorkerCount = workerCount,
-                    Queues = JobHelper.ToJson(queues),
+                    Queues = SerializationHelper.Serialize(queues),
                 },
                 new HangfireServer
                 {
@@ -969,7 +969,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = SucceededState.StateName,
-                        Data = JobHelper.ToJson(data),
+                        Data = SerializationHelper.Serialize(data),
                     };
                     job.States.Add(state);
                     return job;
@@ -1047,7 +1047,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
             {
                 CreatedAt = DateTime.UtcNow,
                 Name = stateName,
-                Data = JobHelper.ToJson(data),
+                Data = SerializationHelper.Serialize(data),
             };
             var job = new HangfireJob
             {

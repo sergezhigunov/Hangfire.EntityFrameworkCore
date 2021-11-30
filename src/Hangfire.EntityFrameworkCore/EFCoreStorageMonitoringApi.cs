@@ -67,7 +67,7 @@ namespace Hangfire.EntityFrameworkCore
                     Id = x.Id,
                     Job = Deserialize(x.InvocationData),
                     Reason = s.Reason,
-                    Data = JobHelper.FromJson<Dictionary<string, string>>(s.Data),
+                    Data = SerializationHelper.Deserialize<Dictionary<string, string>>(s.Data),
                 }).
                 Skip(from).
                 Take(count));
@@ -81,7 +81,7 @@ namespace Hangfire.EntityFrameworkCore
                     CreatedAt = x.CreatedAt,
                     Reason = x.Reason,
                     StateName = x.Name,
-                    Data = JobHelper.FromJson<Dictionary<string, string>>(x.Data),
+                    Data = SerializationHelper.Deserialize<Dictionary<string, string>>(x.Data),
                 });
 
         private static GetStateCountFunc GetStateCountFunc { get; } = EF.CompileQuery(
@@ -161,7 +161,7 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     Name = server.Id,
                     Heartbeat = server.Heartbeat,
-                    Queues = JobHelper.FromJson<string[]>(server.Queues),
+                    Queues = SerializationHelper.Deserialize<string[]>(server.Queues),
                     StartedAt = server.StartedAt,
                     WorkersCount = server.WorkerCount,
                 });
@@ -454,10 +454,10 @@ namespace Hangfire.EntityFrameworkCore
 
         private static Job Deserialize(string json)
         {
-            var data = JobHelper.FromJson<InvocationData>(json);
+            var data = SerializationHelper.Deserialize<InvocationData>(json);
             try
             {
-                return data.Deserialize();
+                return data.DeserializeJob();
             }
             catch (JobLoadException)
             {
@@ -490,7 +490,7 @@ namespace Hangfire.EntityFrameworkCore
                             StringComparison.OrdinalIgnoreCase),
                         EnqueuedAt = x.StateData is null ? default :
                             JobHelper.DeserializeNullableDateTime(
-                                JobHelper.FromJson<Dictionary<string, string>>(x.StateData).
+                                SerializationHelper.Deserialize<Dictionary<string, string>>(x.StateData).
                                     GetValue(nameof(EnqueuedJobDto.EnqueuedAt))),
                     })));
         }

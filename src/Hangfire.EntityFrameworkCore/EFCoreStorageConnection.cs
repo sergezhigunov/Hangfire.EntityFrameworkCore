@@ -148,7 +148,7 @@ namespace Hangfire.EntityFrameworkCore
                 {
                     Name = s.Name,
                     Reason = s.Reason,
-                    Data = JobHelper.FromJson<Dictionary<string, string>>(s.Data),
+                    Data = SerializationHelper.Deserialize<Dictionary<string, string>>(s.Data),
                 }).
                 SingleOrDefault());
 
@@ -213,7 +213,7 @@ namespace Hangfire.EntityFrameworkCore
                 StartedAt = timestamp,
                 Heartbeat = timestamp,
                 WorkerCount = context.WorkerCount,
-                Queues = JobHelper.ToJson(context.Queues),
+                Queues = SerializationHelper.Serialize(context.Queues),
             };
 
             _storage.UseContextSavingChanges(dbContext =>
@@ -236,13 +236,13 @@ namespace Hangfire.EntityFrameworkCore
             if (parameters is null)
                 throw new ArgumentNullException(nameof(parameters));
 
-            var invocationData = InvocationData.Serialize(job);
+            var invocationData = InvocationData.SerializeJob(job);
 
             var hangfireJob = new HangfireJob
             {
                 CreatedAt = createdAt,
                 ExpireAt = createdAt + expireIn,
-                InvocationData = JobHelper.ToJson(invocationData),
+                InvocationData = SerializationHelper.Serialize(invocationData),
                 Parameters = parameters.
                     Select(x => new HangfireJobParameter
                     {
@@ -554,7 +554,7 @@ namespace Hangfire.EntityFrameworkCore
 
         private static JobData CreateJobData(string json, DateTime createdAt, string state)
         {
-            var data = JobHelper.FromJson<InvocationData>(json);
+            var data = SerializationHelper.Deserialize<InvocationData>(json);
             var result = new JobData
             {
                 State = state,
@@ -562,7 +562,7 @@ namespace Hangfire.EntityFrameworkCore
             };
             try
             {
-                result.Job = data.Deserialize();
+                result.Job = data.DeserializeJob();
             }
             catch (JobLoadException exception)
             {

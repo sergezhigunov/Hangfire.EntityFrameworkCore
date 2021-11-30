@@ -32,13 +32,13 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     new EFCoreStorageOptions()));
 
         private protected static string InvocationDataStub { get; } =
-            JobHelper.ToJson(new InvocationData(null, null, null, string.Empty));
+            SerializationHelper.Serialize(new InvocationData(null, null, null, string.Empty));
 
         private protected static string EmptyArrayStub { get; } =
-            JobHelper.ToJson(Array.Empty<string>());
+            SerializationHelper.Serialize(Array.Empty<string>());
 
         private protected static string EmptyDictionaryStub { get; } =
-            JobHelper.ToJson(new Dictionary<string, string>());
+            SerializationHelper.Serialize(new Dictionary<string, string>());
 
         protected EFCoreStorageTest()
         {
@@ -52,7 +52,7 @@ namespace Hangfire.EntityFrameworkCore.Tests
 
         private protected static string CreateInvocationData(Job job)
         {
-            return JobHelper.ToJson(InvocationData.Serialize(job));
+            return SerializationHelper.Serialize(InvocationData.SerializeJob(job));
         }
 
         private protected EFCoreStorage CreateStorageStub()

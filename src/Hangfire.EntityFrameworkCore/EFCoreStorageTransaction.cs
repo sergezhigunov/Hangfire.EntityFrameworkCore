@@ -481,7 +481,7 @@ namespace Hangfire.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(state));
             ThrowIfDisposed();
 
-            var data = JobHelper.ToJson(state.SerializeData());
+            var data = SerializationHelper.Serialize(state.SerializeData());
             var createdAt = state.GetCreatedAt() ?? DateTime.UtcNow;
 
             _queue.Enqueue(context =>
