@@ -4,7 +4,7 @@
     <Copyright>Copyright (c) 2019 Sergey Zhigunov and contributors</Copyright>
     <Authors>Sergey Zhigunov</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
     <VersionPrefix>0.3.1</VersionPrefix>
   </PropertyGroup>
 
