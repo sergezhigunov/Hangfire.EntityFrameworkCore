@@ -1,42 +1,41 @@
 ﻿using System;
 using Hangfire.Annotations;
 
-namespace Hangfire.EntityFrameworkCore
+namespace Hangfire.EntityFrameworkCore;
+
+internal sealed class EFCoreLock : IDisposable
 {
-    internal sealed class EFCoreLock : IDisposable
+    private readonly ILockProvider _provider;
+    private readonly string _resource;
+    private bool _disposed;
+
+    public EFCoreLock(
+        [NotNull] ILockProvider provider,
+        [NotNull] string resource,
+        TimeSpan timeout)
     {
-        private readonly ILockProvider _provider;
-        private readonly string _resource;
-        private bool _disposed;
+        if (provider is null)
+            throw new ArgumentNullException(nameof(provider));
 
-        public EFCoreLock(
-            [NotNull] ILockProvider provider,
-            [NotNull] string resource,
-            TimeSpan timeout)
+        _provider = provider;
+        _provider.Acquire(resource, timeout);
+        _resource = resource;
+    }
+
+    void Dispose(bool disposing)
+    {
+        if (!_disposed)
         {
-            if (provider is null)
-                throw new ArgumentNullException(nameof(provider));
+            if (disposing)
+                _provider.Release(_resource);
 
-            _provider = provider;
-            _provider.Acquire(resource, timeout);
-            _resource = resource;
+            _disposed = true;
         }
+    }
 
-        void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                    _provider.Release(_resource);
-
-                _disposed = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

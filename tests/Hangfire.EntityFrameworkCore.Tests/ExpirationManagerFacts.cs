@@ -3,125 +3,124 @@ using System.Linq;
 using System.Threading;
 using Xunit;
 
-namespace Hangfire.EntityFrameworkCore.Tests
+namespace Hangfire.EntityFrameworkCore.Tests;
+
+public class ExpirationManagerFacts : EFCoreStorageTest
 {
-    public class ExpirationManagerFacts : EFCoreStorageTest
+    [Fact]
+    public static void Ctor_Throws_WhenStorageParameterIsNull()
     {
-        [Fact]
-        public static void Ctor_Throws_WhenStorageParameterIsNull()
+        EFCoreStorage storage = null;
+
+        Assert.Throws<ArgumentNullException>(nameof(storage),
+            () => new ExpirationManager(storage));
+    }
+
+    [Fact]
+    public void Ctor_CreatesInstance()
+    {
+        var storage = CreateStorageStub();
+
+        var instance = new ExpirationManager(storage);
+
+        Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
+    }
+
+    [Fact]
+    public void Execute_RemovesOutdatedRecords()
+    {
+        CreateExpirationEntries(DateTime.UtcNow.AddMonths(-1));
+        var instance = new ExpirationManager(Storage);
+        var source = new CancellationTokenSource(0);
+
+        instance.Execute(source.Token);
+
+        UseContext(context =>
         {
-            EFCoreStorage storage = null;
+            Assert.False(context.Set<HangfireCounter>().Any());
+            Assert.False(context.Set<HangfireJob>().Any());
+            Assert.False(context.Set<HangfireList>().Any());
+            Assert.False(context.Set<HangfireSet>().Any());
+            Assert.False(context.Set<HangfireHash>().Any());
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(storage),
-                () => new ExpirationManager(storage));
-        }
+    [Fact]
+    public void Execute_DoesNotRemoveEntries_WithNoExpirationTimeSet()
+    {
+        CreateExpirationEntries(null);
+        var instance = new ExpirationManager(Storage);
+        var source = new CancellationTokenSource(0);
 
-        [Fact]
-        public void Ctor_CreatesInstance()
+        instance.Execute(source.Token);
+
+        UseContext(context =>
         {
-            var storage = CreateStorageStub();
+            Assert.Equal(1, context.Set<HangfireCounter>().Count());
+            Assert.Equal(1, context.Set<HangfireJob>().Count());
+            Assert.Equal(1, context.Set<HangfireList>().Count());
+            Assert.Equal(1, context.Set<HangfireSet>().Count());
+            Assert.Equal(1, context.Set<HangfireHash>().Count());
+        });
+    }
 
-            var instance = new ExpirationManager(storage);
+    [Fact]
+    public void Execute_DoesNotRemoveEntries_WithFreshExpirationTime()
+    {
+        CreateExpirationEntries(DateTime.UtcNow.AddMonths(1));
+        var instance = new ExpirationManager(Storage);
+        var source = new CancellationTokenSource(0);
 
-            Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
-        }
+        instance.Execute(source.Token);
 
-        [Fact]
-        public void Execute_RemovesOutdatedRecords()
+        UseContext(context =>
         {
-            CreateExpirationEntries(DateTime.UtcNow.AddMonths(-1));
-            var instance = new ExpirationManager(Storage);
-            var source = new CancellationTokenSource(0);
+            Assert.Equal(1, context.Set<HangfireCounter>().Count());
+            Assert.Equal(1, context.Set<HangfireJob>().Count());
+            Assert.Equal(1, context.Set<HangfireList>().Count());
+            Assert.Equal(1, context.Set<HangfireSet>().Count());
+            Assert.Equal(1, context.Set<HangfireHash>().Count());
+        });
+    }
 
-            instance.Execute(source.Token);
+    private void CreateExpirationEntries(DateTime? expireAt)
+    {
+        var now = DateTime.UtcNow;
 
-            UseContext(context =>
+        UseContextSavingChanges(context =>
+        {
+            context.Add(new HangfireCounter
             {
-                Assert.False(context.Set<HangfireCounter>().Any());
-                Assert.False(context.Set<HangfireJob>().Any());
-                Assert.False(context.Set<HangfireList>().Any());
-                Assert.False(context.Set<HangfireSet>().Any());
-                Assert.False(context.Set<HangfireHash>().Any());
+                Key = "test",
+                ExpireAt = expireAt,
             });
-        }
 
-        [Fact]
-        public void Execute_DoesNotRemoveEntries_WithNoExpirationTimeSet()
-        {
-            CreateExpirationEntries(null);
-            var instance = new ExpirationManager(Storage);
-            var source = new CancellationTokenSource(0);
-
-            instance.Execute(source.Token);
-
-            UseContext(context =>
+            context.Add(new HangfireJob
             {
-                Assert.Equal(1, context.Set<HangfireCounter>().Count());
-                Assert.Equal(1, context.Set<HangfireJob>().Count());
-                Assert.Equal(1, context.Set<HangfireList>().Count());
-                Assert.Equal(1, context.Set<HangfireSet>().Count());
-                Assert.Equal(1, context.Set<HangfireHash>().Count());
+                CreatedAt = now,
+                InvocationData = CreateInvocationData(() => SampleMethod("test")),
+                ExpireAt = expireAt,
             });
-        }
 
-        [Fact]
-        public void Execute_DoesNotRemoveEntries_WithFreshExpirationTime()
-        {
-            CreateExpirationEntries(DateTime.UtcNow.AddMonths(1));
-            var instance = new ExpirationManager(Storage);
-            var source = new CancellationTokenSource(0);
-
-            instance.Execute(source.Token);
-
-            UseContext(context =>
+            context.Add(new HangfireList
             {
-                Assert.Equal(1, context.Set<HangfireCounter>().Count());
-                Assert.Equal(1, context.Set<HangfireJob>().Count());
-                Assert.Equal(1, context.Set<HangfireList>().Count());
-                Assert.Equal(1, context.Set<HangfireSet>().Count());
-                Assert.Equal(1, context.Set<HangfireHash>().Count());
+                Key = "test",
+                ExpireAt = expireAt,
             });
-        }
 
-        private void CreateExpirationEntries(DateTime? expireAt)
-        {
-            var now = DateTime.UtcNow;
-
-            UseContextSavingChanges(context =>
+            context.Add(new HangfireSet
             {
-                context.Add(new HangfireCounter
-                {
-                    Key = "test",
-                    ExpireAt = expireAt,
-                });
-
-                context.Add(new HangfireJob
-                {
-                    CreatedAt = now,
-                    InvocationData = CreateInvocationData(() => SampleMethod("test")),
-                    ExpireAt = expireAt,
-                });
-
-                context.Add(new HangfireList
-                {
-                    Key = "test",
-                    ExpireAt = expireAt,
-                });
-
-                context.Add(new HangfireSet
-                {
-                    Key = "test",
-                    Value = "test",
-                    ExpireAt = expireAt,
-                });
-
-                context.Add(new HangfireHash
-                {
-                    Key = "test",
-                    Field = "test",
-                    ExpireAt = expireAt,
-                });
+                Key = "test",
+                Value = "test",
+                ExpireAt = expireAt,
             });
-        }
+
+            context.Add(new HangfireHash
+            {
+                Key = "test",
+                Field = "test",
+                ExpireAt = expireAt,
+            });
+        });
     }
 }

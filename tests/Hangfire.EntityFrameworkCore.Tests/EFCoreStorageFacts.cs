@@ -4,192 +4,191 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace Hangfire.EntityFrameworkCore.Tests
+namespace Hangfire.EntityFrameworkCore.Tests;
+
+public class EFCoreStorageFacts : EFCoreStorageTest
 {
-    public class EFCoreStorageFacts : EFCoreStorageTest
+    [Fact]
+    public static void Ctor_Throws_WhenContextOptionsActionParameterIsNull()
     {
-        [Fact]
-        public static void Ctor_Throws_WhenContextOptionsActionParameterIsNull()
+        Action<DbContextOptionsBuilder> optionsAction = null;
+        var options = new EFCoreStorageOptions();
+
+        Assert.Throws<ArgumentNullException>(nameof(optionsAction),
+            () => new EFCoreStorage(optionsAction, options));
+    }
+
+    [Fact]
+    public void Ctor_Throws_WhenOptionsParameterIsNull()
+    {
+        var contextOptions = OptionsActionStub;
+        EFCoreStorageOptions options = null;
+
+        Assert.Throws<ArgumentNullException>(nameof(options),
+            () => new EFCoreStorage(OptionsAction, options));
+    }
+
+    [Fact]
+    public void Ctor_CreatesInstance()
+    {
+        var options = new EFCoreStorageOptions
         {
-            Action<DbContextOptionsBuilder> optionsAction = null;
-            var options = new EFCoreStorageOptions();
+            DistributedLockTimeout = new TimeSpan(1, 0, 0),
+            QueuePollInterval = new TimeSpan(0, 1, 0),
+            JobExpirationCheckInterval = new TimeSpan(2, 0, 0),
+            CountersAggregationInterval = new TimeSpan(0, 2, 0),
+        };
 
-            Assert.Throws<ArgumentNullException>(nameof(optionsAction),
-                () => new EFCoreStorage(optionsAction, options));
-        }
+        var instance = new EFCoreStorage(OptionsActionStub, options);
 
-        [Fact]
-        public void Ctor_Throws_WhenOptionsParameterIsNull()
-        {
-            var contextOptions = OptionsActionStub;
-            EFCoreStorageOptions options = null;
+        Assert.NotNull(Assert.IsType<DbContextOptions<HangfireContext>>(
+            instance.GetFieldValue("_contextOptions")));
+        Assert.Same(options, Assert.IsType<EFCoreStorageOptions>(
+            instance.GetFieldValue("_options")));
+        Assert.NotNull(instance.DefaultQueueProvider);
+        Assert.Same(instance, instance.DefaultQueueProvider.GetFieldValue("_storage"));
+        Assert.NotNull(instance.QueueProviders);
+        Assert.Empty(instance.QueueProviders);
+        Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
+        Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
+        Assert.Equal(options.JobExpirationCheckInterval, instance.JobExpirationCheckInterval);
+        Assert.Equal(options.CountersAggregationInterval, instance.CountersAggregationInterval);
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new EFCoreStorage(OptionsAction, options));
-        }
+    [Fact]
+    public void GetConnection_ReturnsCorrectResult()
+    {
+        var options = new EFCoreStorageOptions();
+        var instance = new EFCoreStorage(OptionsAction, options);
 
-        [Fact]
-        public void Ctor_CreatesInstance()
-        {
-            var options = new EFCoreStorageOptions
-            {
-                DistributedLockTimeout = new TimeSpan(1, 0, 0),
-                QueuePollInterval = new TimeSpan(0, 1, 0),
-                JobExpirationCheckInterval = new TimeSpan(2, 0, 0),
-                CountersAggregationInterval = new TimeSpan(0, 2, 0),
-            };
+        var result = instance.GetConnection();
 
-            var instance = new EFCoreStorage(OptionsActionStub, options);
+        Assert.NotNull(result);
+        var connection = Assert.IsType<EFCoreStorageConnection>(result);
 
-            Assert.NotNull(Assert.IsType<DbContextOptions<HangfireContext>>(
-                instance.GetFieldValue("_contextOptions")));
-            Assert.Same(options, Assert.IsType<EFCoreStorageOptions>(
-                instance.GetFieldValue("_options")));
-            Assert.NotNull(instance.DefaultQueueProvider);
-            Assert.Same(instance, instance.DefaultQueueProvider.GetFieldValue("_storage"));
-            Assert.NotNull(instance.QueueProviders);
-            Assert.Empty(instance.QueueProviders);
-            Assert.Equal(options.DistributedLockTimeout, instance.DistributedLockTimeout);
-            Assert.Equal(options.QueuePollInterval, instance.QueuePollInterval);
-            Assert.Equal(options.JobExpirationCheckInterval, instance.JobExpirationCheckInterval);
-            Assert.Equal(options.CountersAggregationInterval, instance.CountersAggregationInterval);
-        }
+        Assert.Same(instance,
+            Assert.IsType<EFCoreStorage>(
+                connection.GetFieldValue("_storage")));
+    }
 
-        [Fact]
-        public void GetConnection_ReturnsCorrectResult()
-        {
-            var options = new EFCoreStorageOptions();
-            var instance = new EFCoreStorage(OptionsAction, options);
+    [Fact]
+    public void GetMonitoringApi_ReturnsCorrectResult()
+    {
+        var options = new EFCoreStorageOptions();
+        var instance = new EFCoreStorage(OptionsAction, options);
 
-            var result = instance.GetConnection();
+        var result = instance.GetMonitoringApi();
 
-            Assert.NotNull(result);
-            var connection = Assert.IsType<EFCoreStorageConnection>(result);
+        Assert.NotNull(result);
+        var api = Assert.IsType<EFCoreStorageMonitoringApi>(result);
 
-            Assert.Same(instance,
-                Assert.IsType<EFCoreStorage>(
-                    connection.GetFieldValue("_storage")));
-        }
+        Assert.Same(instance,
+            Assert.IsType<EFCoreStorage>(result.GetFieldValue("_storage")));
+    }
 
-        [Fact]
-        public void GetMonitoringApi_ReturnsCorrectResult()
-        {
-            var options = new EFCoreStorageOptions();
-            var instance = new EFCoreStorage(OptionsAction, options);
+    [Fact]
+    public void CreateContext_CreatesInstance()
+    {
+        var instance = Storage.CreateContext();
+        Assert.NotNull(instance);
+        instance.Dispose();
+    }
 
-            var result = instance.GetMonitoringApi();
+    [Fact]
+    public void CreateContext_FactoryCreatesInstance()
+    {
+        var instance = FactoryStorage.CreateContext();
+        Assert.NotNull(instance);
+        instance.Dispose();
+    }
 
-            Assert.NotNull(result);
-            var api = Assert.IsType<EFCoreStorageMonitoringApi>(result);
+    [Fact]
+    public void UseContext_Throws_WhenActionParameterIsNull()
+    {
+        Action<DbContext> action = null;
 
-            Assert.Same(instance,
-                Assert.IsType<EFCoreStorage>(result.GetFieldValue("_storage")));
-        }
+        Assert.Throws<ArgumentNullException>(nameof(action),
+            () => Storage.UseContext(action));
+    }
 
-        [Fact]
-        public void CreateContext_CreatesInstance()
-        {
-            var instance = Storage.CreateContext();
-            Assert.NotNull(instance);
-            instance.Dispose();
-        }
+    [Fact]
+    public void UseContext_InvokesAction()
+    {
+        bool exposed = false;
+        void Action(DbContext context) => exposed = true;
 
-        [Fact]
-        public void CreateContext_FactoryCreatesInstance()
-        {
-            var instance = FactoryStorage.CreateContext();
-            Assert.NotNull(instance);
-            instance.Dispose();
-        }
+        Storage.UseContext(Action);
 
-        [Fact]
-        public void UseContext_Throws_WhenActionParameterIsNull()
-        {
-            Action<DbContext> action = null;
+        Assert.True(exposed);
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(action),
-                () => Storage.UseContext(action));
-        }
+    [Fact]
+    public void UseContextGeneric_Throws_WhenFuncParameterIsNull()
+    {
+        Func<DbContext, bool> func = null;
 
-        [Fact]
-        public void UseContext_InvokesAction()
-        {
-            bool exposed = false;
-            void Action(DbContext context) => exposed = true;
+        Assert.Throws<ArgumentNullException>(nameof(func),
+            () => Storage.UseContext(func));
+    }
 
-            Storage.UseContext(Action);
+    [Fact]
+    public void UseContextGeneric_InvokesFunc()
+    {
+        bool exposed = false;
+        bool Func(DbContext context) => exposed = true;
 
-            Assert.True(exposed);
-        }
+        var result = Storage.UseContext(Func);
 
-        [Fact]
-        public void UseContextGeneric_Throws_WhenFuncParameterIsNull()
-        {
-            Func<DbContext, bool> func = null;
+        Assert.True(exposed);
+        Assert.True(result);
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(func),
-                () => Storage.UseContext(func));
-        }
+    [Fact]
+    public static void GetQueueProvider_Throws_WhenQueueParameterIsNull()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+        string queue = null;
 
-        [Fact]
-        public void UseContextGeneric_InvokesFunc()
-        {
-            bool exposed = false;
-            bool Func(DbContext context) => exposed = true;
+        Assert.Throws<ArgumentNullException>(nameof(queue),
+            () => storage.GetQueueProvider(queue));
+    }
 
-            var result = Storage.UseContext(Func);
+    [Fact]
+    public static void GetQueueProvider_ReturnsDefaultProvider_WhenProviderIsNotRegistered()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+        var queue = "queue";
 
-            Assert.True(exposed);
-            Assert.True(result);
-        }
+        var result = storage.GetQueueProvider(queue);
 
-        [Fact]
-        public static void GetQueueProvider_Throws_WhenQueueParameterIsNull()
-        {
-            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
-            string queue = null;
+        Assert.NotNull(result);
+        Assert.Same(storage.DefaultQueueProvider, result);
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(queue),
-                () => storage.GetQueueProvider(queue));
-        }
+    [Fact]
+    public static void GetQueueProvider_ReturnsRegisteredProvider()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+        var dictionary = storage.QueueProviders;
+        var provider = new Mock<IPersistentJobQueueProvider>().Object;
+        var queue = "queue";
+        dictionary[queue] = provider;
 
-        [Fact]
-        public static void GetQueueProvider_ReturnsDefaultProvider_WhenProviderIsNotRegistered()
-        {
-            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
-            var queue = "queue";
+        var result = storage.GetQueueProvider(queue);
 
-            var result = storage.GetQueueProvider(queue);
+        Assert.NotNull(result);
+        Assert.Same(provider, result);
+    }
 
-            Assert.NotNull(result);
-            Assert.Same(storage.DefaultQueueProvider, result);
-        }
+    [Fact]
+    public static void GetComponents_ReturnsAllNeededComponents()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
 
-        [Fact]
-        public static void GetQueueProvider_ReturnsRegisteredProvider()
-        {
-            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
-            var dictionary = storage.QueueProviders;
-            var provider = new Mock<IPersistentJobQueueProvider>().Object;
-            var queue = "queue";
-            dictionary[queue] = provider;
+        var result = storage.GetComponents();
 
-            var result = storage.GetQueueProvider(queue);
-
-            Assert.NotNull(result);
-            Assert.Same(provider, result);
-        }
-
-        [Fact]
-        public static void GetComponents_ReturnsAllNeededComponents()
-        {
-            var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
-
-            var result = storage.GetComponents();
-
-            var componentTypes = result.Select(x => x.GetType()).ToArray();
-            Assert.Contains(typeof(ExpirationManager), componentTypes);
-            Assert.Contains(typeof(CountersAggregator), componentTypes);
-        }
+        var componentTypes = result.Select(x => x.GetType()).ToArray();
+        Assert.Contains(typeof(ExpirationManager), componentTypes);
+        Assert.Contains(typeof(CountersAggregator), componentTypes);
     }
 }

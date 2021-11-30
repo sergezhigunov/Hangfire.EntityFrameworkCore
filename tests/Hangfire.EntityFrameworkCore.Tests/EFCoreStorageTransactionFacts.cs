@@ -8,608 +8,608 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace Hangfire.EntityFrameworkCore.Tests
+namespace Hangfire.EntityFrameworkCore.Tests;
+
+public class EFCoreStorageTransactionFacts : EFCoreStorageTest
 {
-    public class EFCoreStorageTransactionFacts : EFCoreStorageTest
+    [Fact]
+    public static void Ctor_Throws_WhenStorageParameterIsNull()
     {
-        [Fact]
-        public static void Ctor_Throws_WhenStorageParameterIsNull()
+        EFCoreStorage storage = null;
+        var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
+
+        Assert.Throws<ArgumentNullException>(nameof(storage),
+            () => new EFCoreStorageTransaction(storage));
+    }
+
+    [Fact]
+    public void Ctor_CreatesInstance()
+    {
+        var storage = CreateStorageStub();
+
+        var instance = new EFCoreStorageTransaction(storage);
+
+        Assert.Same(storage,
+            Assert.IsType<EFCoreStorage>(
+                instance.GetFieldValue("_storage")));
+        Assert.NotNull(
+            Assert.IsType<Queue<Action<DbContext>>>(
+                instance.GetFieldValue("_queue")));
+        Assert.NotNull(
+            Assert.IsType<Queue<Action>>(
+                instance.GetFieldValue("_afterCommitQueue")));
+        Assert.False(Assert.IsType<bool>(instance.GetFieldValue("_disposed")));
+    }
+
+    [Fact]
+    public void Dispose_CleansQueues()
+    {
+        var options = new DbContextOptions<HangfireContext>();
+        var instance = CreateTransaction();
+        var queue = Assert.IsType<Queue<Action<DbContext>>>(
+            instance.GetFieldValue("_queue"));
+        var afterCommitQueue = Assert.IsType<Queue<Action>>(
+            instance.GetFieldValue("_afterCommitQueue"));
+        queue.Enqueue(context => { });
+        afterCommitQueue.Enqueue(() => { });
+
+        instance.Dispose();
+        Assert.Empty(Assert.IsType<Queue<Action<DbContext>>>(
+            instance.GetFieldValue("_queue")));
+        Assert.Empty(Assert.IsType<Queue<Action>>(
+            instance.GetFieldValue("_afterCommitQueue")));
+
+        Assert.True(Assert.IsType<bool>(instance.GetFieldValue("_disposed")));
+    }
+
+    [Fact]
+    public void AddJobState_Throws_WhenJobIdParameterIsNull()
+    {
+        string jobId = null;
+        var state = new Mock<IState>().Object;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(jobId),
+            () => instance.AddJobState(jobId, state));
+    }
+
+    [Fact]
+    public void AddJobState_Throws_WhenJobIdParameterIsEmpty()
+    {
+        string jobId = string.Empty;
+        var state = new Mock<IState>().Object;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentException>(nameof(jobId),
+            () => instance.AddJobState(jobId, state));
+    }
+
+    [Fact]
+    public void AddJobState_Throws_WhenStateParameterIsNull()
+    {
+        string jobId = "1";
+        IState state = null;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(state),
+            () => instance.AddJobState(jobId, state));
+    }
+
+    [Fact]
+    public void AddJobState_Throws_WhenTransactionDisposed()
+    {
+        string jobId = "1";
+        var state = new Mock<IState>().Object;
+
+        AssertThrowsObjectDisposed(instance => instance.AddJobState(jobId, state));
+    }
+
+    [Fact]
+    public void AddJobState_AddsNewRecordToATable()
+    {
+        var job = InsertJob();
+        var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
+        var stateMock = new Mock<IState>();
+        stateMock.Setup(x => x.Name).Returns("State");
+        stateMock.Setup(x => x.Reason).Returns("Reason");
+        stateMock.Setup(x => x.SerializeData()).
+            Returns(new Dictionary<string, string>
+            {
+                ["Name"] = "Value",
+            });
+        var state = stateMock.Object;
+        var createdAtFrom = DateTime.UtcNow;
+
+        UseTransaction(true, instance => instance.AddJobState(jobId, state));
+
+        var createdAtTo = DateTime.UtcNow;
+        UseContext(context =>
         {
-            EFCoreStorage storage = null;
-            var queueProvider = new Mock<IPersistentJobQueueProvider>().Object;
+            var actualJob = Assert.Single(context.Set<HangfireJob>());
+            Assert.Null(actualJob.StateId);
+            var jobState = Assert.Single(context.Set<HangfireState>());
+            Assert.Equal("State", jobState.Name);
+            Assert.Equal("Reason", jobState.Reason);
+            Assert.True(createdAtFrom <= jobState.CreatedAt);
+            Assert.True(jobState.CreatedAt <= createdAtTo);
+            var data = SerializationHelper.Deserialize<Dictionary<string, string>>(jobState.Data);
+            Assert.Single(data);
+            Assert.Equal("Value", data["Name"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(storage),
-                () => new EFCoreStorageTransaction(storage));
-        }
+    [Fact]
+    public void AddRangeToSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var items = Array.Empty<string>();
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.AddRangeToSet(key, items));
+    }
 
-        [Fact]
-        public void Ctor_CreatesInstance()
+    [Fact]
+    public void AddRangeToSet_Throws_WhenItemsParameterIsNull()
+    {
+        string key = "key";
+        IList<string> items = null;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(items),
+            () => instance.AddRangeToSet(key, items));
+    }
+
+    [Fact]
+    public void AddRangeToSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var items = Array.Empty<string>();
+
+        AssertThrowsObjectDisposed(instance => instance.AddRangeToSet(key, items));
+    }
+
+    [Fact]
+    public void AddRangeToSet_AddsAllItems()
+    {
+        string key = "key";
+        var items = new List<string>
+            {
+                "1",
+                "2",
+                "3",
+            };
+
+        UseTransaction(true, instance => instance.AddRangeToSet(key, items));
+
+        UseContext(context =>
         {
-            var storage = CreateStorageStub();
+            var records = (
+                from set in context.Set<HangfireSet>()
+                where set.Key == key
+                select set.Value).
+                ToArray();
+            Assert.Equal(items, records);
+        });
 
-            var instance = new EFCoreStorageTransaction(storage);
+    }
 
-            Assert.Same(storage,
-                Assert.IsType<EFCoreStorage>(
-                    instance.GetFieldValue("_storage")));
-            Assert.NotNull(
-                Assert.IsType<Queue<Action<DbContext>>>(
-                    instance.GetFieldValue("_queue")));
-            Assert.NotNull(
-                Assert.IsType<Queue<Action>>(
-                    instance.GetFieldValue("_afterCommitQueue")));
-            Assert.False(Assert.IsType<bool>(instance.GetFieldValue("_disposed")));
-        }
-
-        [Fact]
-        public void Dispose_CleansQueues()
+    [Fact]
+    public void AddRangeToSet_AddsAllItems_WhenSomeValuesAlreadySet()
+    {
+        string key = "key";
+        var items = new List<string>
+            {
+                "1",
+                "2",
+                "3",
+            };
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            var options = new DbContextOptions<HangfireContext>();
-            var instance = CreateTransaction();
+            Key = key,
+            Value = "1",
+        }));
+
+        UseTransaction(true, instance => instance.AddRangeToSet(key, items));
+
+        UseContext(context =>
+        {
+            var records = (
+                from set in context.Set<HangfireSet>()
+                where set.Key == key
+                select set.Value).
+                ToArray();
+            Assert.Equal(items, records);
+        });
+    }
+
+    [Fact]
+    public void AddToQueue_Throws_WhenQueueParameterIsNull()
+    {
+        string queue = null;
+        string jobId = "1";
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(queue),
+            () => instance.AddToQueue(queue, jobId));
+    }
+
+    [Fact]
+    public void AddToQueue_Throws_WhenQueueParameterIsEmpty()
+    {
+        string queue = string.Empty;
+        string jobId = "1";
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentException>(nameof(queue),
+            () => instance.AddToQueue(queue, jobId));
+    }
+
+    [Fact]
+    public void AddToQueue_Throws_WhenJobIdParameterIsNull()
+    {
+        string queue = "queue";
+        string jobId = null;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentNullException>(nameof(jobId),
+            () => instance.AddToQueue(queue, jobId));
+    }
+
+    [Fact]
+    public void AddToQueue_Throws_WhenJobIdParameterIsEmpty()
+    {
+        string queue = "queue";
+        string jobId = string.Empty;
+        using var instance = CreateTransaction();
+        Assert.Throws<ArgumentException>(nameof(jobId),
+            () => instance.AddToQueue(queue, jobId));
+    }
+
+    [Fact]
+    public void AddToQueue_Throws_WhenTransactionDisposed()
+    {
+        string queue = "queue";
+        string jobId = "1";
+
+        AssertThrowsObjectDisposed(instance => instance.AddToQueue(queue, jobId));
+    }
+
+    [Fact]
+    public void AddToQueue_CallsEnqueue_OnTargetPersistentQueue()
+    {
+        var job = InsertJob();
+        var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
+        var queueMock = new Mock<IPersistentJobQueue>();
+        var queueProviderMock = new Mock<IPersistentJobQueueProvider>();
+        queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
+        var queueProvider = queueProviderMock.Object;
+        var queueName = "queue";
+        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
+        configurationMock.Setup(x => x.Entry).Returns(Storage);
+        var configuration = configurationMock.Object;
+        configuration.UseQueueProvider(queueProvider, new[] { queueName });
+        using (var instance = new EFCoreStorageTransaction(Storage))
+        {
+            instance.AddToQueue("queue", jobId);
+
             var queue = Assert.IsType<Queue<Action<DbContext>>>(
                 instance.GetFieldValue("_queue"));
             var afterCommitQueue = Assert.IsType<Queue<Action>>(
                 instance.GetFieldValue("_afterCommitQueue"));
-            queue.Enqueue(context => { });
-            afterCommitQueue.Enqueue(() => { });
-
-            instance.Dispose();
-            Assert.Empty(Assert.IsType<Queue<Action<DbContext>>>(
-                instance.GetFieldValue("_queue")));
-            Assert.Empty(Assert.IsType<Queue<Action>>(
-                instance.GetFieldValue("_afterCommitQueue")));
-
-            Assert.True(Assert.IsType<bool>(instance.GetFieldValue("_disposed")));
+            Assert.Single(queue);
+            instance.Commit();
         }
 
-        [Fact]
-        public void AddJobState_Throws_WhenJobIdParameterIsNull()
+        queueMock.Verify(x => x.Enqueue("queue", jobId));
+    }
+
+    [Fact]
+    public void AddToSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        string value = "value";
+        double score = 0;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.AddToSet(key, value));
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.AddToSet(key, value, score));
+    }
+
+    [Fact]
+    public void AddToSet_Throws_WhenValueParameterIsNull()
+    {
+        string key = "key";
+        string value = null;
+        double score = 0;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(value),
+            () => instance.AddToSet(key, value));
+        Assert.Throws<ArgumentNullException>(nameof(value),
+            () => instance.AddToSet(key, value, score));
+    }
+
+    [Fact]
+    public void AddToSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        string value = "value";
+        double score = 0;
+
+        AssertThrowsObjectDisposed(instance => instance.AddToSet(key, value));
+        AssertThrowsObjectDisposed(instance => instance.AddToSet(key, value, score));
+    }
+
+    [Fact]
+    public void AddToSet_AddsARecord_IfThereIsNoSuchKeyAndValue()
+    {
+        string key = "key";
+
+        UseTransaction(true, instance => instance.AddToSet(key, "my-value"));
+
+        UseContext(context =>
         {
-            string jobId = null;
-            var state = new Mock<IState>().Object;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(jobId),
-                () => instance.AddJobState(jobId, state));
-        }
+            var record = context.Set<HangfireSet>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal("my-value", record.Value);
+            Assert.Equal(0, record.Score);
+        });
+    }
 
-        [Fact]
-        public void AddJobState_Throws_WhenJobIdParameterIsEmpty()
+    [Fact]
+    public void AddToSet_AddsARecord_WhenKeyIsExists_ButValuesAreDifferent()
+    {
+        string key = "key";
+        string value = "my-value";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            string jobId = string.Empty;
-            var state = new Mock<IState>().Object;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentException>(nameof(jobId),
-                () => instance.AddJobState(jobId, state));
-        }
+            Key = key,
+            Value = value,
+        }));
 
-        [Fact]
-        public void AddJobState_Throws_WhenStateParameterIsNull()
+        UseTransaction(true, instance => instance.AddToSet(key, "another-value"));
+
+        UseContext(context => Assert.Equal(2, context.Set<HangfireSet>().Count()));
+    }
+
+    [Fact]
+    public void AddToSet_DoesNotAddARecord_WhenBothKeyAndValueAreExist()
+    {
+        string key = "key";
+        string value = "my-value";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            string jobId = "1";
-            IState state = null;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(state),
-                () => instance.AddJobState(jobId, state));
-        }
+            Key = key,
+            Value = value,
+        }));
 
-        [Fact]
-        public void AddJobState_Throws_WhenTransactionDisposed()
+        UseTransaction(true, instance => instance.AddToSet(key, value));
+
+        UseContext(context => Assert.Single(context.Set<HangfireSet>()));
+    }
+
+    [Fact]
+    public void AddToSet_WithScore_AddsARecordWithScore_WhenBothKeyAndValueAreNotExist()
+    {
+        string key = "key";
+        string value = "my-value";
+
+        UseTransaction(true, instance => instance.AddToSet(key, value, 3.2));
+
+        UseContext(context =>
         {
-            string jobId = "1";
-            var state = new Mock<IState>().Object;
+            var record = context.Set<HangfireSet>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal(value, record.Value);
+            Assert.Equal(3.2, record.Score);
+        });
+    }
 
-            AssertThrowsObjectDisposed(instance => instance.AddJobState(jobId, state));
-        }
-
-        [Fact]
-        public void AddJobState_AddsNewRecordToATable()
+    [Fact]
+    public void AddToSet_WithScore_UpdatesAScore_WhenBothKeyAndValueAreExist()
+    {
+        string key = "key";
+        string value = "my-value";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            var job = InsertJob();
-            var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-            var stateMock = new Mock<IState>();
-            stateMock.Setup(x => x.Name).Returns("State");
-            stateMock.Setup(x => x.Reason).Returns("Reason");
-            stateMock.Setup(x => x.SerializeData()).
-                Returns(new Dictionary<string, string>
-                {
-                    ["Name"] = "Value",
-                });
-            var state = stateMock.Object;
-            var createdAtFrom = DateTime.UtcNow;
+            Key = key,
+            Value = value,
+        }));
 
-            UseTransaction(true, instance => instance.AddJobState(jobId, state));
+        UseTransaction(true, instance => instance.AddToSet(key, value, 3.2));
 
-            var createdAtTo = DateTime.UtcNow;
-            UseContext(context =>
+        UseContext(context =>
+        {
+            var record = context.Set<HangfireSet>().Single();
+            Assert.Equal(3.2, record.Score);
+        });
+    }
+
+    [Fact]
+    public void Commit_Throws_WhenTransactionDisposed()
+    {
+        AssertThrowsObjectDisposed(instance => instance.Commit());
+    }
+
+    [Fact]
+    public void Commit_DoesNotThrows_WhenContextIsNull()
+    {
+        UseTransaction(false,
+            instance => instance.Commit());
+    }
+
+    [Fact]
+    public void Commit_DoesNotThrows_WhenContextIsNotNull()
+    {
+        UseTransaction(false,
+            instance =>
             {
-                var actualJob = Assert.Single(context.Set<HangfireJob>());
-                Assert.Null(actualJob.StateId);
-                var jobState = Assert.Single(context.Set<HangfireState>());
-                Assert.Equal("State", jobState.Name);
-                Assert.Equal("Reason", jobState.Reason);
-                Assert.True(createdAtFrom <= jobState.CreatedAt);
-                Assert.True(jobState.CreatedAt <= createdAtTo);
-                var data = SerializationHelper.Deserialize<Dictionary<string, string>>(jobState.Data);
-                Assert.Single(data);
-                Assert.Equal("Value", data["Name"]);
-            });
-        }
-
-        [Fact]
-        public void AddRangeToSet_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            var items = Array.Empty<string>();
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.AddRangeToSet(key, items));
-        }
-
-        [Fact]
-        public void AddRangeToSet_Throws_WhenItemsParameterIsNull()
-        {
-            string key = "key";
-            IList<string> items = null;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(items),
-                () => instance.AddRangeToSet(key, items));
-        }
-
-        [Fact]
-        public void AddRangeToSet_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-            var items = Array.Empty<string>();
-
-            AssertThrowsObjectDisposed(instance => instance.AddRangeToSet(key, items));
-        }
-
-        [Fact]
-        public void AddRangeToSet_AddsAllItems()
-        {
-            string key = "key";
-            var items = new List<string>
-            {
-                "1",
-                "2",
-                "3",
-            };
-
-            UseTransaction(true, instance => instance.AddRangeToSet(key, items));
-
-            UseContext(context =>
-            {
-                var records = (
-                    from set in context.Set<HangfireSet>()
-                    where set.Key == key
-                    select set.Value).
-                    ToArray();
-                Assert.Equal(items, records);
-            });
-
-        }
-
-        [Fact]
-        public void AddRangeToSet_AddsAllItems_WhenSomeValuesAlreadySet()
-        {
-            string key = "key";
-            var items = new List<string>
-            {
-                "1",
-                "2",
-                "3",
-            };
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = "1",
-            }));
-
-            UseTransaction(true, instance => instance.AddRangeToSet(key, items));
-
-            UseContext(context =>
-            {
-                var records = (
-                    from set in context.Set<HangfireSet>()
-                    where set.Key == key
-                    select set.Value).
-                    ToArray();
-                Assert.Equal(items, records);
-            });
-        }
-
-        [Fact]
-        public void AddToQueue_Throws_WhenQueueParameterIsNull()
-        {
-            string queue = null;
-            string jobId = "1";
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(queue),
-                () => instance.AddToQueue(queue, jobId));
-        }
-
-        [Fact]
-        public void AddToQueue_Throws_WhenQueueParameterIsEmpty()
-        {
-            string queue = string.Empty;
-            string jobId = "1";
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentException>(nameof(queue),
-                () => instance.AddToQueue(queue, jobId));
-        }
-
-        [Fact]
-        public void AddToQueue_Throws_WhenJobIdParameterIsNull()
-        {
-            string queue = "queue";
-            string jobId = null;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentNullException>(nameof(jobId),
-                () => instance.AddToQueue(queue, jobId));
-        }
-
-        [Fact]
-        public void AddToQueue_Throws_WhenJobIdParameterIsEmpty()
-        {
-            string queue = "queue";
-            string jobId = string.Empty;
-            using var instance = CreateTransaction();
-            Assert.Throws<ArgumentException>(nameof(jobId),
-                () => instance.AddToQueue(queue, jobId));
-        }
-
-        [Fact]
-        public void AddToQueue_Throws_WhenTransactionDisposed()
-        {
-            string queue = "queue";
-            string jobId = "1";
-
-            AssertThrowsObjectDisposed(instance => instance.AddToQueue(queue, jobId));
-        }
-
-        [Fact]
-        public void AddToQueue_CallsEnqueue_OnTargetPersistentQueue()
-        {
-            var job = InsertJob();
-            var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-            var queueMock = new Mock<IPersistentJobQueue>();
-            var queueProviderMock = new Mock<IPersistentJobQueueProvider>();
-            queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
-            var queueProvider = queueProviderMock.Object;
-            var queueName = "queue";
-            var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
-            configurationMock.Setup(x => x.Entry).Returns(Storage);
-            var configuration = configurationMock.Object;
-            configuration.UseQueueProvider(queueProvider, new[] { queueName });
-            using (var instance = new EFCoreStorageTransaction(Storage))
-            {
-                instance.AddToQueue("queue", jobId);
-
                 var queue = Assert.IsType<Queue<Action<DbContext>>>(
                     instance.GetFieldValue("_queue"));
                 var afterCommitQueue = Assert.IsType<Queue<Action>>(
                     instance.GetFieldValue("_afterCommitQueue"));
-                Assert.Single(queue);
-                instance.Commit();
-            }
 
-            queueMock.Verify(x => x.Enqueue("queue", jobId));
-        }
+                bool queueExposed = false;
+                bool afterCommitQueueExposed = false;
 
-        [Fact]
-        public void AddToSet_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            string value = "value";
-            double score = 0;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.AddToSet(key, value));
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.AddToSet(key, value, score));
-        }
-
-        [Fact]
-        public void AddToSet_Throws_WhenValueParameterIsNull()
-        {
-            string key = "key";
-            string value = null;
-            double score = 0;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(value),
-                () => instance.AddToSet(key, value));
-            Assert.Throws<ArgumentNullException>(nameof(value),
-                () => instance.AddToSet(key, value, score));
-        }
-
-        [Fact]
-        public void AddToSet_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-            string value = "value";
-            double score = 0;
-
-            AssertThrowsObjectDisposed(instance => instance.AddToSet(key, value));
-            AssertThrowsObjectDisposed(instance => instance.AddToSet(key, value, score));
-        }
-
-        [Fact]
-        public void AddToSet_AddsARecord_IfThereIsNoSuchKeyAndValue()
-        {
-            string key = "key";
-
-            UseTransaction(true, instance => instance.AddToSet(key, "my-value"));
-
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireSet>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal("my-value", record.Value);
-                Assert.Equal(0, record.Score);
-            });
-        }
-
-        [Fact]
-        public void AddToSet_AddsARecord_WhenKeyIsExists_ButValuesAreDifferent()
-        {
-            string key = "key";
-            string value = "my-value";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = value,
-            }));
-
-            UseTransaction(true, instance => instance.AddToSet(key, "another-value"));
-
-            UseContext(context => Assert.Equal(2, context.Set<HangfireSet>().Count()));
-        }
-
-        [Fact]
-        public void AddToSet_DoesNotAddARecord_WhenBothKeyAndValueAreExist()
-        {
-            string key = "key";
-            string value = "my-value";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = value,
-            }));
-
-            UseTransaction(true, instance => instance.AddToSet(key, value));
-
-            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
-        }
-
-        [Fact]
-        public void AddToSet_WithScore_AddsARecordWithScore_WhenBothKeyAndValueAreNotExist()
-        {
-            string key = "key";
-            string value = "my-value";
-
-            UseTransaction(true, instance => instance.AddToSet(key, value, 3.2));
-
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireSet>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal(value, record.Value);
-                Assert.Equal(3.2, record.Score);
-            });
-        }
-
-        [Fact]
-        public void AddToSet_WithScore_UpdatesAScore_WhenBothKeyAndValueAreExist()
-        {
-            string key = "key";
-            string value = "my-value";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = value,
-            }));
-
-            UseTransaction(true, instance => instance.AddToSet(key, value, 3.2));
-
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireSet>().Single();
-                Assert.Equal(3.2, record.Score);
-            });
-        }
-
-        [Fact]
-        public void Commit_Throws_WhenTransactionDisposed()
-        {
-            AssertThrowsObjectDisposed(instance => instance.Commit());
-        }
-
-        [Fact]
-        public void Commit_DoesNotThrows_WhenContextIsNull()
-        {
-            UseTransaction(false,
-                instance => instance.Commit());
-        }
-
-        [Fact]
-        public void Commit_DoesNotThrows_WhenContextIsNotNull()
-        {
-            UseTransaction(false,
-                instance =>
+                queue.Enqueue(context =>
                 {
-                    var queue = Assert.IsType<Queue<Action<DbContext>>>(
-                        instance.GetFieldValue("_queue"));
-                    var afterCommitQueue = Assert.IsType<Queue<Action>>(
-                        instance.GetFieldValue("_afterCommitQueue"));
-
-                    bool queueExposed = false;
-                    bool afterCommitQueueExposed = false;
-
-                    queue.Enqueue(context =>
-                    {
-                        Assert.NotNull(context);
-                        Assert.False(queueExposed);
-                        Assert.False(afterCommitQueueExposed);
-                        queueExposed = true;
-                    });
-                    afterCommitQueue.Enqueue(() =>
-                    {
-                        Assert.True(queueExposed);
-                        Assert.False(afterCommitQueueExposed);
-                        afterCommitQueueExposed = true;
-                    });
+                    Assert.NotNull(context);
                     Assert.False(queueExposed);
                     Assert.False(afterCommitQueueExposed);
-
-                    instance.Commit();
-
-                    Assert.True(queueExposed);
-                    Assert.True(afterCommitQueueExposed);
+                    queueExposed = true;
                 });
-        }
+                afterCommitQueue.Enqueue(() =>
+                {
+                    Assert.True(queueExposed);
+                    Assert.False(afterCommitQueueExposed);
+                    afterCommitQueueExposed = true;
+                });
+                Assert.False(queueExposed);
+                Assert.False(afterCommitQueueExposed);
 
-        [Fact]
-        public void DecrementCounter_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+                instance.Commit();
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.DecrementCounter(key));
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.DecrementCounter(key, expireIn));
-        }
-
-        [Fact]
-        public void DecrementCounter_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            AssertThrowsObjectDisposed(instance => instance.DecrementCounter(key));
-            AssertThrowsObjectDisposed(instance => instance.DecrementCounter(key, expireIn));
-        }
-
-        [Fact]
-        public void DecrementCounter_AddsRecordToCounterTable_WithoutExpiration()
-        {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            UseTransaction(true, instance => instance.DecrementCounter(key));
-
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireCounter>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal(-1L, record.Value);
-                Assert.Null(record.ExpireAt);
+                Assert.True(queueExposed);
+                Assert.True(afterCommitQueueExposed);
             });
-        }
+    }
 
-        [Fact]
-        public void DecrementCounter_AddsRecordToCounterTable_WithExpiration()
+    [Fact]
+    public void DecrementCounter_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.DecrementCounter(key));
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.DecrementCounter(key, expireIn));
+    }
+
+    [Fact]
+    public void DecrementCounter_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.DecrementCounter(key));
+        AssertThrowsObjectDisposed(instance => instance.DecrementCounter(key, expireIn));
+    }
+
+    [Fact]
+    public void DecrementCounter_AddsRecordToCounterTable_WithoutExpiration()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        UseTransaction(true, instance => instance.DecrementCounter(key));
+
+        UseContext(context =>
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
+            var record = context.Set<HangfireCounter>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal(-1L, record.Value);
+            Assert.Null(record.ExpireAt);
+        });
+    }
 
-            UseTransaction(true, instance => instance.DecrementCounter(key, expireIn));
+    [Fact]
+    public void DecrementCounter_AddsRecordToCounterTable_WithExpiration()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
 
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireCounter>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal(-1L, record.Value);
-                Assert.NotNull(record.ExpireAt);
-                Assert.True(expiredFrom <= record.ExpireAt);
-                Assert.True(expiredTo >= record.ExpireAt);
-            });
-        }
+        UseTransaction(true, instance => instance.DecrementCounter(key, expireIn));
 
-        [Fact]
-        public void ExpireJob_Throws_WhenJobIdParameterIsNull()
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string jobId = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+            var record = context.Set<HangfireCounter>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal(-1L, record.Value);
+            Assert.NotNull(record.ExpireAt);
+            Assert.True(expiredFrom <= record.ExpireAt);
+            Assert.True(expiredTo >= record.ExpireAt);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(jobId),
-                () => instance.ExpireJob(jobId, expireIn));
-        }
+    [Fact]
+    public void ExpireJob_Throws_WhenJobIdParameterIsNull()
+    {
+        string jobId = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void ExpireJob_Throws_WhenJobIdParameterIsEmpty()
+        Assert.Throws<ArgumentNullException>(nameof(jobId),
+            () => instance.ExpireJob(jobId, expireIn));
+    }
+
+    [Fact]
+    public void ExpireJob_Throws_WhenJobIdParameterIsEmpty()
+    {
+        string jobId = string.Empty;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentException>(nameof(jobId),
+            () => instance.ExpireJob(jobId, expireIn));
+    }
+
+    [Fact]
+    public void ExpireJob_Throws_WhenTransactionDisposed()
+    {
+        string jobId = "1";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.ExpireJob(jobId, expireIn));
+    }
+
+    [Fact]
+    public void ExpireJob_SetsJobExpirationData()
+    {
+        var job = InsertJob();
+        var anotherJob = InsertJob();
+        var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
+
+        UseTransaction(true, instance => instance.ExpireJob(jobId, expireIn));
+
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string jobId = string.Empty;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+            var jobs = context.Set<HangfireJob>();
+            var actualJob = jobs.Single(x => x.Id == job.Id);
+            Assert.True(expiredFrom <= actualJob.ExpireAt);
+            Assert.True(expiredTo >= actualJob.ExpireAt);
+            anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
+            Assert.Null(anotherJob.ExpireAt);
+        });
+    }
 
-            Assert.Throws<ArgumentException>(nameof(jobId),
-                () => instance.ExpireJob(jobId, expireIn));
-        }
+    [Fact]
+    public void ExpireHash_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void ExpireJob_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.ExpireHash(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireHash_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.ExpireHash(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireHash_SetsHashExpirationData()
+    {
+        var hashes = new[]
         {
-            string jobId = "1";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            AssertThrowsObjectDisposed(instance => instance.ExpireJob(jobId, expireIn));
-        }
-
-        [Fact]
-        public void ExpireJob_SetsJobExpirationData()
-        {
-            var job = InsertJob();
-            var anotherJob = InsertJob();
-            var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
-
-            UseTransaction(true, instance => instance.ExpireJob(jobId, expireIn));
-
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var jobs = context.Set<HangfireJob>();
-                var actualJob = jobs.Single(x => x.Id == job.Id);
-                Assert.True(expiredFrom <= actualJob.ExpireAt);
-                Assert.True(expiredTo >= actualJob.ExpireAt);
-                anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
-                Assert.Null(anotherJob.ExpireAt);
-            });
-        }
-
-        [Fact]
-        public void ExpireHash_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.ExpireHash(key, expireIn));
-        }
-
-        [Fact]
-        public void ExpireHash_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            AssertThrowsObjectDisposed(instance => instance.ExpireHash(key, expireIn));
-        }
-
-        [Fact]
-        public void ExpireHash_SetsHashExpirationData()
-        {
-            var hashes = new[]
-            {
                 new HangfireHash
                 {
                     Key = "hash-1",
@@ -622,48 +622,48 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
 
-            UseContextSavingChanges(context => context.AddRange(hashes));
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
+        UseContextSavingChanges(context => context.AddRange(hashes));
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
 
-            UseTransaction(true, instance => instance.ExpireHash("hash-1", new TimeSpan(1, 0, 0)));
+        UseTransaction(true, instance => instance.ExpireHash("hash-1", new TimeSpan(1, 0, 0)));
 
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireHash>().
-                    ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom <= records["hash-1"]);
-                Assert.True(records["hash-1"] <= expiredTo);
-                Assert.Null(records["hash-2"]);
-            });
-        }
-
-        [Fact]
-        public void ExpireList_Throws_WhenKeyParameterIsNull()
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string key = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireHash>().
+                ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.True(expiredFrom <= records["hash-1"]);
+            Assert.True(records["hash-1"] <= expiredTo);
+            Assert.Null(records["hash-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.ExpireList(key, expireIn));
-        }
+    [Fact]
+    public void ExpireList_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void ExpireList_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.ExpireList(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireList_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.ExpireList(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireList_SetsExpirationTime()
+    {
+        var lists = new[]
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            AssertThrowsObjectDisposed(instance => instance.ExpireList(key, expireIn));
-        }
-
-        [Fact]
-        public void ExpireList_SetsExpirationTime()
-        {
-            var lists = new[]
-            {
                 new HangfireList
                 {
                     Key = "list-1",
@@ -675,48 +675,48 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "1",
                 },
             };
-            UseContextSavingChanges(context => context.AddRange(lists));
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
+        UseContextSavingChanges(context => context.AddRange(lists));
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
 
-            UseTransaction(true, instance => instance.ExpireList("list-1", new TimeSpan(1, 0, 0)));
+        UseTransaction(true, instance => instance.ExpireList("list-1", new TimeSpan(1, 0, 0)));
 
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireList>().
-                    ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom <= records["list-1"]);
-                Assert.True(records["list-1"] <= expiredTo);
-                Assert.Null(records["list-2"]);
-            });
-        }
-
-        [Fact]
-        public void ExpireSet_Throws_WhenKeyParameterIsNull()
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string key = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireList>().
+                ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.True(expiredFrom <= records["list-1"]);
+            Assert.True(records["list-1"] <= expiredTo);
+            Assert.Null(records["list-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.ExpireSet(key, expireIn));
-        }
+    [Fact]
+    public void ExpireSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void ExpireSet_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.ExpireSet(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.ExpireSet(key, expireIn));
+    }
+
+    [Fact]
+    public void ExpireSet_SetsExpirationTime_OnASet_WithGivenKey()
+    {
+        var sets = new[]
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            AssertThrowsObjectDisposed(instance => instance.ExpireSet(key, expireIn));
-        }
-
-        [Fact]
-        public void ExpireSet_SetsExpirationTime_OnASet_WithGivenKey()
-        {
-            var sets = new[]
-            {
                 new HangfireSet
                 {
                     Key = "set-1",
@@ -729,205 +729,205 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
 
-            UseContextSavingChanges(context => context.AddRange(sets));
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
+        UseContextSavingChanges(context => context.AddRange(sets));
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
 
-            UseTransaction(true, instance => instance.ExpireSet("set-1", expireIn));
+        UseTransaction(true, instance => instance.ExpireSet("set-1", expireIn));
 
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.True(expiredFrom <= records["set-1"]);
-                Assert.True(records["set-1"] <= expiredTo);
-                Assert.Null(records["set-2"]);
-            });
-        }
-
-        [Fact]
-        public void IncrementCounter_Throws_WhenKeyParameterIsNull()
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string key = null;
-            var expireIn = new TimeSpan(1, 0, 0);
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.True(expiredFrom <= records["set-1"]);
+            Assert.True(records["set-1"] <= expiredTo);
+            Assert.Null(records["set-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.IncrementCounter(key));
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.IncrementCounter(key, expireIn));
-        }
+    [Fact]
+    public void IncrementCounter_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var expireIn = new TimeSpan(1, 0, 0);
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void IncrementCounter_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.IncrementCounter(key));
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.IncrementCounter(key, expireIn));
+    }
+
+    [Fact]
+    public void IncrementCounter_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        AssertThrowsObjectDisposed(instance => instance.IncrementCounter(key));
+        AssertThrowsObjectDisposed(instance => instance.IncrementCounter(key, expireIn));
+    }
+
+    [Fact]
+    public void IncrementCounter_AddsRecordToCounterTable_WithoutExpiration()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        UseTransaction(true, instance => instance.IncrementCounter(key));
+
+        UseContext(context =>
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
+            var record = context.Set<HangfireCounter>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal(1L, record.Value);
+            Assert.Null(record.ExpireAt);
+        });
+    }
 
-            AssertThrowsObjectDisposed(instance => instance.IncrementCounter(key));
-            AssertThrowsObjectDisposed(instance => instance.IncrementCounter(key, expireIn));
-        }
+    [Fact]
+    public void IncrementCounter_AddsRecordToCounterTable_WithExpiration()
+    {
+        string key = "key";
+        var expireIn = new TimeSpan(1, 0, 0);
+        var expiredFrom = DateTime.UtcNow + expireIn;
 
-        [Fact]
-        public void IncrementCounter_AddsRecordToCounterTable_WithoutExpiration()
+        UseTransaction(true, instance => instance.IncrementCounter(key, expireIn));
+
+        var expiredTo = DateTime.UtcNow + expireIn;
+        UseContext(context =>
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
+            var record = context.Set<HangfireCounter>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal(1L, record.Value);
+            Assert.NotNull(record.ExpireAt);
+            Assert.True(expiredFrom <= record.ExpireAt);
+            Assert.True(expiredTo >= record.ExpireAt);
+        });
+    }
 
-            UseTransaction(true, instance => instance.IncrementCounter(key));
+    [Fact]
+    public void InsertToList_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        string value = "value";
+        using var instance = CreateTransaction();
 
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireCounter>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal(1L, record.Value);
-                Assert.Null(record.ExpireAt);
-            });
-        }
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.InsertToList(key, value));
+    }
 
-        [Fact]
-        public void IncrementCounter_AddsRecordToCounterTable_WithExpiration()
+    [Fact]
+    public void InsertToList_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        string value = "value";
+
+        AssertThrowsObjectDisposed(instance => instance.InsertToList(key, value));
+    }
+
+    [Fact]
+    public void InsertToList_AddsARecord_WithGivenValues()
+    {
+        string key = "key";
+
+        UseTransaction(true, instance => instance.InsertToList(key, "my-value"));
+
+        UseContext(context =>
         {
-            string key = "key";
-            var expireIn = new TimeSpan(1, 0, 0);
-            var expiredFrom = DateTime.UtcNow + expireIn;
+            var record = context.Set<HangfireList>().Single();
+            Assert.Equal(key, record.Key);
+            Assert.Equal("my-value", record.Value);
+        });
+    }
 
-            UseTransaction(true, instance => instance.IncrementCounter(key, expireIn));
+    [Fact]
+    public void InsertToList_AddsAnotherRecord_WhenBothKeyAndValueAreExist()
+    {
+        string key = "key";
 
-            var expiredTo = DateTime.UtcNow + expireIn;
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireCounter>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal(1L, record.Value);
-                Assert.NotNull(record.ExpireAt);
-                Assert.True(expiredFrom <= record.ExpireAt);
-                Assert.True(expiredTo >= record.ExpireAt);
-            });
-        }
-
-        [Fact]
-        public void InsertToList_Throws_WhenKeyParameterIsNull()
+        UseTransaction(true, instance =>
         {
-            string key = null;
-            string value = "value";
-            using var instance = CreateTransaction();
+            instance.InsertToList(key, "my-value");
+            instance.InsertToList(key, "my-value");
+        });
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.InsertToList(key, value));
-        }
+        UseContext(context => Assert.Equal(2, context.Set<HangfireList>().Count()));
+    }
 
-        [Fact]
-        public void InsertToList_Throws_WhenTransactionDisposed()
+    [Fact]
+    public void PersistJob_Throws_WhenJobIdParameterIsNull()
+    {
+        string jobId = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(jobId),
+            () => instance.PersistJob(jobId));
+    }
+
+    [Fact]
+    public void PersistJob_Throws_WhenJobIdParameterIsEmpty()
+    {
+        string jobId = string.Empty;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentException>(nameof(jobId),
+            () => instance.PersistJob(jobId));
+    }
+
+    [Fact]
+    public void PersistJob_Throws_WhenTransactionDisposed()
+    {
+        string jobId = "1";
+
+        AssertThrowsObjectDisposed(instance => instance.PersistJob(jobId));
+    }
+
+    [Fact]
+    public void PersistJob_ClearsTheJobExpirationData()
+    {
+        var now = DateTime.UtcNow;
+        var job = InsertJob(now);
+        var anotherJob = InsertJob(now);
+        var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
+        var expireIn = new TimeSpan(1, 0, 0);
+
+        UseTransaction(true, instance => instance.PersistJob(jobId));
+
+        UseContext(context =>
         {
-            string key = "key";
-            string value = "value";
+            var jobs = context.Set<HangfireJob>();
+            var actualJob = jobs.Single(x => x.Id == job.Id);
+            Assert.Null(actualJob.ExpireAt);
+            anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
+            Assert.Equal(now, anotherJob.ExpireAt);
+        });
+    }
 
-            AssertThrowsObjectDisposed(instance => instance.InsertToList(key, value));
-        }
+    [Fact]
+    public void PersistHash_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void InsertToList_AddsARecord_WithGivenValues()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.PersistHash(key));
+    }
+
+    [Fact]
+    public void PersistHash_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+
+        AssertThrowsObjectDisposed(instance => instance.PersistHash(key));
+    }
+
+    [Fact]
+    public void PersistHash_ClearsExpirationTime()
+    {
+        var expiredAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
+        var hashes = new[]
         {
-            string key = "key";
-
-            UseTransaction(true, instance => instance.InsertToList(key, "my-value"));
-
-            UseContext(context =>
-            {
-                var record = context.Set<HangfireList>().Single();
-                Assert.Equal(key, record.Key);
-                Assert.Equal("my-value", record.Value);
-            });
-        }
-
-        [Fact]
-        public void InsertToList_AddsAnotherRecord_WhenBothKeyAndValueAreExist()
-        {
-            string key = "key";
-
-            UseTransaction(true, instance =>
-            {
-                instance.InsertToList(key, "my-value");
-                instance.InsertToList(key, "my-value");
-            });
-
-            UseContext(context => Assert.Equal(2, context.Set<HangfireList>().Count()));
-        }
-
-        [Fact]
-        public void PersistJob_Throws_WhenJobIdParameterIsNull()
-        {
-            string jobId = null;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(jobId),
-                () => instance.PersistJob(jobId));
-        }
-
-        [Fact]
-        public void PersistJob_Throws_WhenJobIdParameterIsEmpty()
-        {
-            string jobId = string.Empty;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentException>(nameof(jobId),
-                () => instance.PersistJob(jobId));
-        }
-
-        [Fact]
-        public void PersistJob_Throws_WhenTransactionDisposed()
-        {
-            string jobId = "1";
-
-            AssertThrowsObjectDisposed(instance => instance.PersistJob(jobId));
-        }
-
-        [Fact]
-        public void PersistJob_ClearsTheJobExpirationData()
-        {
-            var now = DateTime.UtcNow;
-            var job = InsertJob(now);
-            var anotherJob = InsertJob(now);
-            var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-            var expireIn = new TimeSpan(1, 0, 0);
-
-            UseTransaction(true, instance => instance.PersistJob(jobId));
-
-            UseContext(context =>
-            {
-                var jobs = context.Set<HangfireJob>();
-                var actualJob = jobs.Single(x => x.Id == job.Id);
-                Assert.Null(actualJob.ExpireAt);
-                anotherJob = actualJob = jobs.Single(x => x.Id == anotherJob.Id);
-                Assert.Equal(now, anotherJob.ExpireAt);
-            });
-        }
-
-        [Fact]
-        public void PersistHash_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.PersistHash(key));
-        }
-
-        [Fact]
-        public void PersistHash_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-
-            AssertThrowsObjectDisposed(instance => instance.PersistHash(key));
-        }
-
-        [Fact]
-        public void PersistHash_ClearsExpirationTime()
-        {
-            var expiredAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
-            var hashes = new[]
-            {
                 new HangfireHash
                 {
                     Key = "hash-1",
@@ -941,43 +941,43 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     ExpireAt = expiredAt,
                 },
             };
-            UseContextSavingChanges(context => context.AddRange(hashes));
+        UseContextSavingChanges(context => context.AddRange(hashes));
 
-            UseTransaction(true, instance => instance.PersistHash("hash-1"));
+        UseTransaction(true, instance => instance.PersistHash("hash-1"));
 
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireHash>().
-                    ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.Null(records["hash-1"]);
-                Assert.Equal(expiredAt, records["hash-2"]);
-            });
-        }
-
-        [Fact]
-        public void PersistList_Throws_WhenKeyParameterIsNull()
+        UseContext(context =>
         {
-            string key = null;
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireHash>().
+                ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.Null(records["hash-1"]);
+            Assert.Equal(expiredAt, records["hash-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.PersistList(key));
-        }
+    [Fact]
+    public void PersistList_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void PersistList_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.PersistList(key));
+    }
+
+    [Fact]
+    public void PersistList_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+
+        AssertThrowsObjectDisposed(instance => instance.PersistList(key));
+    }
+
+    [Fact]
+    public void PersistList_ClearsExpirationTime()
+    {
+        var expireAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
+        var lists = new[]
         {
-            string key = "key";
-
-            AssertThrowsObjectDisposed(instance => instance.PersistList(key));
-        }
-
-        [Fact]
-        public void PersistList_ClearsExpirationTime()
-        {
-            var expireAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
-            var lists = new[]
-            {
                 new HangfireList
                 {
                     Key = "list-1",
@@ -993,43 +993,43 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     ExpireAt = expireAt,
                 },
             };
-            UseContextSavingChanges(context => context.AddRange(lists));
+        UseContextSavingChanges(context => context.AddRange(lists));
 
-            UseTransaction(true, instance => instance.PersistList("list-1"));
+        UseTransaction(true, instance => instance.PersistList("list-1"));
 
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireList>().
-                    ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.Null(records["list-1"]);
-                Assert.Equal(expireAt, records["list-2"]);
-            });
-        }
-
-        [Fact]
-        public void PersistSet_Throws_WhenKeyParameterIsNull()
+        UseContext(context =>
         {
-            string key = null;
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireList>().
+                ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.Null(records["list-1"]);
+            Assert.Equal(expireAt, records["list-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.PersistSet(key));
-        }
+    [Fact]
+    public void PersistSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void PersistSet_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.PersistSet(key));
+    }
+
+    [Fact]
+    public void PersistSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+
+        AssertThrowsObjectDisposed(instance => instance.PersistSet(key));
+    }
+
+    [Fact]
+    public void PersistSet_ClearsExpirationTime()
+    {
+        var expiredAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
+        var sets = new[]
         {
-            string key = "key";
-
-            AssertThrowsObjectDisposed(instance => instance.PersistSet(key));
-        }
-
-        [Fact]
-        public void PersistSet_ClearsExpirationTime()
-        {
-            var expiredAt = DateTime.UtcNow + new TimeSpan(1, 0, 0);
-            var sets = new[]
-            {
                 new HangfireSet
                 {
                     Key = "set-1",
@@ -1044,44 +1044,44 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             };
 
-            UseContextSavingChanges(context => context.AddRange(sets));
+        UseContextSavingChanges(context => context.AddRange(sets));
 
-            UseTransaction(true, instance => instance.PersistSet("set-1"));
+        UseTransaction(true, instance => instance.PersistSet("set-1"));
 
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
-                Assert.Null(records["set-1"]);
-                Assert.NotNull(records["set-2"]);
-            });
-        }
-
-        [Fact]
-        public void RemoveFromList_Throws_WhenKeyParameterIsNull()
+        UseContext(context =>
         {
-            string key = null;
-            string value = "value";
-            using var instance = CreateTransaction();
+            var records = context.Set<HangfireSet>().ToDictionary(x => x.Key, x => x.ExpireAt);
+            Assert.Null(records["set-1"]);
+            Assert.NotNull(records["set-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveFromList(key, value));
-        }
+    [Fact]
+    public void RemoveFromList_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        string value = "value";
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void RemoveFromList_Throws_WhenTransactionDisposed()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.RemoveFromList(key, value));
+    }
+
+    [Fact]
+    public void RemoveFromList_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        string value = "value";
+
+        AssertThrowsObjectDisposed(instance => instance.RemoveFromList(key, value));
+    }
+
+    [Fact]
+    public void RemoveFromList_RemovesAllRecords_WithGivenKeyAndValue()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
         {
-            string key = "key";
-            string value = "value";
-
-            AssertThrowsObjectDisposed(instance => instance.RemoveFromList(key, value));
-        }
-
-        [Fact]
-        public void RemoveFromList_RemovesAllRecords_WithGivenKeyAndValue()
-        {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
                 new HangfireList
                 {
                     Key = key,
@@ -1096,17 +1096,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             }));
 
-            UseTransaction(true, instance => instance.RemoveFromList(key, "my-value"));
+        UseTransaction(true, instance => instance.RemoveFromList(key, "my-value"));
 
-            UseContext(context => Assert.Empty(context.Set<HangfireList>()));
-        }
+        UseContext(context => Assert.Empty(context.Set<HangfireList>()));
+    }
 
-        [Fact]
-        public void RemoveFromList_DoesNotRemoveRecords_WithSameKey_ButDifferentValue()
+    [Fact]
+    public void RemoveFromList_DoesNotRemoveRecords_WithSameKey_ButDifferentValue()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
                 new HangfireList
                 {
                     Key = key,
@@ -1115,17 +1115,17 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             }));
 
-            UseTransaction(true, instance => instance.RemoveFromList(key, "different-value"));
+        UseTransaction(true, instance => instance.RemoveFromList(key, "different-value"));
 
-            UseContext(context => Assert.Single(context.Set<HangfireList>()));
-        }
+        UseContext(context => Assert.Single(context.Set<HangfireList>()));
+    }
 
-        [Fact]
-        public void RemoveFromList_DoesNotRemoveRecords_WithSameValue_ButDifferentKey()
+    [Fact]
+    public void RemoveFromList_DoesNotRemoveRecords_WithSameValue_ButDifferentKey()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
                 new HangfireList
                 {
                     Key = key,
@@ -1134,111 +1134,111 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             }));
 
-            UseTransaction(true, instance => instance.RemoveFromList("different-key", "my-value"));
+        UseTransaction(true, instance => instance.RemoveFromList("different-key", "my-value"));
 
-            UseContext(context => Assert.Single(context.Set<HangfireList>()));
-        }
+        UseContext(context => Assert.Single(context.Set<HangfireList>()));
+    }
 
-        [Fact]
-        public void RemoveFromSet_Throws_WhenKeyParameterIsNull()
+    [Fact]
+    public void RemoveFromSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        string value = "value";
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.RemoveFromSet(key, value));
+    }
+
+    [Fact]
+    public void RemoveFromSet_Throws_WhenValueParameterIsNull()
+    {
+        string key = "key";
+        string value = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(value),
+            () => instance.RemoveFromSet(key, value));
+    }
+
+    [Fact]
+    public void RemoveFromSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        string value = "value";
+
+        AssertThrowsObjectDisposed(instance => instance.RemoveFromSet(key, value));
+    }
+
+    [Fact]
+    public void RemoveFromSet_RemovesARecord_WithGivenKeyAndValue()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            string key = null;
-            string value = "value";
-            using var instance = CreateTransaction();
+            Key = key,
+            Value = "my-value",
+        }));
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveFromSet(key, value));
-        }
+        UseTransaction(true, instance => instance.RemoveFromSet(key, "my-value"));
 
-        [Fact]
-        public void RemoveFromSet_Throws_WhenValueParameterIsNull()
+        UseContext(context => Assert.Empty(context.Set<HangfireSet>()));
+    }
+
+    [Fact]
+    public void RemoveFromSet_DoesNotRemoveRecord_WithSameKey_AndDifferentValue()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            string key = "key";
-            string value = null;
-            using var instance = CreateTransaction();
+            Key = key,
+            Value = "my-value",
+        }));
 
-            Assert.Throws<ArgumentNullException>(nameof(value),
-                () => instance.RemoveFromSet(key, value));
-        }
+        UseTransaction(true, instance => instance.RemoveFromSet(key, "another-value"));
 
-        [Fact]
-        public void RemoveFromSet_Throws_WhenTransactionDisposed()
+        UseContext(context => Assert.Single(context.Set<HangfireSet>()));
+    }
+
+    [Fact]
+    public void RemoveFromSet_DoesNotRemoveRecord_WithSameValue_AndDifferentKey()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.Add(new HangfireSet
         {
-            string key = "key";
-            string value = "value";
+            Key = key,
+            Value = "my-value",
+        }));
 
-            AssertThrowsObjectDisposed(instance => instance.RemoveFromSet(key, value));
-        }
+        UseTransaction(true, instance => instance.RemoveFromSet("another-key", "my-value"));
 
-        [Fact]
-        public void RemoveFromSet_RemovesARecord_WithGivenKeyAndValue()
+        UseContext(context => Assert.Single(context.Set<HangfireSet>()));
+    }
+
+    [Fact]
+    public void RemoveHash_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.RemoveHash(key));
+    }
+
+    [Fact]
+    public void RemoveHash_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+
+        AssertThrowsObjectDisposed(instance => instance.RemoveHash(key));
+    }
+
+    [Fact]
+    public void RemoveHash_RemovesAllHashRecords()
+    {
+        string key = "key";
+        var hashes = new[]
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = "my-value",
-            }));
-
-            UseTransaction(true, instance => instance.RemoveFromSet(key, "my-value"));
-
-            UseContext(context => Assert.Empty(context.Set<HangfireSet>()));
-        }
-
-        [Fact]
-        public void RemoveFromSet_DoesNotRemoveRecord_WithSameKey_AndDifferentValue()
-        {
-            string key = "key";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = "my-value",
-            }));
-
-            UseTransaction(true, instance => instance.RemoveFromSet(key, "another-value"));
-
-            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
-        }
-
-        [Fact]
-        public void RemoveFromSet_DoesNotRemoveRecord_WithSameValue_AndDifferentKey()
-        {
-            string key = "key";
-            UseContextSavingChanges(context => context.Add(new HangfireSet
-            {
-                Key = key,
-                Value = "my-value",
-            }));
-
-            UseTransaction(true, instance => instance.RemoveFromSet("another-key", "my-value"));
-
-            UseContext(context => Assert.Single(context.Set<HangfireSet>()));
-        }
-
-        [Fact]
-        public void RemoveHash_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveHash(key));
-        }
-
-        [Fact]
-        public void RemoveHash_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-
-            AssertThrowsObjectDisposed(instance => instance.RemoveHash(key));
-        }
-
-        [Fact]
-        public void RemoveHash_RemovesAllHashRecords()
-        {
-            string key = "key";
-            var hashes = new[]
-            {
                 new HangfireHash
                 {
                     Key = key,
@@ -1252,36 +1252,36 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "value-2",
                 },
             };
-            UseContextSavingChanges(context => context.AddRange(hashes));
+        UseContextSavingChanges(context => context.AddRange(hashes));
 
-            UseTransaction(true, instance => instance.RemoveHash(key));
+        UseTransaction(true, instance => instance.RemoveHash(key));
 
-            UseContext(context => Assert.Empty(context.Set<HangfireHash>()));
-        }
+        UseContext(context => Assert.Empty(context.Set<HangfireHash>()));
+    }
 
-        [Fact]
-        public void RemoveSet_Throws_WhenKeyParameterIsNull()
+    [Fact]
+    public void RemoveSet_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.RemoveSet(key));
+    }
+
+    [Fact]
+    public void RemoveSet_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+
+        AssertThrowsObjectDisposed(instance => instance.RemoveSet(key));
+    }
+
+    [Fact]
+    public void RemoveSet_RemovesASet()
+    {
+        var sets = new[]
         {
-            string key = null;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.RemoveSet(key));
-        }
-
-        [Fact]
-        public void RemoveSet_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-
-            AssertThrowsObjectDisposed(instance => instance.RemoveSet(key));
-        }
-
-        [Fact]
-        public void RemoveSet_RemovesASet()
-        {
-            var sets = new[]
-            {
                 new HangfireSet
                 {
                     Key = "set-1",
@@ -1293,154 +1293,154 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "1",
                 },
             };
-            UseContextSavingChanges(context => context.AddRange(sets));
+        UseContextSavingChanges(context => context.AddRange(sets));
 
-            UseTransaction(true, instance => instance.RemoveSet("set-1"));
+        UseTransaction(true, instance => instance.RemoveSet("set-1"));
 
-            UseContext(context =>
+        UseContext(context =>
+        {
+            var record = context.Set<HangfireSet>().Single();
+            Assert.Equal("set-2", record.Key);
+        });
+    }
+
+    [Fact]
+    public void SetJobState_Throws_WhenJobIdParameterIsNull()
+    {
+        string jobId = null;
+        var state = new Mock<IState>().Object;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(jobId),
+            () => instance.SetJobState(jobId, state));
+    }
+
+    [Fact]
+    public void SetJobState_Throws_WhenJobIdParameterIsEmpty()
+    {
+        string jobId = string.Empty;
+        var state = new Mock<IState>().Object;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentException>(nameof(jobId),
+            () => instance.SetJobState(jobId, state));
+    }
+
+    [Fact]
+    public void SetJobState_Throws_WhenStateParameterIsNull()
+    {
+        string jobId = "1";
+        IState state = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(state),
+            () => instance.SetJobState(jobId, state));
+    }
+
+    [Fact]
+    public void SetJobState_Throws_WhenTransactionDisposed()
+    {
+        string jobId = "1";
+        var state = new Mock<IState>().Object;
+
+        AssertThrowsObjectDisposed(instance => instance.SetJobState(jobId, state));
+    }
+
+    [Fact]
+    public void SetJobState_AppendsAStateAndSetItToTheJob()
+    {
+        var createdAtFrom = DateTime.UtcNow;
+        var job = InsertJob();
+        var anotherJob = InsertJob();
+        var state = new Mock<IState>();
+        state.Setup(x => x.Name).Returns("State");
+        state.Setup(x => x.Reason).Returns("Reason");
+        state.Setup(x => x.SerializeData()).
+            Returns(new Dictionary<string, string>
             {
-                var record = context.Set<HangfireSet>().Single();
-                Assert.Equal("set-2", record.Key);
+                ["Name"] = "Value",
             });
-        }
+        var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
-        [Fact]
-        public void SetJobState_Throws_WhenJobIdParameterIsNull()
+        UseTransaction(true, instance => instance.SetJobState(jobId, state.Object));
+
+        var createdAtTo = DateTime.UtcNow;
+        UseContext(context =>
         {
-            string jobId = null;
-            var state = new Mock<IState>().Object;
-            using var instance = CreateTransaction();
+            var actualJob = Assert.Single(
+                context.Set<HangfireJob>().Where(x => x.Id == job.Id));
+            Assert.Equal("State", actualJob.StateName);
+            var actualState = Assert.Single(context.Set<HangfireState>());
+            Assert.Equal("State", actualState.Name);
+            Assert.Equal("Reason", actualState.Reason);
+            Assert.True(createdAtFrom <= actualState.CreatedAt);
+            Assert.True(actualState.CreatedAt <= createdAtTo);
+            var data = SerializationHelper.Deserialize<Dictionary<string, string>>(actualState.Data);
+            Assert.Single(data);
+            Assert.Equal("Value", data["Name"]);
+            Assert.Equal(actualState.Id, actualJob.StateId);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(jobId),
-                () => instance.SetJobState(jobId, state));
-        }
+    [Fact]
+    public void SetRangeInHash_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        var keyValuePairs = new Dictionary<string, string>();
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void SetJobState_Throws_WhenJobIdParameterIsEmpty()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.SetRangeInHash(key, keyValuePairs));
+    }
+
+    [Fact]
+    public void SetRangeInHash_Throws_WhenKeyValuePairsParameterIsNull()
+    {
+        string key = "key";
+        Dictionary<string, string> keyValuePairs = null;
+        using var instance = CreateTransaction();
+
+        Assert.Throws<ArgumentNullException>(nameof(keyValuePairs),
+            () => instance.SetRangeInHash(key, keyValuePairs));
+    }
+
+    [Fact]
+    public void SetRangeInHash_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        var keyValuePairs = new Dictionary<string, string>();
+
+        AssertThrowsObjectDisposed(instance => instance.SetRangeInHash(key, keyValuePairs));
+    }
+
+    [Fact]
+    public void SetRangeInHash_MergesAllRecords()
+    {
+        string key = "key";
+        var keyValuePairs = new Dictionary<string, string>
         {
-            string jobId = string.Empty;
-            var state = new Mock<IState>().Object;
-            using var instance = CreateTransaction();
+            ["field-1"] = "value-1",
+            ["field-2"] = "value-2",
+        };
 
-            Assert.Throws<ArgumentException>(nameof(jobId),
-                () => instance.SetJobState(jobId, state));
-        }
+        UseTransaction(true, instance => instance.SetRangeInHash(key, keyValuePairs));
 
-        [Fact]
-        public void SetJobState_Throws_WhenStateParameterIsNull()
+        UseContext(context =>
         {
-            string jobId = "1";
-            IState state = null;
-            using var instance = CreateTransaction();
+            var result = context.Set<HangfireHash>().
+                Where(x => x.Key == key).
+                ToDictionary(x => x.Field, x => x.Value);
+            Assert.Equal("value-1", result["field-1"]);
+            Assert.Equal("value-2", result["field-2"]);
+        });
+    }
 
-            Assert.Throws<ArgumentNullException>(nameof(state),
-                () => instance.SetJobState(jobId, state));
-        }
-
-        [Fact]
-        public void SetJobState_Throws_WhenTransactionDisposed()
+    [Fact]
+    public void SetRangeInHash_MergesAllRecords_WhenStorageHasExistingValues()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
         {
-            string jobId = "1";
-            var state = new Mock<IState>().Object;
-
-            AssertThrowsObjectDisposed(instance => instance.SetJobState(jobId, state));
-        }
-
-        [Fact]
-        public void SetJobState_AppendsAStateAndSetItToTheJob()
-        {
-            var createdAtFrom = DateTime.UtcNow;
-            var job = InsertJob();
-            var anotherJob = InsertJob();
-            var state = new Mock<IState>();
-            state.Setup(x => x.Name).Returns("State");
-            state.Setup(x => x.Reason).Returns("Reason");
-            state.Setup(x => x.SerializeData()).
-                Returns(new Dictionary<string, string>
-                {
-                    ["Name"] = "Value",
-                });
-            var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-
-            UseTransaction(true, instance => instance.SetJobState(jobId, state.Object));
-
-            var createdAtTo = DateTime.UtcNow;
-            UseContext(context =>
-            {
-                var actualJob = Assert.Single(
-                    context.Set<HangfireJob>().Where(x => x.Id == job.Id));
-                Assert.Equal("State", actualJob.StateName);
-                var actualState = Assert.Single(context.Set<HangfireState>());
-                Assert.Equal("State", actualState.Name);
-                Assert.Equal("Reason", actualState.Reason);
-                Assert.True(createdAtFrom <= actualState.CreatedAt);
-                Assert.True(actualState.CreatedAt <= createdAtTo);
-                var data = SerializationHelper.Deserialize<Dictionary<string, string>>(actualState.Data);
-                Assert.Single(data);
-                Assert.Equal("Value", data["Name"]);
-                Assert.Equal(actualState.Id, actualJob.StateId);
-            });
-        }
-
-        [Fact]
-        public void SetRangeInHash_Throws_WhenKeyParameterIsNull()
-        {
-            string key = null;
-            var keyValuePairs = new Dictionary<string, string>();
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.SetRangeInHash(key, keyValuePairs));
-        }
-
-        [Fact]
-        public void SetRangeInHash_Throws_WhenKeyValuePairsParameterIsNull()
-        {
-            string key = "key";
-            Dictionary<string, string> keyValuePairs = null;
-            using var instance = CreateTransaction();
-
-            Assert.Throws<ArgumentNullException>(nameof(keyValuePairs),
-                () => instance.SetRangeInHash(key, keyValuePairs));
-        }
-
-        [Fact]
-        public void SetRangeInHash_Throws_WhenTransactionDisposed()
-        {
-            string key = "key";
-            var keyValuePairs = new Dictionary<string, string>();
-
-            AssertThrowsObjectDisposed(instance => instance.SetRangeInHash(key, keyValuePairs));
-        }
-
-        [Fact]
-        public void SetRangeInHash_MergesAllRecords()
-        {
-            string key = "key";
-            var keyValuePairs = new Dictionary<string, string>
-            {
-                ["field-1"] = "value-1",
-                ["field-2"] = "value-2",
-            };
-
-            UseTransaction(true, instance => instance.SetRangeInHash(key, keyValuePairs));
-
-            UseContext(context =>
-            {
-                var result = context.Set<HangfireHash>().
-                    Where(x => x.Key == key).
-                    ToDictionary(x => x.Field, x => x.Value);
-                Assert.Equal("value-1", result["field-1"]);
-                Assert.Equal("value-2", result["field-2"]);
-            });
-        }
-
-        [Fact]
-        public void SetRangeInHash_MergesAllRecords_WhenStorageHasExistingValues()
-        {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
                 new HangfireHash
                 {
                     Key = key,
@@ -1454,54 +1454,54 @@ namespace Hangfire.EntityFrameworkCore.Tests
                     Value = "old-value2",
                 },
             }));
-            var keyValuePairs = new Dictionary<string, string>
-            {
-                ["field-1"] = "value-1",
-                ["field-2"] = "value-2",
-            };
-
-            UseTransaction(true, instance => instance.SetRangeInHash(key, keyValuePairs));
-
-            UseContext(context =>
-            {
-                var result = context.Set<HangfireHash>().
-                    Where(x => x.Key == key).
-                    ToDictionary(x => x.Field, x => x.Value);
-                Assert.Equal(2, result.Count);
-                Assert.Equal("value-1", result["field-1"]);
-                Assert.Equal("value-2", result["field-2"]);
-            });
-        }
-
-        [Fact]
-        public void TrimList_Throws_WhenKeyParameterIsNull()
+        var keyValuePairs = new Dictionary<string, string>
         {
-            string key = null;
-            const int keepStartingFrom = 0;
-            const int keepEndingAt = 1;
-            using var instance = CreateTransaction();
+            ["field-1"] = "value-1",
+            ["field-2"] = "value-2",
+        };
 
-            Assert.Throws<ArgumentNullException>(nameof(key),
-                () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
-        }
+        UseTransaction(true, instance => instance.SetRangeInHash(key, keyValuePairs));
 
-        [Fact]
-        public void TrimList_Throws_WhenTransactionDisposed()
+        UseContext(context =>
         {
-            string key = "key";
-            const int keepStartingFrom = 0;
-            const int keepEndingAt = 1;
+            var result = context.Set<HangfireHash>().
+                Where(x => x.Key == key).
+                ToDictionary(x => x.Field, x => x.Value);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("value-1", result["field-1"]);
+            Assert.Equal("value-2", result["field-2"]);
+        });
+    }
 
-            AssertThrowsObjectDisposed(
-                instance => instance.TrimList(key, keepStartingFrom, keepEndingAt));
-        }
+    [Fact]
+    public void TrimList_Throws_WhenKeyParameterIsNull()
+    {
+        string key = null;
+        const int keepStartingFrom = 0;
+        const int keepEndingAt = 1;
+        using var instance = CreateTransaction();
 
-        [Fact]
-        public void TrimList_TrimsAList_ToASpecifiedRange()
+        Assert.Throws<ArgumentNullException>(nameof(key),
+            () => instance.TrimList(key, keepStartingFrom, keepEndingAt));
+    }
+
+    [Fact]
+    public void TrimList_Throws_WhenTransactionDisposed()
+    {
+        string key = "key";
+        const int keepStartingFrom = 0;
+        const int keepEndingAt = 1;
+
+        AssertThrowsObjectDisposed(
+            instance => instance.TrimList(key, keepStartingFrom, keepEndingAt));
+    }
+
+    [Fact]
+    public void TrimList_TrimsAList_ToASpecifiedRange()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
                 new HangfireList
                 {
                     Key = key,
@@ -1528,23 +1528,23 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             }));
 
-            UseTransaction(true, instance => instance.TrimList(key, 1, 2));
+        UseTransaction(true, instance => instance.TrimList(key, 1, 2));
 
-            UseContext(context =>
-            {
-                var records = context.Set<HangfireList>().ToArray();
-                Assert.Equal(2, records.Length);
-                Assert.Equal("1", records[0].Value);
-                Assert.Equal("2", records[1].Value);
-            });
-        }
-
-        [Fact]
-        public void TrimList_RemovesRecordsToEnd_IfKeepAndingAt_GreaterThanMaxElementIndex()
+        UseContext(context =>
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.AddRange(new[]
-            {
+            var records = context.Set<HangfireList>().ToArray();
+            Assert.Equal(2, records.Length);
+            Assert.Equal("1", records[0].Value);
+            Assert.Equal("2", records[1].Value);
+        });
+    }
+
+    [Fact]
+    public void TrimList_RemovesRecordsToEnd_IfKeepAndingAt_GreaterThanMaxElementIndex()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.AddRange(new[]
+        {
                 new HangfireList
                 {
                     Key = key,
@@ -1565,115 +1565,114 @@ namespace Hangfire.EntityFrameworkCore.Tests
                 },
             }));
 
-            UseTransaction(true, instance => instance.TrimList(key, 1, 100));
+        UseTransaction(true, instance => instance.TrimList(key, 1, 100));
 
-            UseContext(context =>
+        UseContext(context =>
+        {
+            var recordCount = context.Set<HangfireList>().Count();
+            Assert.Equal(2, recordCount);
+        });
+    }
+
+    [Fact]
+    public void TrimList_RemovesAllRecords_WhenStartingFromValue_GreaterThanMaxElementIndex()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.
+            Add(new HangfireList
             {
-                var recordCount = context.Set<HangfireList>().Count();
-                Assert.Equal(2, recordCount);
-            });
-        }
+                Key = key,
+                Position = 0,
+                Value = "0",
+            }));
 
-        [Fact]
-        public void TrimList_RemovesAllRecords_WhenStartingFromValue_GreaterThanMaxElementIndex()
+        UseTransaction(true, instance => instance.TrimList(key, 1, 100));
+
+        UseContext(context =>
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.
-                Add(new HangfireList
-                {
-                    Key = key,
-                    Position = 0,
-                    Value = "0",
-                }));
+            var recordCount = context.Set<HangfireList>().Count();
+            Assert.Equal(0, recordCount);
+        });
+    }
 
-            UseTransaction(true, instance => instance.TrimList(key, 1, 100));
-
-            UseContext(context =>
+    [Fact]
+    public void TrimList_RemovesAllRecords_IfStartFromGreaterThanEndingAt()
+    {
+        string key = "key";
+        UseContextSavingChanges(context => context.
+            Add(new HangfireList
             {
-                var recordCount = context.Set<HangfireList>().Count();
-                Assert.Equal(0, recordCount);
-            });
-        }
+                Key = key,
+                Position = 0,
+                Value = "0",
+            }));
 
-        [Fact]
-        public void TrimList_RemovesAllRecords_IfStartFromGreaterThanEndingAt()
+        UseTransaction(true, instance => instance.TrimList(key, 1, 0));
+
+        UseContext(context =>
         {
-            string key = "key";
-            UseContextSavingChanges(context => context.
-                Add(new HangfireList
-                {
-                    Key = key,
-                    Position = 0,
-                    Value = "0",
-                }));
+            var recordCount = context.Set<HangfireList>().Count();
+            Assert.Equal(0, recordCount);
+        });
+    }
 
-            UseTransaction(true, instance => instance.TrimList(key, 1, 0));
-
-            UseContext(context =>
+    [Fact]
+    public void TrimList_RemovesRecords_OnlyOfAGivenKey()
+    {
+        string key = "key";
+        string anotherKey = "another-key";
+        UseContextSavingChanges(context => context.
+            Add(new HangfireList
             {
-                var recordCount = context.Set<HangfireList>().Count();
-                Assert.Equal(0, recordCount);
-            });
-        }
+                Key = key,
+                Position = 0,
+                Value = "0",
+            }));
 
-        [Fact]
-        public void TrimList_RemovesRecords_OnlyOfAGivenKey()
+        UseTransaction(true, instance => instance.TrimList(anotherKey, 1, 0));
+
+        UseContext(context =>
         {
-            string key = "key";
-            string anotherKey = "another-key";
-            UseContextSavingChanges(context => context.
-                Add(new HangfireList
-                {
-                    Key = key,
-                    Position = 0,
-                    Value = "0",
-                }));
+            var recordCount = context.Set<HangfireList>().Count();
+            Assert.Equal(1, recordCount);
+        });
+    }
 
-            UseTransaction(true, instance => instance.TrimList(anotherKey, 1, 0));
+    private void AssertThrowsObjectDisposed(
+        Action<EFCoreStorageTransaction> action)
+    {
+        var options = new DbContextOptions<HangfireContext>();
+        var instance = CreateTransaction();
+        instance.Dispose();
+        var exception = Assert.Throws<ObjectDisposedException>(() => action(instance));
+        Assert.Equal(instance.GetType().FullName, exception.ObjectName);
+    }
 
-            UseContext(context =>
-            {
-                var recordCount = context.Set<HangfireList>().Count();
-                Assert.Equal(1, recordCount);
-            });
-        }
+    private EFCoreStorageTransaction CreateTransaction()
+    {
+        return new EFCoreStorageTransaction(Storage);
+    }
 
-        private void AssertThrowsObjectDisposed(
-            Action<EFCoreStorageTransaction> action)
+    private HangfireJob InsertJob(DateTime? expireAt = null)
+    {
+        var job = new HangfireJob
         {
-            var options = new DbContextOptions<HangfireContext>();
-            var instance = CreateTransaction();
-            instance.Dispose();
-            var exception = Assert.Throws<ObjectDisposedException>(() => action(instance));
-            Assert.Equal(instance.GetType().FullName, exception.ObjectName);
-        }
+            InvocationData = InvocationDataStub,
+            CreatedAt = DateTime.UtcNow,
+            ExpireAt = expireAt,
+        };
+        UseContextSavingChanges(context => context.Add(job));
 
-        private EFCoreStorageTransaction CreateTransaction()
-        {
-            return new EFCoreStorageTransaction(Storage);
-        }
+        return job;
+    }
 
-        private HangfireJob InsertJob(DateTime? expireAt = null)
-        {
-            var job = new HangfireJob
-            {
-                InvocationData = InvocationDataStub,
-                CreatedAt = DateTime.UtcNow,
-                ExpireAt = expireAt,
-            };
-            UseContextSavingChanges(context => context.Add(job));
-
-            return job;
-        }
-
-        private void UseTransaction(
-            bool commit,
-            Action<EFCoreStorageTransaction> action)
-        {
-            using var transaction = CreateTransaction();
-            action(transaction);
-            if (commit)
-                transaction.Commit();
-        }
+    private void UseTransaction(
+        bool commit,
+        Action<EFCoreStorageTransaction> action)
+    {
+        using var transaction = CreateTransaction();
+        action(transaction);
+        if (commit)
+            transaction.Commit();
     }
 }

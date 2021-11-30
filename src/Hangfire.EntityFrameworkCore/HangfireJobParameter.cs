@@ -1,16 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Hangfire.EntityFrameworkCore
+namespace Hangfire.EntityFrameworkCore;
+
+internal class HangfireJobParameter
 {
-    internal class HangfireJobParameter
-    {
-        public long JobId { get; set; }
+    public long JobId { get; set; }
 
-        [MaxLength(256)]
-        public string Name { get; set; }
+    [MaxLength(256)]
+    public string Name { get; set; }
 
-        public string Value { get; set; }
+    public string Value { get; set; }
 
-        public virtual HangfireJob Job { get; set; }
-    }
+    public virtual HangfireJob Job { get; set; }
 }

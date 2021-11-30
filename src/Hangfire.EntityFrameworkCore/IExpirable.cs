@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace Hangfire.EntityFrameworkCore
+namespace Hangfire.EntityFrameworkCore;
+
+internal interface IExpirable
 {
-    internal interface IExpirable
-    {
-        DateTime? ExpireAt { get; set; }
-    }
+    DateTime? ExpireAt { get; set; }
 }

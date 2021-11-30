@@ -2,54 +2,53 @@
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace Hangfire.EntityFrameworkCore.Tests
+namespace Hangfire.EntityFrameworkCore.Tests;
+
+public class HangfireContextFacts : DbContextOptionsTest
 {
-    public class HangfireContextFacts : DbContextOptionsTest
+    [Fact]
+    public static void Ctor_Throws_WhenOptionsParameterIsNull()
     {
-        [Fact]
-        public static void Ctor_Throws_WhenOptionsParameterIsNull()
-        {
-            DbContextOptions options = null;
-            string schema = string.Empty;
+        DbContextOptions options = null;
+        string schema = string.Empty;
 
-            Assert.Throws<ArgumentNullException>(nameof(options),
-                () => new HangfireContext(options, schema));
-        }
+        Assert.Throws<ArgumentNullException>(nameof(options),
+            () => new HangfireContext(options, schema));
+    }
 
-        [Fact]
-        public static void Ctor_Throws_WhenSchemaParameterIsNull()
-        {
-            DbContextOptions options = new DbContextOptionsBuilder<HangfireContext>().Options;
-            string schema = null;
+    [Fact]
+    public static void Ctor_Throws_WhenSchemaParameterIsNull()
+    {
+        DbContextOptions options = new DbContextOptionsBuilder<HangfireContext>().Options;
+        string schema = null;
 
-            Assert.Throws<ArgumentNullException>(nameof(schema),
-                () => new HangfireContext(options, schema));
-        }
+        Assert.Throws<ArgumentNullException>(nameof(schema),
+            () => new HangfireContext(options, schema));
+    }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData("hangfire")]
-        [InlineData("Hangfire")]
-        public void Ctor_CreatesInstance(string schema)
-        {
-            var builder = new DbContextOptionsBuilder<HangfireContext>();
-            OptionsAction(builder);
-            DbContextOptions options = builder.Options;
+    [Theory]
+    [InlineData("")]
+    [InlineData("hangfire")]
+    [InlineData("Hangfire")]
+    public void Ctor_CreatesInstance(string schema)
+    {
+        var builder = new DbContextOptionsBuilder<HangfireContext>();
+        OptionsAction(builder);
+        DbContextOptions options = builder.Options;
 
-            using var context = new HangfireContext(options, schema);
-            Assert.Same(schema, context.Schema);
-            var model = context.Model;
-            Assert.NotNull(model);
+        using var context = new HangfireContext(options, schema);
+        Assert.Same(schema, context.Schema);
+        var model = context.Model;
+        Assert.NotNull(model);
 
-            var actualSchema = context.Model
+        var actualSchema = context.Model
 #if NET48
                 .Relational()
-                .DefaultSchema
+            .DefaultSchema
 #else
                 .GetDefaultSchema()
 #endif
                 ?? string.Empty;
-            Assert.Equal(schema, actualSchema);
-        }
+        Assert.Equal(schema, actualSchema);
     }
 }
