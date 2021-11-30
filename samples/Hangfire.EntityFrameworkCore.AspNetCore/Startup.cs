@@ -34,6 +34,10 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
                         SlidingInvisibilityTimeout = new TimeSpan(0, 5, 0),
                     }).
                 UseDatabaseCreator());
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = 1;
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -41,11 +45,6 @@ namespace Hangfire.EntityFrameworkCore.AspNetCore
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
-            app.UseHangfireServer(
-                new BackgroundJobServerOptions
-                {
-                    WorkerCount = 1,
-                });
             app.UseHangfireDashboard(string.Empty,
                 new DashboardOptions
                 {
