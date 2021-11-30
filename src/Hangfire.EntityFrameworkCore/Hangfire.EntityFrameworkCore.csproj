@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-   <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+   <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>
 0.3.1
@@ -33,8 +33,20 @@ This is the first public release.
 
   <ItemGroup>
     <PackageReference Include="Hangfire.Core" Version="[1.6.18,2.0)" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.0" />
   </ItemGroup>
+  
+  <Choose>
+    <When Condition=" '$(TargetFramework)'=='net6.0' ">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.0" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
   <ItemGroup>
     <EmbeddedResource Update="Properties\CoreStrings.resx">
