@@ -6,7 +6,7 @@
 public interface IPersistentJobQueueProvider
 {
     /// <summary>
-    /// Returns the Hangfire job queue. 
+    /// Returns the Hangfire job queue.
     /// </summary>
     /// <returns>
     ///  An instance of queue.
@@ -14,7 +14,7 @@ public interface IPersistentJobQueueProvider
     IPersistentJobQueue GetJobQueue();
 
     /// <summary>
-    /// Returns the Hangfire job monitoring API. 
+    /// Returns the Hangfire job monitoring API.
     /// </summary>
     /// <returns>
     ///  An instance of queue monitoring API.
