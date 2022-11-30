@@ -319,8 +319,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
             var entry = context.FindEntry<HangfireSet>(x => x.Key == key && x.Value == value);
             if (SetExistsFunc(context, key, value))
             {
-                if (entry == null)
-                    entry = context.Attach(new HangfireSet
+                entry ??= context.Attach(new HangfireSet
                     {
                         Key = key,
                         Value = value,
@@ -474,7 +473,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
             throw new ArgumentNullException(nameof(state));
         ThrowIfDisposed();
 
-        var data = SerializationHelper.Serialize(state.SerializeData());
+        var data = state.SerializeData();
         var createdAt = state.GetCreatedAt() ?? DateTime.UtcNow;
 
         _queue.Enqueue(context =>

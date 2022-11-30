@@ -54,7 +54,7 @@ This is the first public release.
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>

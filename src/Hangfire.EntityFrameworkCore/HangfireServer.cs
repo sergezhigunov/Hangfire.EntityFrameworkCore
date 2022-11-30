@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hangfire.EntityFrameworkCore;
 
@@ -14,5 +15,5 @@ internal class HangfireServer
     public int WorkerCount { get; set; }
 
     [Required]
-    public string Queues { get; set; }
+    public IList<string> Queues { get; set; } = Array.Empty<string>();
 }

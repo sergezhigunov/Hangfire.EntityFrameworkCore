@@ -45,7 +45,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                         {
                             CreatedAt = DateTime.UtcNow,
                             Name = DeletedState.StateName,
-                            Data = SerializationHelper.Serialize(data),
+                            Data = data,
                         },
                 },
             }).
@@ -171,7 +171,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                     CreatedAt = createdAt,
                     Name = EnqueuedState.StateName,
                     Reason = "Reason",
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                 };
                 var job = new HangfireJob
                 {
@@ -283,7 +283,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = DateTime.UtcNow,
                     Name = FailedState.StateName,
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                     Reason = "Reason",
                 };
                 job.States.Add(state);
@@ -400,7 +400,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                     CreatedAt = createdAt,
                     Name = EnqueuedState.StateName,
                     Reason = "Reason",
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                 };
                 var job = new HangfireJob
                 {
@@ -635,7 +635,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             Name = "State",
             Reason = "Reason",
             CreatedAt = stateCreatedAt,
-            Data = SerializationHelper.Serialize(data),
+            Data = data,
         };
         var job = new HangfireJob
         {
@@ -712,7 +712,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = DateTime.UtcNow,
                     Name = ProcessingState.StateName,
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                 };
                 job.States.Add(state);
                 return job;
@@ -822,7 +822,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = DateTime.UtcNow,
                     Name = ScheduledState.StateName,
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                 };
                 job.States.Add(state);
                 return job;
@@ -892,7 +892,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                     StartedAt = startedAt1,
                     Heartbeat = heartbeat,
                     WorkerCount = workerCount,
-                    Queues = SerializationHelper.Serialize(queues),
+                    Queues = queues,
                 },
                 new HangfireServer
                 {
@@ -965,7 +965,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = DateTime.UtcNow,
                     Name = SucceededState.StateName,
-                    Data = SerializationHelper.Serialize(data),
+                    Data = data,
                 };
                 job.States.Add(state);
                 return job;
@@ -1043,7 +1043,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         {
             CreatedAt = DateTime.UtcNow,
             Name = stateName,
-            Data = SerializationHelper.Serialize(data),
+            Data = data,
         };
         var job = new HangfireJob
         {

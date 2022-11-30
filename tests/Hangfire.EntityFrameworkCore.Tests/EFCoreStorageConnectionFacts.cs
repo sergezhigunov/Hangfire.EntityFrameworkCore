@@ -182,7 +182,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
                 Include(p => p.Parameters).
                 Single();
 
-            var invocationData = SerializationHelper.Deserialize<InvocationData>(hangfireJob.InvocationData);
+            var invocationData = hangfireJob.InvocationData;
 
             Assert.Equal(jobId, hangfireJob.Id.ToString(CultureInfo.InvariantCulture));
             Assert.Equal(createdAt, hangfireJob.CreatedAt);
@@ -228,7 +228,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
             Assert.Null(hangfireJob.State);
             Assert.Null(hangfireJob.StateName);
 
-            var invocationData = SerializationHelper.Deserialize<InvocationData>(hangfireJob.InvocationData);
+            var invocationData = hangfireJob.InvocationData;
 
             var job = invocationData.DeserializeJob();
             Assert.Equal(typeof(EFCoreStorageTest), job.Type);
@@ -1230,7 +1230,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         {
             Name = stateName,
             Reason = "Reason",
-            Data = SerializationHelper.Serialize(data),
+            Data = data,
         };
         job.States.Add(state);
         UseContextSavingChanges(context =>
@@ -1268,7 +1268,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
             CreatedAt = DateTime.UtcNow,
             Name = stateName,
             Reason = "Reason",
-            Data = SerializationHelper.Serialize(data),
+            Data = data,
         };
         job.States.Add(state);
         UseContextSavingChanges(context =>
@@ -1707,7 +1707,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         {
             var actualServer = Assert.Single(context.Set<HangfireServer>().
                 Where(x => x.Id == serverId));
-            var actualQueues = SerializationHelper.Deserialize<string[]>(actualServer.Queues);
+            var actualQueues = actualServer.Queues;
             Assert.Equal(serverId, actualServer.Id);
             Assert.Equal(expectedContext.WorkerCount, actualServer.WorkerCount);
             Assert.Equal(expectedContext.Queues, actualQueues);

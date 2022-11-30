@@ -23,7 +23,7 @@ internal class HangfireJob : IExpirable
     public DateTime? ExpireAt { get; set; }
 
     [Required]
-    public string InvocationData { get; set; }
+    public InvocationData InvocationData { get; set; }
 
     public virtual HangfireState State { get; set; }
 

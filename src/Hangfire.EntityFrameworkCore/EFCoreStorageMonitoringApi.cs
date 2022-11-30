@@ -60,7 +60,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 Id = x.Id,
                 Job = Deserialize(x.InvocationData),
                 Reason = s.Reason,
-                Data = SerializationHelper.Deserialize<Dictionary<string, string>>(s.Data),
+                Data = s.Data,
             }).
             Skip(from).
             Take(count));
@@ -74,7 +74,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 CreatedAt = x.CreatedAt,
                 Reason = x.Reason,
                 StateName = x.Name,
-                Data = SerializationHelper.Deserialize<Dictionary<string, string>>(x.Data),
+                Data = x.Data,
             });
 
     private static GetStateCountFunc GetStateCountFunc { get; } = EF.CompileQuery(
@@ -128,8 +128,8 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             {
                 Id = id,
                 StateName = job.StateName,
-                InvocationData = job.InvocationData,
-                StateData = state.Data,
+                InvocationData = SerializationHelper.Serialize(job.InvocationData),
+                StateData = SerializationHelper.Serialize(state.Data),
             });
 
     private static FetchedJobsFunc FetchedJobsFunc { get; } = EF.CompileQuery(
@@ -154,7 +154,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             {
                 Name = server.Id,
                 Heartbeat = server.Heartbeat,
-                Queues = SerializationHelper.Deserialize<string[]>(server.Queues),
+                Queues = server.Queues,
                 StartedAt = server.StartedAt,
                 WorkersCount = server.WorkerCount,
             });
@@ -445,9 +445,8 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return GetNumberOfJobsByStateName(SucceededState.StateName);
     }
 
-    private static Job Deserialize(string json)
+    private static Job Deserialize(InvocationData data)
     {
-        var data = SerializationHelper.Deserialize<InvocationData>(json);
         try
         {
             return data.DeserializeJob();
@@ -476,7 +475,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 x.Id.ToString(CultureInfo.InvariantCulture),
                 new EnqueuedJobDto
                 {
-                    Job = Deserialize(x.InvocationData),
+                    Job = Deserialize(SerializationHelper.Deserialize<InvocationData>(x.InvocationData)),
                     State = x.StateName,
                     InEnqueuedState = EnqueuedState.StateName.Equals(
                         x.StateName,

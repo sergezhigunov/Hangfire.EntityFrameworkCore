@@ -140,7 +140,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
             {
                 Name = s.Name,
                 Reason = s.Reason,
-                Data = SerializationHelper.Deserialize<Dictionary<string, string>>(s.Data),
+                Data = s.Data,
             }).
             SingleOrDefault());
 
@@ -205,7 +205,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
             StartedAt = timestamp,
             Heartbeat = timestamp,
             WorkerCount = context.WorkerCount,
-            Queues = SerializationHelper.Serialize(context.Queues),
+            Queues = context.Queues,
         };
 
         _storage.UseContextSavingChanges(dbContext =>
@@ -234,7 +234,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         {
             CreatedAt = createdAt,
             ExpireAt = createdAt + expireIn,
-            InvocationData = SerializationHelper.Serialize(invocationData),
+            InvocationData = invocationData,
             Parameters = parameters.
                 Select(x => new HangfireJobParameter
                 {
@@ -544,9 +544,8 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return _storage.UseContext(context => func(context, key));
     }
 
-    private static JobData CreateJobData(string json, DateTime createdAt, string state)
+    private static JobData CreateJobData(InvocationData data, DateTime createdAt, string state)
     {
-        var data = SerializationHelper.Deserialize<InvocationData>(json);
         var result = new JobData
         {
             State = state,
@@ -566,9 +565,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
 
     private static void Swap<T>(ref T left, ref T right)
     {
-        var temp = left;
-        left = right;
-        right = temp;
+        (right, left) = (left, right);
     }
 
     private static TimeSpan ToTtl(DateTime? expireAt) =>

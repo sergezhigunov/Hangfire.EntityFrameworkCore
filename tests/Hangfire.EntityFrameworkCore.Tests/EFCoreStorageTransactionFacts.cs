@@ -125,7 +125,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
             Assert.Equal("Reason", jobState.Reason);
             Assert.True(createdAtFrom <= jobState.CreatedAt);
             Assert.True(jobState.CreatedAt <= createdAtTo);
-            var data = SerializationHelper.Deserialize<Dictionary<string, string>>(jobState.Data);
+            var data = jobState.Data;
             Assert.Single(data);
             Assert.Equal("Value", data["Name"]);
         });
@@ -1371,7 +1371,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
             Assert.Equal("Reason", actualState.Reason);
             Assert.True(createdAtFrom <= actualState.CreatedAt);
             Assert.True(actualState.CreatedAt <= createdAtTo);
-            var data = SerializationHelper.Deserialize<Dictionary<string, string>>(actualState.Data);
+            var data = actualState.Data;
             Assert.Single(data);
             Assert.Equal("Value", data["Name"]);
             Assert.Equal(actualState.Id, actualJob.StateId);

@@ -17,7 +17,7 @@ internal class HangfireState
     public DateTime CreatedAt { get; set; }
 
     [Required]
-    public string Data { get; set; }
+    public IDictionary<string, string> Data { get; set; }
 
     public virtual HangfireJob Job { get; set; }
 }

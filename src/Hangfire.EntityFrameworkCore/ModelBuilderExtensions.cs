@@ -34,6 +34,10 @@ public static class ModelBuilderExtensions
 
         modelBuilder.Entity<HangfireJob>(entity =>
         {
+            entity.Property(x => x.InvocationData)
+                .HasConversion(
+                    x => SerializationHelper.Serialize(x),
+                    x => SerializationHelper.Deserialize<InvocationData>(x));
             entity.HasIndex(nameof(HangfireJob.StateName));
             entity.HasIndex(nameof(HangfireJob.ExpireAt));
         });
@@ -65,11 +69,19 @@ public static class ModelBuilderExtensions
 
         modelBuilder.Entity<HangfireServer>(entity =>
         {
+            entity.Property(x => x.Queues)
+                .HasConversion(
+                    x => SerializationHelper.Serialize(x),
+                    x => SerializationHelper.Deserialize<string[]>(x));
             entity.HasIndex(nameof(HangfireServer.Heartbeat));
         });
 
         modelBuilder.Entity<HangfireState>(entity =>
         {
+            entity.Property(x => x.Data)
+               .HasConversion(
+                   x => SerializationHelper.Serialize(x),
+                   x => SerializationHelper.Deserialize<Dictionary<string, string>>(x));
             entity.HasIndex(nameof(HangfireState.JobId));
             entity.HasMany<HangfireJob>().
                 WithOne(x => x.State).

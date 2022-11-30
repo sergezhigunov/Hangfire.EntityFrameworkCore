@@ -28,28 +28,28 @@ public abstract class EFCoreStorageTest : DbContextOptionsTest
                 CreateInMemoryContext,
                 new EFCoreStorageOptions()));
 
-    private protected static string InvocationDataStub { get; } =
-        SerializationHelper.Serialize(new InvocationData(null, null, null, string.Empty));
+    private protected static InvocationData InvocationDataStub { get; } =
+        new InvocationData(null, null, null, string.Empty);
 
-    private protected static string EmptyArrayStub { get; } =
-        SerializationHelper.Serialize(Array.Empty<string>());
+    private protected static string[] EmptyArrayStub { get; } =
+        Array.Empty<string>();
 
-    private protected static string EmptyDictionaryStub { get; } =
-        SerializationHelper.Serialize(new Dictionary<string, string>());
+    private protected static IDictionary<string, string> EmptyDictionaryStub { get; } =
+        new Dictionary<string, string>();
 
     protected EFCoreStorageTest()
     {
     }
 
-    private protected static string CreateInvocationData(Expression<Action> methodCall)
+    private protected static InvocationData CreateInvocationData(Expression<Action> methodCall)
     {
         var job = Job.FromExpression(methodCall);
         return CreateInvocationData(job);
     }
 
-    private protected static string CreateInvocationData(Job job)
+    private protected static InvocationData CreateInvocationData(Job job)
     {
-        return SerializationHelper.Serialize(InvocationData.SerializeJob(job));
+        return InvocationData.SerializeJob(job);
     }
 
     private protected EFCoreStorage CreateStorageStub()
