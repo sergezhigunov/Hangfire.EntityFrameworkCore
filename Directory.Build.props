@@ -6,7 +6,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <LangVersion>11.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <VersionPrefix>0.4.0</VersionPrefix>
+    <VersionPrefix>0.5.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
