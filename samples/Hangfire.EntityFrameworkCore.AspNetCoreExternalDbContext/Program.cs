@@ -1,8 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext;
 

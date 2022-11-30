@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.EntityFrameworkCore.Properties;
+﻿using Hangfire.EntityFrameworkCore.Properties;
 
 namespace Hangfire.EntityFrameworkCore;
 

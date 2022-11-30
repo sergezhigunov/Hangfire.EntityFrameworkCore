@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.Storage;
+﻿using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

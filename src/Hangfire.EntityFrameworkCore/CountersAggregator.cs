@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using Hangfire.EntityFrameworkCore.Properties;
+﻿using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;

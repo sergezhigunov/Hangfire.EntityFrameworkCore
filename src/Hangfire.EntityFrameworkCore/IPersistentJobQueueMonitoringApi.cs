@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Hangfire.Annotations;
+﻿using Hangfire.Annotations;
 
 namespace Hangfire.EntityFrameworkCore;
 

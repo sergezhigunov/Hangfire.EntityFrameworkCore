@@ -1,7 +1,5 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Threading;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Logging;
 using Hangfire.Storage;

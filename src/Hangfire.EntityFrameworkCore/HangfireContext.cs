@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.Annotations;
+﻿using Hangfire.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 

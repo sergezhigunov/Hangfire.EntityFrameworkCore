@@ -1,8 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-
-namespace Hangfire.EntityFrameworkCore.AspNetCore;
+﻿namespace Hangfire.EntityFrameworkCore.AspNetCore;
 
 internal static class Program
 {

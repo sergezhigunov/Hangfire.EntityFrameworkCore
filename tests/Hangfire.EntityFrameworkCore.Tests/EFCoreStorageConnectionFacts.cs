@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
+﻿using System.Globalization;
 using Hangfire.Common;
 using Hangfire.Server;
 using Hangfire.Storage;

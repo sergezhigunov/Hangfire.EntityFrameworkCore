@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.States;
+﻿using Hangfire.States;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;

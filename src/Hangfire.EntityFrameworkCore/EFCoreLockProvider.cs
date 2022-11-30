@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using Hangfire.Annotations;
+﻿using Hangfire.Annotations;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;

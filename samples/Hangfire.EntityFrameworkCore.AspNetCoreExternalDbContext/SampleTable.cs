@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext;
+﻿namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext;
 
 public class SampleTable
 {

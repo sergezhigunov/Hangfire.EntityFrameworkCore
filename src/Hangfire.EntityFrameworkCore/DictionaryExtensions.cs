@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 internal static class DictionaryExtensions
 {

@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.States;
+﻿using Hangfire.States;
 
 namespace Hangfire.EntityFrameworkCore;
 

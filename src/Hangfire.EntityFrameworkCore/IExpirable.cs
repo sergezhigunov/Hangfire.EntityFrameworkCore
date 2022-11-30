@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 internal interface IExpirable
 {
