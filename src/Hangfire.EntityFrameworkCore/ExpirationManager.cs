@@ -1,4 +1,5 @@
-﻿using Hangfire.EntityFrameworkCore.Properties;
+﻿using System.Linq.Expressions;
+using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore;
@@ -22,10 +23,18 @@ internal class ExpirationManager : IServerComponent
 
     public void Execute(CancellationToken cancellationToken)
     {
-        RemoveExpired<HangfireCounter>();
-        RemoveExpired<HangfireHash>();
-        RemoveExpired<HangfireList>();
-        RemoveExpired<HangfireSet>();
+        RemoveExpired(
+            (HangfireCounter x) => x.Id,
+            x => new HangfireCounter { Id = x });
+        RemoveExpired(
+            (HangfireHash x) => new { x.Key, x.Field },
+            x => new HangfireHash { Key = x.Key, Field = x.Field });
+        RemoveExpired(
+            (HangfireList x) => new { x.Key, x.Position },
+            x => new HangfireList { Key = x.Key, Position = x.Position });
+        RemoveExpired(
+            (HangfireSet x) => new { x.Key, x.Value },
+            x => new HangfireSet { Key = x.Key, Value = x.Value });
         RemoveExpiredJobs();
         cancellationToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
     }
@@ -39,12 +48,7 @@ internal class ExpirationManager : IServerComponent
         {
             while (0 != _storage.UseContext(context =>
             {
-                var expiredEntityIds = context
-                    .Set<HangfireJob>()
-                    .Where(x => x.ExpireAt < DateTime.UtcNow)
-                    .Select(x => x.Id)
-                    .Take(BatchSize)
-                    .ToList();
+                var expiredEntityIds = GetExpiredIds(context, (HangfireJob x) => x.Id);
                 if (expiredEntityIds.Count == 0)
                     return 0;
                 var entries = expiredEntityIds
@@ -88,24 +92,27 @@ internal class ExpirationManager : IServerComponent
 
         _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
     }
-    private void RemoveExpired<T>()
-        where T : class, IExpirable
+
+    private void RemoveExpired<TEntity, TKey>(
+        Expression<Func<TEntity, TKey>> keySelector,
+        Func<TKey, TEntity> entityFactory)
+        where TEntity : class, IExpirable
     {
-        var type = typeof(T);
+        var type = typeof(TEntity);
         _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
 
         UseLock(() =>
         {
             while (0 != _storage.UseContext(context =>
             {
-                var expiredEntities = context
-                    .Set<T>()
-                    .AsNoTracking()
-                    .Where(x => x.ExpireAt < DateTime.UtcNow)
-                    .Take(BatchSize)
-                    .ToList();
-                if (expiredEntities.Count == 0)
+                var expiredEntityIds = GetExpiredIds(context, keySelector);
+                if (expiredEntityIds.Count == 0)
                     return 0;
+
+                var expiredEntities = expiredEntityIds
+                    .Select(entityFactory)
+                    .ToList();
+
                 context.RemoveRange(expiredEntities);
                 try
                 {
@@ -141,5 +148,18 @@ internal class ExpirationManager : IServerComponent
                     _storage.JobExpirationCheckInterval.TotalSeconds),
                 exception);
         }
+    }
+
+    private static IReadOnlyCollection<TKey> GetExpiredIds<TEntity, TKey>(
+        DbContext context,
+        Expression<Func<TEntity, TKey>> keySelector)
+        where TEntity : class, IExpirable
+    {
+        return context
+            .Set<TEntity>()
+            .Where(x => x.ExpireAt < DateTime.UtcNow)
+            .Select(keySelector)
+            .Take(BatchSize)
+            .ToList();
     }
 }
