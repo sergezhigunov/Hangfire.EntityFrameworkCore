@@ -12,7 +12,7 @@ public abstract class DbContextOptionsTest : IDisposable
     public static LoggerFactory LoggerFactory { get; } = new LoggerFactory(new[]
     {
             new DebugLoggerProvider(),
-        });
+    });
 
     private SqliteConnection _connection;
     private bool _disposed = false;
@@ -31,6 +31,7 @@ public abstract class DbContextOptionsTest : IDisposable
     {
         builder.UseLoggerFactory(LoggerFactory);
         builder.UseSqlite(Connection);
+        builder.EnableSensitiveDataLogging();
     }
 
     protected DbContextOptionsTest()
