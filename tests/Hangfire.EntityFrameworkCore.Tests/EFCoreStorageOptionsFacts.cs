@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Hangfire.EntityFrameworkCore.Tests;
+﻿namespace Hangfire.EntityFrameworkCore.Tests;
 
 public static class EFCoreStorageOptionsFacts
 {

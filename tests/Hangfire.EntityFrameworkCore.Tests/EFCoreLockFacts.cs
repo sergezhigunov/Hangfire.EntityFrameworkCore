@@ -1,5 +1,4 @@
 ﻿using Moq;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 

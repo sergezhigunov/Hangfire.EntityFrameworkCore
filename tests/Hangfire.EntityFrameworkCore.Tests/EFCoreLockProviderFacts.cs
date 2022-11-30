@@ -1,6 +1,5 @@
 ﻿using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 

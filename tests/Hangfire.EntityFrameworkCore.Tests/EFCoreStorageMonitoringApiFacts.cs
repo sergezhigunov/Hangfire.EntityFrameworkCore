@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using Hangfire.Common;
 using Hangfire.States;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 

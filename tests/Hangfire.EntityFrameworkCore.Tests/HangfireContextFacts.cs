@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 

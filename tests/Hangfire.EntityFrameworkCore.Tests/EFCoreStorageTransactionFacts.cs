@@ -3,7 +3,6 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using Xunit;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 
