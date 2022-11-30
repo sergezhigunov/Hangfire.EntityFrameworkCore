@@ -26,10 +26,68 @@ internal class ExpirationManager : IServerComponent
         RemoveExpired<HangfireHash>();
         RemoveExpired<HangfireList>();
         RemoveExpired<HangfireSet>();
-        RemoveExpired<HangfireJob>();
+        RemoveExpiredJobs();
         cancellationToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
     }
 
+    private void RemoveExpiredJobs()
+    {
+        var type = typeof(HangfireJob);
+        _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
+
+        UseLock(() =>
+        {
+            while (0 != _storage.UseContext(context =>
+            {
+                var expiredEntityIds = context
+                    .Set<HangfireJob>()
+                    .Where(x => x.ExpireAt < DateTime.UtcNow)
+                    .Select(x => x.Id)
+                    .Take(BatchSize)
+                    .ToList();
+                if (expiredEntityIds.Count == 0)
+                    return 0;
+                var entries = expiredEntityIds
+                    .Select(x => context.Attach(new HangfireJob { Id = x }))
+                    .ToList();
+
+                // Trying to set StateId = null for all fetched jobs first
+                foreach (var entry in entries)
+                    entry.Property(x => x.StateId).IsModified = true;
+                using var transaction = context.Database.BeginTransaction();
+
+                try
+                {
+                    context.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Someone else already has removed item, database wins. Just try again.
+                    transaction.Rollback();
+                    return -1;
+                }
+
+                // After setting StateId = null remove all fetched jobs
+                foreach (var entry in entries)
+                    entry.State = EntityState.Deleted;
+                int affected;
+                try
+                {
+                    affected = context.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Someone else already has removed item, database wins. Just try again.
+                    transaction.Rollback();
+                    return -1;
+                }
+                transaction.Commit();
+                return affected;
+            }));
+        });
+
+        _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
+    }
     private void RemoveExpired<T>()
         where T : class, IExpirable
     {
@@ -39,9 +97,10 @@ internal class ExpirationManager : IServerComponent
         UseLock(() =>
         {
             while (0 != _storage.UseContext(context =>
-                 {
+            {
                 var expiredEntities = context
                     .Set<T>()
+                    .AsNoTracking()
                     .Where(x => x.ExpireAt < DateTime.UtcNow)
                     .Take(BatchSize)
                     .ToList();

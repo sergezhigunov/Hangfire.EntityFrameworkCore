@@ -78,6 +78,50 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         });
     }
 
+    [Fact]
+    public void Execute_RemovesOutdatedJobs_WithActualStateSet()
+    {
+        var now = DateTime.UtcNow;
+
+        var job = new HangfireJob
+        {
+            CreatedAt = now,
+            InvocationData = CreateInvocationData(() => SampleMethod("test")),
+            ExpireAt = now.AddMonths(-1),
+            States = new[]
+            {
+                new HangfireState
+                {
+                    CreatedAt = now,
+                    Data = EmptyDictionaryStub,
+                    Name = "Created",
+                    Reason = "Reason",
+                },
+            },
+        };
+        UseContext(context =>
+        {
+            using var transaction = context.Database.BeginTransaction();
+            context.Add(job);
+            context.SaveChanges();
+            var state = job.States.First();
+            job.StateName = state.Name;
+            job.StateId = state.Id;
+            context.SaveChanges();
+            transaction.Commit();
+        });
+        var instance = new ExpirationManager(Storage);
+        var source = new CancellationTokenSource(0);
+
+        instance.Execute(source.Token);
+
+        UseContext(context =>
+        {
+            Assert.False(context.Set<HangfireState>().Any());
+            Assert.False(context.Set<HangfireJob>().Any());
+        });
+    }
+
     private void CreateExpirationEntries(DateTime? expireAt)
     {
         var now = DateTime.UtcNow;
