@@ -1,7 +1,4 @@
-﻿using Hangfire.Annotations;
-using Microsoft.EntityFrameworkCore;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 /// <summary>
 /// Extension methods for setting up Entity Framework Core job storage in an

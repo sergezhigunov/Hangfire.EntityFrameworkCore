@@ -1,10 +1,6 @@
 ﻿using System.Globalization;
-using Hangfire.Annotations;
-using Hangfire.Common;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.States;
-using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore;
 

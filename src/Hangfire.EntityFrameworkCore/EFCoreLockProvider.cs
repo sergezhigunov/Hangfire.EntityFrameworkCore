@@ -1,7 +1,4 @@
-﻿using Hangfire.Annotations;
-using Hangfire.EntityFrameworkCore.Properties;
-using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
+﻿using Hangfire.EntityFrameworkCore.Properties;
 
 namespace Hangfire.EntityFrameworkCore;
 

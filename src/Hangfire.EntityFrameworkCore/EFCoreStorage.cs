@@ -1,7 +1,5 @@
 ﻿using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
-using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore;
 

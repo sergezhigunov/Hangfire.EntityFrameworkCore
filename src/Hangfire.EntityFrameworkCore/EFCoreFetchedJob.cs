@@ -1,9 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
-using Hangfire.Logging;
-using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
 
 namespace Hangfire.EntityFrameworkCore;

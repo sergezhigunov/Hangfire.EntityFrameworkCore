@@ -1,7 +1,5 @@
 ﻿using System.Globalization;
 using System.Linq.Expressions;
-using Hangfire.Annotations;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore;
 

@@ -1,6 +1,4 @@
-﻿using Hangfire.Annotations;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 /// <summary>
 /// Provides Hangfire job queue monitoring functionality.

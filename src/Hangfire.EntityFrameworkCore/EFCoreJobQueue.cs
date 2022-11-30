@@ -1,8 +1,5 @@
 ﻿using System.Globalization;
-using Hangfire.Annotations;
 using Hangfire.EntityFrameworkCore.Properties;
-using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore;
 

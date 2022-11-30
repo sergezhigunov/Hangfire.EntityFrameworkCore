@@ -27,6 +27,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Microsoft.EntityFrameworkCore" />
+    <Using Include="Hangfire.Annotations" />
+    <Using Include="Hangfire.Common" />
+    <Using Include="Hangfire.Logging" />
+    <Using Include="Hangfire.Storage" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="true" PackagePath="" Visible="false"/>
   </ItemGroup>
 

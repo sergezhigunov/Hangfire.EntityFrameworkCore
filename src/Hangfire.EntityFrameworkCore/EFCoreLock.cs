@@ -1,6 +1,4 @@
-﻿using Hangfire.Annotations;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 internal sealed class EFCoreLock : IDisposable
 {
