@@ -39,7 +39,7 @@ public void Configuration(IAppBuilder app)
 
 ### ASP.NET Core
 
-There is an [example](samples/Hangfire.EntityFrameworkCore.AspNetCore/Startup.cs) to use Hangfire.EntityFrameworkCore with ASP.NET Core.
+There is an [example](samples/Hangfire.EntityFrameworkCore.AspNetCore/Program.cs) to use Hangfire.EntityFrameworkCore with ASP.NET Core.
 
 ### Migrations
 
@@ -49,13 +49,17 @@ Currently, automatic migrations are not implemented. The migrations support [pla
 
 As of the `0.3.0` version you have the ability to attach the tables required for this library to your own DbContext. Since the tables are attached to your own DbContext this means that the migrations are also attached to this DbContext and managed by the regular `dotnet ef` migration flow.
 
-There is an example of this configuration found [here](samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Startup.cs), however the important sections are listed below.
+There is an example of this configuration found [here](samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Program.cs), however the important sections are listed below.
 
-In `Startup.cs` in `ConfigureServices`:
+In `Program.cs`:
 
 ```csharp
-services.AddDbContextFactory<SampleDbContext>(builder => builder.UseSqlite(connectionString));
-services.AddHangfire((serviceProvider, configuration) =>
+var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("HangfireConnection")
+    ?? throw new InvalidOperationException("Connection string 'HangfireConnection' not found.");
+
+builder.Services.AddDbContextFactory<SampleDbContext>(builder => builder.UseSqlite(connectionString));
+builder.Services.AddHangfire((serviceProvider, configuration) =>
     configuration.UseEFCoreStorage(
         () => serviceProvider.GetRequiredService<IDbContextFactory<SampleDbContext>>().CreateDbContext(),
         new EFCoreStorageOptions
