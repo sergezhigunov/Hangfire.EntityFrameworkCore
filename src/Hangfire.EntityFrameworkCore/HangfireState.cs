@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hangfire.EntityFrameworkCore;
 
@@ -38,6 +39,7 @@ public class HangfireState
     /// Gets or sets the job state data.
     /// </summary>
     [Required]
+    [SuppressMessage("Usage", "CA2227")]
     public IDictionary<string, string> Data { get; set; }
 
     /// <summary>

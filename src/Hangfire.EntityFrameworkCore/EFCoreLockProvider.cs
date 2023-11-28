@@ -1,8 +1,10 @@
-﻿using Hangfire.EntityFrameworkCore.Properties;
+﻿using System.Diagnostics.CodeAnalysis;
+using Hangfire.EntityFrameworkCore.Properties;
 
 namespace Hangfire.EntityFrameworkCore;
 
 using GetLockFunc = Func<DbContext, string, HangfireLock>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class EFCoreLockProvider : ILockProvider
 {
@@ -14,6 +16,7 @@ internal class EFCoreLockProvider : ILockProvider
             context.Set<HangfireLock>().
             SingleOrDefault(x => x.Id == id));
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreLockProvider(
         [NotNull] EFCoreStorage storage)
     {
@@ -23,6 +26,7 @@ internal class EFCoreLockProvider : ILockProvider
         _storage = storage;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public void Acquire([NotNull] string resource, TimeSpan timeout)
     {
         if (resource is null)
@@ -62,6 +66,7 @@ internal class EFCoreLockProvider : ILockProvider
         throw new DistributedLockTimeoutException(resource);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public void Release([NotNull] string resource)
     {
         if (resource is null)

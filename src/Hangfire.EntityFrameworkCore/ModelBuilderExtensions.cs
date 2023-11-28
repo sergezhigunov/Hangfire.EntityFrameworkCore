@@ -1,4 +1,6 @@
-﻿namespace Hangfire.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Hangfire.EntityFrameworkCore;
 
 /// <summary>
 /// Public extensions for a DbContext model builder
@@ -15,6 +17,7 @@ public static class ModelBuilderExtensions
     /// <paramref name="modelBuilder"/> is <see langword="null"/>.
     /// </exception>
     [CLSCompliant(false)]
+    [SuppressMessage("Maintainability", "CA1510")]
     public static void OnHangfireModelCreating(this ModelBuilder modelBuilder)
     {
         if (modelBuilder is null)

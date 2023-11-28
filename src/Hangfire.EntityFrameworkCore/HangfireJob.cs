@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hangfire.EntityFrameworkCore;
 
@@ -58,15 +59,18 @@ public class HangfireJob : IExpirable
     /// <summary>
     /// Gets or sets the job parameter collection.
     /// </summary>
+    [SuppressMessage("Usage", "CA2227")]
     public virtual ICollection<HangfireJobParameter> Parameters { get; set; }
 
     /// <summary>
     /// Gets or sets the queue job executions.
     /// </summary>
+    [SuppressMessage("Usage", "CA2227")]
     public virtual ICollection<HangfireQueuedJob> QueuedJobs { get; set; }
 
     /// <summary>
     /// Gets or sets the job state history.
     /// </summary>
+    [SuppressMessage("Usage", "CA2227")]
     public virtual ICollection<HangfireState> States { get; set; }
 }

@@ -142,7 +142,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
     }
 
     [Fact]
-    public void EnqueuedJobs_ReturnsEmptyResult_WhenQueueIsmpty()
+    public void EnqueuedJobs_ReturnsEmptyResult_WhenQueueIsEmpty()
     {
         var queue = "queue";
 

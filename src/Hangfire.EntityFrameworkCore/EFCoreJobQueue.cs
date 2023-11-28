@@ -1,9 +1,11 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
 
 namespace Hangfire.EntityFrameworkCore;
 
 using DequeueFunc = Func<DbContext, string[], DateTime, HangfireQueuedJob>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal sealed class EFCoreJobQueue : IPersistentJobQueue
 {
@@ -22,6 +24,7 @@ internal sealed class EFCoreJobQueue : IPersistentJobQueue
             select x).
             FirstOrDefault());
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreJobQueue([NotNull] EFCoreStorage storage)
     {
         if (storage is null)
@@ -30,6 +33,7 @@ internal sealed class EFCoreJobQueue : IPersistentJobQueue
         _storage = storage;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public IFetchedJob Dequeue([NotNull] string[] queues, CancellationToken cancellationToken)
     {
         if (queues is null)
@@ -73,6 +77,7 @@ internal sealed class EFCoreJobQueue : IPersistentJobQueue
         }
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public void Enqueue([NotNull] string queue, [NotNull] string jobId)
     {
         if (queue is null)

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.States;
 
@@ -10,6 +11,7 @@ using GetListsFunc = Func<DbContext, string, IEnumerable<HangfireList>>;
 using GetListPositionsFunc = Func<DbContext, string, IEnumerable<int>>;
 using GetMaxListPositionFunc = Func<DbContext, string, int?>;
 using SetExistsFunc = Func<DbContext, string, string, bool>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal sealed class EFCoreStorageTransaction : JobStorageTransaction
 {
@@ -52,6 +54,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     private readonly Queue<Action> _afterCommitQueue;
     private bool _disposed;
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreStorageTransaction(
         EFCoreStorage storage)
     {
@@ -68,6 +71,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         AddJobState(jobId, state, false);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void AddRangeToSet([NotNull] string key, [NotNull] IList<string> items)
     {
         if (key is null)
@@ -138,6 +142,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         AddToSet(key, value, 0d);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void AddToSet([NotNull] string key, [NotNull] string value, double score)
     {
         if (key is null)
@@ -249,6 +254,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         AddCounter(key, 1L, DateTime.UtcNow + expireIn);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void InsertToList([NotNull] string key, string value)
     {
         if (key is null)
@@ -290,6 +296,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         SetSetExpiration(key, null);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveFromList([NotNull] string key, string value)
     {
         if (key is null)
@@ -306,6 +313,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveFromSet([NotNull] string key, [NotNull] string value)
     {
         if (key is null)
@@ -331,6 +339,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveHash([NotNull] string key)
     {
         if (key is null)
@@ -357,6 +366,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveSet([NotNull] string key)
     {
         if (key is null)
@@ -386,6 +396,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         AddJobState(jobId, state, true);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void SetRangeInHash(
         [NotNull] string key,
         [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
@@ -424,6 +435,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void TrimList([NotNull] string key, int keepStartingFrom, int keepEndingAt)
     {
         if (key is null)
@@ -444,6 +456,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private void AddCounter([NotNull] string key, long value, DateTime? expireAt)
     {
         if (key is null)
@@ -466,6 +479,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private void AddJobState([NotNull] string jobId, [NotNull] IState state, bool setActual)
     {
         var id = ValidateJobId(jobId);
@@ -541,6 +555,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private void SetHashExpiration(string key, DateTime? expireAt)
     {
         if (key is null)
@@ -567,6 +582,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private void SetListExpiration(string key, DateTime? expireAt)
     {
         if (key is null)
@@ -592,6 +608,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private void SetSetExpiration(string key, DateTime? expireAt)
     {
         if (key is null)
@@ -617,12 +634,14 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1513")]
     private void ThrowIfDisposed()
     {
         if (_disposed)
             throw new ObjectDisposedException(GetType().FullName);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private static void ValidateQueue(string queue)
     {
         if (queue is null)
@@ -632,6 +651,7 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
                 nameof(queue));
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private static long ValidateJobId(string jobId)
     {
         if (jobId is null)

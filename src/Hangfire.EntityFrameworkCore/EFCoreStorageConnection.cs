@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
@@ -24,6 +25,7 @@ using GetStateDataFunc = Func<DbContext, long, StateData>;
 using GetTimedOutServersFunc = Func<DbContext, DateTime, IEnumerable<string>>;
 using GetValueFromHashFunc = Func<DbContext, string, string, string>;
 using JobParameterExistsFunc = Func<DbContext, long, string, bool>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class EFCoreStorageConnection : JobStorageConnection
 {
@@ -164,6 +166,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
     private readonly ILockProvider _lockProvider;
     private readonly EFCoreStorage _storage;
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreStorageConnection(EFCoreStorage storage)
     {
         if (storage is null)
@@ -173,6 +176,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         _lockProvider = new EFCoreLockProvider(_storage);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override IDisposable AcquireDistributedLock(
         [NotNull] string resource,
         TimeSpan timeout)
@@ -188,6 +192,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return new EFCoreLock(_lockProvider, resource, timeout);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void AnnounceServer(
         [NotNull] string serverId,
         [NotNull] ServerContext context)
@@ -217,6 +222,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override string CreateExpiredJob(
         [NotNull] Job job,
         [NotNull] IDictionary<string, string> parameters,
@@ -258,6 +264,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
             _storage);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override IFetchedJob FetchNextJob(
         [NotNull] string[] queues,
         CancellationToken cancellationToken)
@@ -273,6 +280,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return queue.Dequeue(queues, cancellationToken);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override Dictionary<string, string> GetAllEntriesFromHash([NotNull] string key)
     {
         if (key is null)
@@ -285,6 +293,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return result.Count != 0 ? result : null;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override List<string> GetAllItemsFromList([NotNull] string key)
     {
         if (key is null)
@@ -295,6 +304,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
             ToList());
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override HashSet<string> GetAllItemsFromSet([NotNull] string key)
     {
         if (key is null)
@@ -324,6 +334,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
     public override TimeSpan GetHashTtl([NotNull] string key) =>
         ToTtl(UseContext(GetHashTtlFunc, key));
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override JobData GetJobData([NotNull] string jobId)
     {
         if (jobId is null)
@@ -335,6 +346,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return _storage.UseContext(context => GetJobDataFunc(context, id));
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override string GetJobParameter([NotNull] string id, [NotNull] string name)
     {
         if (id is null)
@@ -386,6 +398,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
     public override TimeSpan GetSetTtl([NotNull] string key) =>
         ToTtl(UseContext(GetSetTtlFunc, key));
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override StateData GetStateData([NotNull] string jobId)
     {
         if (jobId is null)
@@ -397,6 +410,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return _storage.UseContext(context => GetStateDataFunc(context, id));
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override string GetValueFromHash([NotNull] string key, [NotNull] string name)
     {
         if (key is null)
@@ -407,6 +421,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         return _storage.UseContext(context => GetValueFromHashFunc(context, key, name));
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void Heartbeat([NotNull] string serverId)
     {
         if (serverId is null)
@@ -431,6 +446,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveServer([NotNull] string serverId)
     {
         if (serverId is null)
@@ -483,6 +499,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void SetJobParameter(
         [NotNull] string id,
         [NotNull] string name,
@@ -508,6 +525,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public override void SetRangeInHash(
         [NotNull] string key,
         [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
@@ -536,6 +554,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private T UseContext<T>(Func<DbContext, string, T> func, string key)
     {
         if (key is null)
@@ -576,6 +595,7 @@ internal class EFCoreStorageConnection : JobStorageConnection
     private static bool TryParseJobId(string jobId, out long id) =>
         long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private static long ValidateId(string id)
     {
         if (id is null)

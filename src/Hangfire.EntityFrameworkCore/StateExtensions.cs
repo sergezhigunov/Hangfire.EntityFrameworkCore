@@ -1,9 +1,11 @@
-﻿using Hangfire.States;
+﻿using System.Diagnostics.CodeAnalysis;
+using Hangfire.States;
 
 namespace Hangfire.EntityFrameworkCore;
 
 internal static class StateExtensions
 {
+    [SuppressMessage("Maintainability", "CA1510")]
     internal static DateTime? GetCreatedAt(this IState state)
     {
         if (state is null)

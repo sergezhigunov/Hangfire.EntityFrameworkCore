@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Hangfire.States;
 using Hangfire.Storage.Monitoring;
 
@@ -15,6 +16,7 @@ using GetCountFunc = Func<DbContext, long>;
 using EnqueuedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<EFCoreStorageMonitoringApi.EnqueuedJobState>>;
 using FetchedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
 using ServersFunc = Func<DbContext, IEnumerable<ServerDto>>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class EFCoreStorageMonitoringApi : IMonitoringApi
 {
@@ -161,6 +163,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
 
     private readonly EFCoreStorage _storage;
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreStorageMonitoringApi(
         EFCoreStorage storage)
     {
@@ -186,6 +189,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return GetNumberOfJobsByStateName(DeletedState.StateName);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public long EnqueuedCount([NotNull] string queue)
     {
         if (queue is null)
@@ -197,6 +201,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return statistics.Enqueued;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
     {
         if (queue is null)
@@ -233,6 +238,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             });
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public long FetchedCount([NotNull] string queue)
     {
         if (queue is null)
@@ -244,6 +250,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return statistics.Fetched;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
     {
         if (queue is null)
@@ -312,6 +319,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return GetHourlyTimelineStats(SucceededStatsName);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public JobDetailsDto JobDetails([NotNull] string jobId)
     {
         if (jobId is null)

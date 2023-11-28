@@ -1,38 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net48;netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net48;netcoreapp3.1;net6.0;net7.0;net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <Choose>
+    <When Condition=" '$(TargetFramework)'=='net8.0' ">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+      </ItemGroup>
+    </When>
     <When Condition=" '$(TargetFramework)'=='net7.0' ">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.14" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
       </ItemGroup>
     </When>
     <When Condition=" '$(TargetFramework)'=='net6.0' ">
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.11" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.25" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-      </ItemGroup>
-    </When>
-    <When Condition=" '$(TargetFramework)'=='netcoreapp3.1' ">
-      <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.31" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.31" />
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.6" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.2.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.32" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.32" />
       </ItemGroup>
     </Otherwise>
   </Choose>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>

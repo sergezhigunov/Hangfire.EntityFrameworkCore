@@ -1,4 +1,7 @@
-﻿namespace Hangfire.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
+
+namespace Hangfire.EntityFrameworkCore;
 
 /// <summary>
 /// Extension methods for setting up Entity Framework Core job storage in an
@@ -58,6 +61,7 @@ public static class EFCoreStorageExtensions
     /// <paramref name="options"/> is <see langword="null"/>.
     /// </exception>
     [CLSCompliant(false)]
+    [SuppressMessage("Maintainability", "CA1510")]
     public static IGlobalConfiguration<EFCoreStorage> UseEFCoreStorage(
         [NotNull] this IGlobalConfiguration configuration,
         [NotNull] Action<DbContextOptionsBuilder> optionsAction,
@@ -95,6 +99,7 @@ public static class EFCoreStorageExtensions
     /// <paramref name="options"/> is <see langword="null"/>.
     /// </exception>
     [CLSCompliant(false)]
+    [SuppressMessage("Maintainability", "CA1510")]
     public static IGlobalConfiguration<EFCoreStorage> UseEFCoreStorage(
         [NotNull] this IGlobalConfiguration configuration,
         [NotNull] Func<DbContext> contextBuilder,
@@ -122,6 +127,7 @@ public static class EFCoreStorageExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="configuration"/> is <see langword="null"/>.
     /// </exception>
+    [SuppressMessage("Maintainability", "CA1510")]
     public static IGlobalConfiguration<EFCoreStorage> UseDatabaseCreator(
         [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration)
     {
@@ -160,6 +166,7 @@ public static class EFCoreStorageExtensions
     /// <exception cref="ArgumentException">
     /// <paramref name="queues"/> is empty.
     /// </exception>
+    [SuppressMessage("Maintainability", "CA1510")]
     public static IGlobalConfiguration<EFCoreStorage> UseQueueProvider(
         [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration,
         [NotNull] IPersistentJobQueueProvider provider,

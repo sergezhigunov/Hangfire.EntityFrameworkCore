@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
@@ -13,6 +14,7 @@ internal class ExpirationManager : IServerComponent
     private readonly ILog _logger = LogProvider.For<ExpirationManager>();
     private readonly EFCoreStorage _storage;
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public ExpirationManager(EFCoreStorage storage)
     {
         if (storage is null)
@@ -150,6 +152,7 @@ internal class ExpirationManager : IServerComponent
         }
     }
 
+    [SuppressMessage("Performance", "CA1859")]
     private static IReadOnlyCollection<TKey> GetExpiredIds<TEntity, TKey>(
         DbContext context,
         Expression<Func<TEntity, TKey>> keySelector)

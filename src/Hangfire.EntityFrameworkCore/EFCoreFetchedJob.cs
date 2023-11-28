@@ -21,6 +21,7 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
 
     string IFetchedJob.JobId => _queuedJob.JobId.ToString(CultureInfo.InvariantCulture);
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreFetchedJob(
         [NotNull] EFCoreStorage storage,
         [NotNull] HangfireQueuedJob queuedJob)

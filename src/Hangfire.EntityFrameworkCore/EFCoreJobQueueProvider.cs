@@ -1,9 +1,12 @@
-﻿namespace Hangfire.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Hangfire.EntityFrameworkCore;
 
 internal sealed class EFCoreJobQueueProvider : IPersistentJobQueueProvider
 {
     private readonly EFCoreStorage _storage;
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreJobQueueProvider(EFCoreStorage storage)
     {
         if (storage is null)

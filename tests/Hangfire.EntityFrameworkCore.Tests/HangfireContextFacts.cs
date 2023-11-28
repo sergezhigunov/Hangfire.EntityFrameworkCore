@@ -39,14 +39,7 @@ public class HangfireContextFacts : DbContextOptionsTest
         var model = context.Model;
         Assert.NotNull(model);
 
-        var actualSchema = context.Model
-#if NET48
-                .Relational()
-            .DefaultSchema
-#else
-                .GetDefaultSchema()
-#endif
-                ?? string.Empty;
+        var actualSchema = context.Model.GetDefaultSchema() ?? string.Empty;
         Assert.Equal(schema, actualSchema);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq.Expressions;
 
 namespace Hangfire.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using GetCountFunc = Func<DbContext, string, long>;
 using GetQueuesFunc = Func<DbContext, IEnumerable<string>>;
 using GetJobIdsFunc = Func<DbContext, string, int, int, IEnumerable<long>>;
 using QueuedJobPredicate = Expression<Func<HangfireQueuedJob, bool>>;
+using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
 {
@@ -34,6 +36,7 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
             Select(x => x.Queue).
             Distinct());
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreJobQueueMonitoringApi(EFCoreStorage storage)
     {
         if (storage is null)
@@ -42,6 +45,7 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
         _storage = storage;
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public IList<string> GetEnqueuedJobIds([NotNull] string queue, int from, int perPage)
     {
         if (queue is null)
@@ -55,6 +59,7 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
             ToList();
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     public IList<string> GetFetchedJobIds([NotNull] string queue, int from, int perPage)
     {
         if (queue is null)
@@ -84,6 +89,7 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
             queue);
     }
 
+    [SuppressMessage("Maintainability", "CA1510")]
     private T UseContext<T>(Func<DbContext, string, T> func, string queue)
     {
         if (queue is null)
