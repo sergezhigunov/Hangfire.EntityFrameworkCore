@@ -4,6 +4,11 @@
    <TargetFrameworks>netstandard2.0;net6.0;net7.0;net8.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>
+0.6.0
+• Added – .NET 8 support (thanks to @m0ddixx).
+• Breaking – Set minimal inclusive Hangfire.Core version 1.8.0.
+• Breaking – Remove `netstandard2.1` target.
+
 0.5.0
 • Added – .NET 7 support.
 • Breaking – Set minimum inclusive EFCore version 2.1.0.
