@@ -2,13 +2,9 @@
 
 namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext;
 
-public class SampleDbContext : DbContext
+public class SampleDbContext(DbContextOptions<SampleDbContext> options) : DbContext(options)
 {
     public DbSet<SampleTable> SampleTables { get; set; }
-
-    public SampleDbContext(DbContextOptions<SampleDbContext> options) : base(options)
-    {
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

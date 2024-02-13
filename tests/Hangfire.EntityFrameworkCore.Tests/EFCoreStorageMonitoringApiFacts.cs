@@ -41,12 +41,12 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 InvocationData = invocationData,
                 States = new List<HangfireState>
                 {
-                        new HangfireState
-                        {
-                            CreatedAt = DateTime.UtcNow,
-                            Name = DeletedState.StateName,
-                            Data = data,
-                        },
+                    new()
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        Name = DeletedState.StateName,
+                        Data = data,
+                    },
                 },
             }).
             ToArray();
@@ -755,7 +755,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         var result = UseMonitoringApi(instance => instance.Queues());
 
         Assert.NotNull(result);
-        Assert.Equal(0, result.Count);
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -865,7 +865,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         var result = UseMonitoringApi(instance => instance.Servers());
 
         Assert.NotNull(result);
-        Assert.Equal(0, result.Count);
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -916,7 +916,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         Assert.Equal(startedAt1, server1.StartedAt);
         Assert.Equal(heartbeat, server2.Heartbeat);
         Assert.Equal(0, server2.WorkersCount);
-        Assert.False(server2.Queues?.Any() == true);
+        Assert.False(server2.Queues?.Any());
         Assert.Equal(startedAt2, server2.StartedAt);
     }
 
