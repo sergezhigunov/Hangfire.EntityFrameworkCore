@@ -60,7 +60,6 @@ internal class ExpirationManager : IServerComponent
                 // Trying to set StateId = null for all fetched jobs first
                 foreach (var entry in entries)
                     entry.Property(x => x.StateId).IsModified = true;
-                using var transaction = context.Database.BeginTransaction();
 
                 try
                 {
@@ -69,7 +68,6 @@ internal class ExpirationManager : IServerComponent
                 catch (DbUpdateConcurrencyException)
                 {
                     // Someone else already has removed item, database wins. Just try again.
-                    transaction.Rollback();
                     return -1;
                 }
 
@@ -84,10 +82,8 @@ internal class ExpirationManager : IServerComponent
                 catch (DbUpdateConcurrencyException)
                 {
                     // Someone else already has removed item, database wins. Just try again.
-                    transaction.Rollback();
                     return -1;
                 }
-                transaction.Commit();
                 return affected;
             }));
         });
