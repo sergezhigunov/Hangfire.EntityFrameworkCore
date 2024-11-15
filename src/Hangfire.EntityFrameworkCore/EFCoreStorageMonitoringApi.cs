@@ -52,7 +52,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             select new KeyValuePair<string, string>(x.Name, x.Value));
 
     private static GetStateDataFunc GetStateDataFunc { get; } = EF.CompileQuery(
-        (DbContext context, string name, int from, int count) => (
+        (DbContext context, string name, int skip, int count) => (
             from x in context.Set<HangfireJob>()
             where x.StateName == name
             let s = x.State
@@ -64,7 +64,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 Reason = s.Reason,
                 Data = s.Data,
             }).
-            Skip(from).
+            Skip(skip).
             Take(count));
 
     private static GetStateHistoryFunc GetStateHistoryFunc { get; } = EF.CompileQuery(

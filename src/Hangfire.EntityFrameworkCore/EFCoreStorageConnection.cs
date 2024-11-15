@@ -55,9 +55,9 @@ internal class EFCoreStorageConnection : JobStorageConnection
             Sum(x => x.Value));
 
     private static GetFirstByLowestScoreFromSetFunc GetFirstByLowestScoreFromSetFunc { get; } = EF.CompileQuery(
-        (DbContext context, string key, double from, double to) => (
+        (DbContext context, string key, double from_score, double to_score) => (
             from x in context.Set<HangfireSet>()
-            where x.Key == key && @from <= x.Score && x.Score <= to
+            where x.Key == key && from_score <= x.Score && x.Score <= to_score
             orderby x.Score
             select x.Value).
             FirstOrDefault());
@@ -105,11 +105,11 @@ internal class EFCoreStorageConnection : JobStorageConnection
             Min());
 
     private static GetRangeFromListFunc GetRangeFromListFunc { get; } = EF.CompileQuery(
-        (DbContext context, string key, int from, int to) =>
+        (DbContext context, string key, int from_pos, int to_pos) =>
             from x in context.Set<HangfireList>()
             where x.Key == key
             let position = x.Position
-            where @from <= position && position <= to
+            where from_pos <= position && position <= to_pos
             orderby position descending
             select x.Value);
 

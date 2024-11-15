@@ -105,11 +105,11 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
             LongCount();
 
     private static Expression<GetJobIdsFunc> GetJobIdsExpression(QueuedJobPredicate predicate)
-        => (DbContext context, string queue, int from, int perPage) => (
+        => (DbContext context, string queue, int skip, int perPage) => (
             from x in context.Set<HangfireQueuedJob>().Where(predicate)
             where x.Queue == queue
             orderby x.Id ascending
             select x.Id).
-            Skip(from).
+            Skip(skip).
             Take(perPage);
 }
