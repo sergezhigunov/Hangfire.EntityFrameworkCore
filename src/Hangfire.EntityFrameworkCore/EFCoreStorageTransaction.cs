@@ -518,8 +518,8 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     }
 
     private static void CopyNonKeyValues(
-        IReadOnlyList<HangfireList> source,
-        IReadOnlyList<HangfireList> destination)
+        List<HangfireList> source,
+        List<HangfireList> destination)
     {
         var count = source.Count;
         for (int i = 0; i < count; i++)

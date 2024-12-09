@@ -37,7 +37,7 @@ public static class Program
             new DashboardOptions
             {
                 AppPath = null,
-                Authorization = Array.Empty<IDashboardAuthorizationFilter>(),
+                Authorization = [],
             });
         RecurringJob.AddOrUpdate(nameof(DoNothing), () => DoNothing(), Cron.Minutely);
 

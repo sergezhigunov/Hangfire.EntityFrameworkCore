@@ -39,15 +39,15 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             {
                 CreatedAt = now + new TimeSpan(0, 0, x),
                 InvocationData = invocationData,
-                States = new List<HangfireState>
-                {
+                States =
+                [
                     new()
                     {
                         CreatedAt = DateTime.UtcNow,
                         Name = DeletedState.StateName,
                         Data = data,
                     },
-                },
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context =>
@@ -114,13 +114,13 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             {
                 CreatedAt = now + new TimeSpan(0, 0, x),
                 InvocationData = invocationData,
-                QueuedJobs = new[]
-                {
-                        new HangfireQueuedJob
-                        {
-                            Queue = queue,
-                        },
-                },
+                QueuedJobs =
+                [
+                    new()
+                    {
+                        Queue = queue,
+                    },
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context => context.AddRange(jobs));
@@ -177,17 +177,17 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = createdAt,
                     InvocationData = invocationData,
-                    States = new[]
-                    {
-                            state,
-                    },
-                    QueuedJobs = new[]
-                    {
-                            new HangfireQueuedJob
-                            {
-                                Queue = queue,
-                            },
-                    }
+                    States =
+                    [
+                        state,
+                    ],
+                    QueuedJobs =
+                    [
+                        new()
+                        {
+                            Queue = queue,
+                        },
+                    ]
                 };
                 return job;
             }).
@@ -214,7 +214,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         {
             Assert.NotNull(item.Key);
             var id = long.Parse(item.Key, CultureInfo.InvariantCulture);
-            var job = Assert.Single(jobs.Where(x => x.Id == id));
+            var job = Assert.Single(jobs, x => x.Id == id);
             var value = item.Value;
             Assert.NotNull(value);
             Assert.Equal(job.State.CreatedAt, value.EnqueuedAt);
@@ -342,14 +342,14 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             {
                 CreatedAt = now + new TimeSpan(0, 0, x),
                 InvocationData = invocationData,
-                QueuedJobs = new[]
-                {
-                        new HangfireQueuedJob
-                        {
-                            Queue = queue,
-                            FetchedAt = now,
-                        },
-                },
+                QueuedJobs =
+                [
+                    new()
+                    {
+                        Queue = queue,
+                        FetchedAt = now,
+                    },
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context => context.AddRange(jobs));
@@ -406,18 +406,18 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                 {
                     CreatedAt = createdAt,
                     InvocationData = invocationData,
-                    States = new[]
-                    {
-                            state,
-                    },
-                    QueuedJobs = new[]
-                    {
-                            new HangfireQueuedJob
-                            {
-                                Queue = queue,
-                                FetchedAt = now,
-                            },
-                    }
+                    States =
+                    [
+                        state,
+                    ],
+                    QueuedJobs =
+                    [
+                        new()
+                        {
+                            Queue = queue,
+                            FetchedAt = now,
+                        },
+                    ]
                 };
                 return job;
             }).
@@ -444,7 +444,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         {
             Assert.NotNull(item.Key);
             var id = long.Parse(item.Key, CultureInfo.InvariantCulture);
-            var job = Assert.Single(jobs.Where(x => x.Id == id));
+            var job = Assert.Single(jobs, x => x.Id == id);
             var value = item.Value;
             Assert.NotNull(value);
             Assert.Equal(now, value.FetchedAt);
@@ -642,10 +642,10 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             CreatedAt = createdAt,
             InvocationData = CreateInvocationData(() => SampleMethod("argument")),
             ExpireAt = createdAt + new TimeSpan(1, 0, 0, 0),
-            States = new[]
-            {
-                    state,
-                },
+            States =
+            [
+                state,
+            ],
             Parameters = parameters.
                 Select(x => new HangfireJobParameter
                 {
@@ -664,7 +664,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         Assert.Equal(createdAt.AddDays(1), result.ExpireAt);
         Assert.Equal(typeof(EFCoreStorageTest), result.Job.Type);
         Assert.Equal(nameof(SampleMethod), result.Job.Method.Name);
-        Assert.Equal(new[] { "argument" }, result.Job.Args);
+        Assert.Equal(["argument"], result.Job.Args);
         Assert.NotNull(result.History);
         var historyItem = result.History.Single();
         Assert.Equal("State", historyItem.StateName);
@@ -763,20 +763,20 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
     {
         var queues = new[]
         {
-                "queue1",
-                "queue2",
-            };
+            "queue1",
+            "queue2",
+        };
         var jobs = queues.Select(x => new HangfireJob
         {
             CreatedAt = DateTime.UtcNow,
             InvocationData = CreateInvocationData(() => SampleMethod(null)),
-            QueuedJobs = new[]
-            {
-                    new HangfireQueuedJob
-                    {
-                        Queue = x,
-                    }
-                },
+            QueuedJobs =
+            [
+                new()
+                {
+                    Queue = x,
+                }
+            ],
         });
         UseContextSavingChanges(context => context.AddRange(jobs));
 
@@ -880,9 +880,9 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         var heartbeat = now - new TimeSpan(1, 0, 0);
         var queues = new[]
         {
-                "queue1",
-                "queue1",
-            };
+            "queue1",
+            "queue1",
+        };
         var queuesJson = SerializationHelper.Serialize(queues);
         var servers = new[]
         {
@@ -1049,10 +1049,10 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         {
             CreatedAt = DateTime.UtcNow,
             InvocationData = CreateInvocationData(() => SampleMethod(null)),
-            States = new[]
-            {
-                    state,
-                },
+            States =
+            [
+                state,
+            ],
         };
         context.Add(job);
         context.SaveChanges();

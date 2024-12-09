@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Hangfire.EntityFrameworkCore.Properties;
+﻿using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore;
@@ -24,11 +23,14 @@ internal class CountersAggregator : IServerComponent
     private readonly ILog _logger = LogProvider.For<CountersAggregator>();
     private readonly EFCoreStorage _storage;
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public CountersAggregator(EFCoreStorage storage)
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+#else
         if (storage is null)
             throw new ArgumentNullException(nameof(storage));
+#endif
 
         _storage = storage;
     }
