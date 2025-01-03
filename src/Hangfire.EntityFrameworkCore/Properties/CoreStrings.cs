@@ -21,40 +21,67 @@ internal static class CoreStrings
     public static string ArgumentOutOfRangeExceptionNeedPositiveValue
         => GetString("ArgumentOutOfRangeExceptionNeedPositiveValue");
 
-    public static string CountersAggregatorExecuteCompleted(object tableName)
+    public static string CountersAggregatorExecuteCompleted(
+        object tableName)
         => string.Format(
-            GetString("CountersAggregatorExecuteCompleted", nameof(tableName)),
+            GetString(
+                "CountersAggregatorExecuteCompleted",
+                nameof(tableName)),
             tableName);
 
-    public static string CountersAggregatorExecuteStarting(object tableName)
+    public static string CountersAggregatorExecuteStarting(
+        object tableName)
         => string.Format(
-            GetString("CountersAggregatorExecuteStarting", nameof(tableName)),
+            GetString(
+                "CountersAggregatorExecuteStarting",
+                nameof(tableName)),
             tableName);
 
-    public static string EFCoreFetchedJobExecuteKeepAliveQueryCompleted(object id)
+    public static string EFCoreFetchedJobExecuteKeepAliveQueryCompleted(
+        object id)
         => string.Format(
-            GetString("EFCoreFetchedJobExecuteKeepAliveQueryCompleted", nameof(id)),
+            GetString(
+                "EFCoreFetchedJobExecuteKeepAliveQueryCompleted",
+                nameof(id)),
             id);
 
-    public static string EFCoreFetchedJobExecuteKeepAliveQueryFailed(object id)
+    public static string EFCoreFetchedJobExecuteKeepAliveQueryFailed(
+        object id)
         => string.Format(
-            GetString("EFCoreFetchedJobExecuteKeepAliveQueryFailed", nameof(id)),
+            GetString(
+                "EFCoreFetchedJobExecuteKeepAliveQueryFailed",
+                nameof(id)),
             id);
 
-    public static string ExpirationManagerRemoveExpiredCompleted(object tableName)
+    public static string ExpirationManagerRemoveExpiredCompleted(
+        object tableName)
         => string.Format(
-            GetString("ExpirationManagerRemoveExpiredCompleted", nameof(tableName)),
+            GetString(
+                "ExpirationManagerRemoveExpiredCompleted",
+                nameof(tableName)),
             tableName);
 
-    public static string ExpirationManagerRemoveExpiredStarting(object tableName)
+    public static string ExpirationManagerRemoveExpiredStarting(
+        object tableName)
         => string.Format(
-            GetString("ExpirationManagerRemoveExpiredStarting", nameof(tableName)),
+            GetString(
+                "ExpirationManagerRemoveExpiredStarting",
+                nameof(tableName)),
             tableName);
 
-    public static string ExpirationManagerUseLockFailed(object lockKey, object lockTimeoutSeconds, object expirationCheckIntervalSeconds)
+    public static string ExpirationManagerUseLockFailed(
+        object lockKey,
+        object lockTimeoutSeconds,
+        object expirationCheckIntervalSeconds)
         => string.Format(
-            GetString("ExpirationManagerUseLockFailed", nameof(lockKey), nameof(lockTimeoutSeconds), nameof(expirationCheckIntervalSeconds)),
-            lockKey, lockTimeoutSeconds, expirationCheckIntervalSeconds);
+            GetString(
+                "ExpirationManagerUseLockFailed",
+                nameof(lockKey),
+                nameof(lockTimeoutSeconds),
+                nameof(expirationCheckIntervalSeconds)),
+            lockKey,
+            lockTimeoutSeconds,
+            expirationCheckIntervalSeconds);
 
     public static string InvalidOperationExceptionJobDoesNotExists
         => GetString("InvalidOperationExceptionJobDoesNotExists");
