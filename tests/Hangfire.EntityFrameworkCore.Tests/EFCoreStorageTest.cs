@@ -16,7 +16,7 @@ public abstract class EFCoreStorageTest : DbContextOptionsTest
         LazyInitializer.EnsureInitialized(ref _storage,
             () =>
             {
-                var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions());
+                var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions { UseSlidingInvisibilityTimeout = true });
                 storage.RegisterDatabaseInitializer(
                     context => context.Database.EnsureCreated());
                 return storage;
@@ -26,7 +26,7 @@ public abstract class EFCoreStorageTest : DbContextOptionsTest
         LazyInitializer.EnsureInitialized(ref _factoryStorage,
             () => new EFCoreStorage(
                 CreateInMemoryContext,
-                new EFCoreStorageOptions()));
+                new EFCoreStorageOptions { UseSlidingInvisibilityTimeout = true }));
 
     private protected static InvocationData InvocationDataStub { get; } =
         new InvocationData(null, null, null, string.Empty);
@@ -55,7 +55,7 @@ public abstract class EFCoreStorageTest : DbContextOptionsTest
     private protected EFCoreStorage CreateStorageStub()
     {
         var options = new DbContextOptions<HangfireContext>();
-        return new EFCoreStorage(OptionsAction, new EFCoreStorageOptions());
+        return new EFCoreStorage(OptionsAction, new EFCoreStorageOptions { UseSlidingInvisibilityTimeout = true });
     }
 
     private protected static Action<DbContextOptionsBuilder> OptionsActionStub { get; } =
