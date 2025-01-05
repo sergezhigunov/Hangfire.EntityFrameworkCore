@@ -10,14 +10,17 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
     private readonly ILog _logger = LogProvider.GetLogger(typeof(EFCoreFetchedJob));
     private readonly object _lock = new();
     private readonly EFCoreStorage _storage;
-    private readonly Timer _timer;
     private readonly HangfireQueuedJob _queuedJob;
     private bool _disposed;
-    private bool _completed;
+    private bool _removedFromQueue;
+    private bool _requeued;
+    private long _lastHeartbeat;
+    private readonly TimeSpan _interval;
 
     public long Id => _queuedJob.Id;
     public long JobId => _queuedJob.JobId;
     public string Queue => _queuedJob.Queue;
+    internal DateTime? FetchedAt => _queuedJob.FetchedAt;
 
     string IFetchedJob.JobId => _queuedJob.JobId.ToString(CultureInfo.InvariantCulture);
 
@@ -33,14 +36,24 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
 
         _storage = storage;
         _queuedJob = queuedJob;
-        var keepAliveInterval = new TimeSpan(storage.SlidingInvisibilityTimeout.Ticks / 5);
-        _timer = new Timer(ExecuteKeepAliveQuery, null, keepAliveInterval, keepAliveInterval);
+
+        if (storage.UseSlidingInvisibilityTimeout)
+        {
+            _lastHeartbeat = TimestampHelper.GetTimestamp();
+            _interval = TimeSpan.FromSeconds(storage.SlidingInvisibilityTimeout.TotalSeconds / 5);
+            storage.HeartbeatProcess.Track(this);
+        }
     }
 
     public void RemoveFromQueue()
     {
         lock (_lock)
         {
+            if (!FetchedAt.HasValue)
+            {
+                return;
+            }
+
             _storage.UseContext(context =>
             {
                 context.Remove(_queuedJob);
@@ -50,10 +63,10 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                     // Someone else already has removed item, database wins
+                    // Someone else already has removed item, database wins
                 }
             });
-            _completed = true;
+            _removedFromQueue = true;
         }
     }
 
@@ -61,8 +74,13 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
     {
         lock (_lock)
         {
+            if (!FetchedAt.HasValue)
+            {
+                return;
+            }
+
             SetFetchedAt(null);
-            _completed = true;
+            _requeued = true;
         }
     }
 
@@ -83,13 +101,36 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
         });
     }
 
-    [SuppressMessage("Design", "CA1031")]
-    private void ExecuteKeepAliveQuery(object state)
+    internal void DisposeTimer()
     {
+        if (_storage.UseSlidingInvisibilityTimeout)
+        {
+            _storage.HeartbeatProcess.Untrack(this);
+        }
+    }
+
+    [SuppressMessage("Design", "CA1031")]
+    internal void ExecuteKeepAliveQueryIfRequired()
+    {
+        var now = TimestampHelper.GetTimestamp();
+
+        if (TimestampHelper.Elapsed(now, Interlocked.Read(ref _lastHeartbeat)) < _interval)
+        {
+            return;
+        }
+
         lock (_lock)
         {
-            if (_completed)
+            if (!FetchedAt.HasValue)
+            {
                 return;
+            }
+
+            if (_requeued || _removedFromQueue)
+            {
+                return;
+            }
+
             try
             {
                 SetFetchedAt(DateTime.UtcNow);
@@ -107,20 +148,21 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
 
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing && !_completed)
+            return;
+        }
+
+        _disposed = true;
+
+        DisposeTimer();
+
+        lock (_lock)
+        {
+            if (!_removedFromQueue && !_requeued)
             {
-                _timer.Dispose();
                 Requeue();
             }
-            _disposed = true;
         }
     }
 }

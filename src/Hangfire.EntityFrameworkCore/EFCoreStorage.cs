@@ -21,6 +21,8 @@ public class EFCoreStorage : JobStorage
     internal IDictionary<string, IPersistentJobQueueProvider> QueueProviders { get; } =
         new Dictionary<string, IPersistentJobQueueProvider>(StringComparer.OrdinalIgnoreCase);
 
+    internal EFCoreHeartbeatProcess HeartbeatProcess { get; }
+
     internal TimeSpan DistributedLockTimeout => _options.DistributedLockTimeout;
 
     internal TimeSpan QueuePollInterval => _options.QueuePollInterval;
@@ -30,6 +32,7 @@ public class EFCoreStorage : JobStorage
     internal TimeSpan CountersAggregationInterval => _options.CountersAggregationInterval;
 
     internal TimeSpan SlidingInvisibilityTimeout => _options.SlidingInvisibilityTimeout;
+    internal bool UseSlidingInvisibilityTimeout => _options.UseSlidingInvisibilityTimeout;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EFCoreStorage"/> class.
@@ -65,6 +68,10 @@ public class EFCoreStorage : JobStorage
         optionsAction.Invoke(contextOptionsBuilder);
         _contextOptions = contextOptionsBuilder.Options;
         DefaultQueueProvider = new EFCoreJobQueueProvider(this);
+        if (UseSlidingInvisibilityTimeout)
+        {
+            HeartbeatProcess = new EFCoreHeartbeatProcess();
+        }
     }
 
     /// <summary>
@@ -90,6 +97,10 @@ public class EFCoreStorage : JobStorage
         _dbContextBuilder = dbContextBuilder ?? throw new ArgumentNullException(nameof(dbContextBuilder));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         DefaultQueueProvider = new EFCoreJobQueueProvider(this);
+        if (UseSlidingInvisibilityTimeout)
+        {
+            HeartbeatProcess = new EFCoreHeartbeatProcess();
+        }
     }
 
     /// <summary>
@@ -128,6 +139,11 @@ public class EFCoreStorage : JobStorage
             yield return item;
         yield return new ExpirationManager(this);
         yield return new CountersAggregator(this);
+        if (UseSlidingInvisibilityTimeout)
+        {
+            // This is only used to update the sliding invisibility timeouts, so if not enabled then do not use it
+            yield return HeartbeatProcess;
+        }
     }
 
     [SuppressMessage("Maintainability", "CA1510")]

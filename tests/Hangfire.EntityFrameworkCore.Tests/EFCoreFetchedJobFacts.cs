@@ -40,7 +40,9 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
         Assert.False(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
         Assert.False(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_removedFromQueue")));
+        Assert.False(Assert.IsType<bool>(
+            instance.GetFieldValue("_requeued")));
         Assert.Same(Storage, Assert.IsType<EFCoreStorage>(
             instance.GetFieldValue("_storage")));
         Assert.Same(queuedJob,
@@ -69,7 +71,7 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
 
         UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_removedFromQueue")));
         Assert.False(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
     }
@@ -100,7 +102,7 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
             Assert.Empty(context.Set<HangfireQueuedJob>());
         });
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_removedFromQueue")));
         Assert.False(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
     }
@@ -121,7 +123,7 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
 
         UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_requeued")));
         Assert.False(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
     }
@@ -152,7 +154,7 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
             Assert.Null(item.FetchedAt);
         });
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_requeued")));
         Assert.False(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
     }
@@ -173,7 +175,9 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
 
         UseContext(context => Assert.Empty(context.Set<HangfireQueuedJob>()));
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_requeued")) ||
+            Assert.IsType<bool>(
+            instance.GetFieldValue("_removedFromQueue")));
         Assert.True(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
 
@@ -206,7 +210,9 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
             Assert.Null(item.FetchedAt);
         });
         Assert.True(Assert.IsType<bool>(
-            instance.GetFieldValue("_completed")));
+            instance.GetFieldValue("_requeued")) ||
+            Assert.IsType<bool>(
+            instance.GetFieldValue("_removedFromQueue")));
         Assert.True(Assert.IsType<bool>(
             instance.GetFieldValue("_disposed")));
 
