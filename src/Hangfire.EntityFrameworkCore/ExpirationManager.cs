@@ -57,9 +57,19 @@ internal class ExpirationManager : IServerComponent
                     .Select(x => context.Attach(new HangfireJob { Id = x }))
                     .ToList();
 
+                var expiredParameterIds = context.Set<HangfireJobParameter>()
+                    .Where(x => expiredEntityIds.Contains(x.JobId))
+                    .Select(x => new { x.JobId, x.Name })
+                    .ToList();
+
                 // Trying to set StateId = null for all fetched jobs first
                 foreach (var entry in entries)
                     entry.Property(x => x.StateId).IsModified = true;
+                // Trying remove HangfireJobParameter from expired jobs
+                if (expiredParameterIds.Count != 0)
+                    context.RemoveRange(
+                        expiredParameterIds.Select(
+                            x => new HangfireJobParameter { JobId = x.JobId, Name = x.Name }));
 
                 try
                 {

@@ -25,9 +25,7 @@ public class HangfireContextFacts : DbContextOptionsTest
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("hangfire")]
-    [InlineData("Hangfire")]
+    [MemberData(nameof(Schemata))]
     public void Ctor_CreatesInstance(string schema)
     {
         var builder = new DbContextOptionsBuilder<HangfireContext>();
@@ -41,5 +39,19 @@ public class HangfireContextFacts : DbContextOptionsTest
 
         var actualSchema = context.Model.GetDefaultSchema() ?? string.Empty;
         Assert.Equal(schema, actualSchema);
+
+        var script = context.Database.GenerateCreateScript();
+        Assert.NotNull(script);
+    }
+
+    public static TheoryData<string> Schemata()
+    {
+        return
+        [
+            string.Empty,
+            "hangfire",
+            "Hangfire",
+            "HANGFIRE",
+        ];
     }
 }

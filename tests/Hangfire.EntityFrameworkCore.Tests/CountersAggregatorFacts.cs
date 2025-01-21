@@ -30,7 +30,8 @@ public class CountersAggregatorFacts : EFCoreStorageTest
         });
         storage.RegisterDatabaseInitializer(context => context.Database.EnsureCreated());
         var instance = new CountersAggregator(storage);
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         Assert.Throws<OperationCanceledException>(
             () => instance.Execute(source.Token));

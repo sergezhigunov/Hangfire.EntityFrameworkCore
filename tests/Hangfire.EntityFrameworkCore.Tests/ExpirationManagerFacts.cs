@@ -1,4 +1,6 @@
-﻿namespace Hangfire.EntityFrameworkCore.Tests;
+﻿using System.Xml.Linq;
+
+namespace Hangfire.EntityFrameworkCore.Tests;
 
 public class ExpirationManagerFacts : EFCoreStorageTest
 {
@@ -26,7 +28,8 @@ public class ExpirationManagerFacts : EFCoreStorageTest
     {
         CreateExpirationEntries(DateTime.UtcNow.AddMonths(-1));
         var instance = new ExpirationManager(Storage);
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         instance.Execute(source.Token);
 
@@ -45,7 +48,8 @@ public class ExpirationManagerFacts : EFCoreStorageTest
     {
         CreateExpirationEntries(null);
         var instance = new ExpirationManager(Storage);
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         instance.Execute(source.Token);
 
@@ -64,7 +68,8 @@ public class ExpirationManagerFacts : EFCoreStorageTest
     {
         CreateExpirationEntries(DateTime.UtcNow.AddMonths(1));
         var instance = new ExpirationManager(Storage);
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         instance.Execute(source.Token);
 
@@ -88,8 +93,8 @@ public class ExpirationManagerFacts : EFCoreStorageTest
             CreatedAt = now,
             InvocationData = CreateInvocationData(() => SampleMethod("test")),
             ExpireAt = now.AddMonths(-1),
-            States = new[]
-            {
+            States =
+            [
                 new HangfireState
                 {
                     CreatedAt = now,
@@ -97,7 +102,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
                     Name = "Created",
                     Reason = "Reason",
                 },
-            },
+            ],
         };
         UseContext(context =>
         {
@@ -111,12 +116,47 @@ public class ExpirationManagerFacts : EFCoreStorageTest
             transaction.Commit();
         });
         var instance = new ExpirationManager(Storage);
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         instance.Execute(source.Token);
 
         UseContext(context =>
         {
+            Assert.False(context.Set<HangfireState>().Any());
+            Assert.False(context.Set<HangfireJob>().Any());
+        });
+    }
+
+    [Fact]
+    public void Execute_RemovesOutdatedJobs_WithParametersSet()
+    {
+        var now = DateTime.UtcNow;
+
+        var job = new HangfireJob
+        {
+            CreatedAt = now,
+            InvocationData = CreateInvocationData(() => SampleMethod("test")),
+            ExpireAt = now.AddMonths(-1),
+            Parameters =
+            [
+                new HangfireJobParameter
+                {
+                    Name = "TestName",
+                    Value = "TestValue"
+                }
+            ],
+        };
+        UseContextSavingChanges(context => context.Add(job));
+        var instance = new ExpirationManager(Storage);
+        var source = new CancellationTokenSource();
+        source.Cancel();
+
+        instance.Execute(source.Token);
+
+        UseContext(context =>
+        {
+            Assert.False(context.Set<HangfireJobParameter>().Any());
             Assert.False(context.Set<HangfireState>().Any());
             Assert.False(context.Set<HangfireJob>().Any());
         });

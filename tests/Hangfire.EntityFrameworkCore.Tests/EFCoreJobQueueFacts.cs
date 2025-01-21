@@ -48,7 +48,8 @@ public class EFCoreJobQueueFacts : EFCoreStorageTest
     {
         var instance = new EFCoreJobQueue(Storage);
         string[] queues = { "default" };
-        var source = new CancellationTokenSource(0);
+        var source = new CancellationTokenSource();
+        source.Cancel();
 
         Assert.Throws<OperationCanceledException>(
             () => instance.Dequeue(queues, source.Token));
