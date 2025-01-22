@@ -37,8 +37,10 @@ public class HangfireContextFacts : DbContextOptionsTest
         var model = context.Model;
         Assert.NotNull(model);
 
-        var actualSchema = context.Model.GetDefaultSchema() ?? string.Empty;
-        Assert.Equal(schema, actualSchema);
+        var expectedSchema = schema == string.Empty ? null : schema;
+        Assert.All(
+            model.GetEntityTypes(),
+            entity => Assert.Equal(expectedSchema, entity.GetSchema()));
 
         var script = context.Database.GenerateCreateScript();
         Assert.NotNull(script);

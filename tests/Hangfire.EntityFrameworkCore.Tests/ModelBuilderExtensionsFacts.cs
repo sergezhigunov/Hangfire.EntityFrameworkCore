@@ -14,15 +14,24 @@ public class ModelBuilderExtensionsFacts
             () => modelBuilder.OnHangfireModelCreating());
     }
 
-    [Fact]
-    public void OnHangfireModelCreating_ConfiguresModelCorectly()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("hangfire")]
+    [InlineData("Hangfire")]
+    [InlineData("HANGFIRE")]
+    public void OnHangfireModelCreating_ConfiguresModelCorectly(string schema)
     {
         var conventions = new ConventionSet();
         var modelBuilder = new ModelBuilder(conventions);
 
-        modelBuilder.OnHangfireModelCreating();
+        modelBuilder.OnHangfireModelCreating(schema);
 
         var model = modelBuilder.Model;
+        var expectedSchema = schema == string.Empty ? null : schema;
+        Assert.All(
+            model.GetEntityTypes(),
+            entity => Assert.Equal(expectedSchema, entity.GetSchema()));
         Assert.NotNull(model.FindEntityType(typeof(HangfireCounter)));
         Assert.NotNull(model.FindEntityType(typeof(HangfireHash)));
         Assert.NotNull(model.FindEntityType(typeof(HangfireJob)));

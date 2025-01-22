@@ -27,10 +27,6 @@ internal class HangfireContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        if (!string.IsNullOrEmpty(Schema))
-            modelBuilder.HasDefaultSchema(Schema);
-
-        modelBuilder.OnHangfireModelCreating();
+        modelBuilder.OnHangfireModelCreating(Schema);
     }
 }

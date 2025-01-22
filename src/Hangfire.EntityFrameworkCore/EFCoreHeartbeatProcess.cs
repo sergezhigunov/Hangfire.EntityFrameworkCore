@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using Hangfire.Common;
+﻿using System.Collections.Concurrent;
 using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore

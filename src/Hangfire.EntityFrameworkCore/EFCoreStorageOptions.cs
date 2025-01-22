@@ -114,16 +114,17 @@ public class EFCoreStorageOptions
     }
 
     /// <summary>
-    ///   Apply a sliding invisibility timeout where the last fetched time is continually updated in the background.
-    ///   This allows a lower invisibility timeout to be used with longer running jobs
-    ///   IMPORTANT: If <see cref="BackgroundJobServerOptions.IsLightweightServer" /> option is used, then sliding invisiblity timeouts will not work
-    ///   since the background storage processes are not run (which is used to update the invisibility timeouts)
+    /// Apply a sliding invisibility timeout where the last fetched time is continually updated in the background.
+    /// This allows a lower invisibility timeout to be used with longer running jobs
+    /// IMPORTANT: If <see cref="BackgroundJobServerOptions.IsLightweightServer" /> option is used, then sliding
+    /// invisibility timeouts will not work since the background storage processes are not run
+    /// (which is used to update the invisibility timeouts)
     /// </summary>
     public bool UseSlidingInvisibilityTimeout { get; set; }
 
     /// <summary>
-    /// Gets or set DB storage schema name. The <see cref="string.Empty"/> value means that
-    /// the provider-specific default schema name will be used.
+    /// Gets or set DB storage schema name. The <see cref="string.Empty"/> value means that the provider-specific
+    /// default schema name will be used. NOT applicable if uses external <see cref="DbContext"/> type.
     /// The default value is <see cref="string.Empty"/>.
     /// </summary>
     /// <value>
