@@ -4,6 +4,16 @@
    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>
+0.7.0
+• Added – .NET 9 support.
+• Added – External DbContext custom schema name support.
+• Breaking – Remove `net6.0` target.
+• Breaking – Remove `net7.0` target.
+• Fixed - A few EFCoreFetchedJob behavior issues (by @typesbb).
+• Fixed - ExpirationManager sometimes fails delete jobs with parameters.
+• Fixed - Unexpected error if external DbContext uses EnableRetryOnFailure (by @davidscheidt2).
+• Fixed - SQL parameter names colliding Oracle keywords (by @thegnu).
+
 0.6.0
 • Added – .NET 8 support (thanks to @m0ddixx).
 • Breaking – Set minimal inclusive Hangfire.Core version 1.8.0.
@@ -46,7 +56,7 @@
 
 0.1.0
 This is the first public release.
-</PackageReleaseNotes>
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
