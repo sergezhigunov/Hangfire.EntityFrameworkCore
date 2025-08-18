@@ -1,0 +1,32 @@
+<Solution>
+  <Folder Name="/.config/">
+    <File Path=".config/dotnet-tools.json" />
+  </Folder>
+  <Folder Name="/samples/">
+    <File Path="samples/Directory.Build.props" />
+    <Project Path="samples/Hangfire.EntityFrameworkCore.AspNetCore/Hangfire.EntityFrameworkCore.AspNetCore.csproj" />
+    <Project Path="samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".config/dotnet-tools.json" />
+    <File Path=".dockerignore" />
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <Project Path="src/Hangfire.EntityFrameworkCore/Hangfire.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <Project Path="tests/Hangfire.EntityFrameworkCore.Tests/Hangfire.EntityFrameworkCore.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <File Path="tools/Resources.tt" />
+  </Folder>
+</Solution>
