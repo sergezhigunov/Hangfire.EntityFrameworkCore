@@ -8,18 +8,27 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: |
+          8.0.x
+          9.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore -c Release
-    - name: Test
+    - name: Test .NET 8.0
+      run: dotnet test --no-build --verbosity normal -c Release -f net8.0
+    - name: Test .NET 9.0
       run: dotnet test --no-build --verbosity normal -c Release -f net9.0
+    - name: Test .NET Framework 4.8
+      if: matrix.os == 'windows-latest'
+      run: dotnet test --no-build --verbosity normal -c Release -f net48

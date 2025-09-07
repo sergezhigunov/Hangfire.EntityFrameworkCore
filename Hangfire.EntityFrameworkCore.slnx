@@ -2,6 +2,10 @@
   <Folder Name="/.config/">
     <File Path=".config/dotnet-tools.json" />
   </Folder>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/dotnet.yml" />
+  </Folder>
   <Folder Name="/samples/">
     <File Path="samples/Directory.Build.props" />
     <Project Path="samples/Hangfire.EntityFrameworkCore.AspNetCore/Hangfire.EntityFrameworkCore.AspNetCore.csproj" />
