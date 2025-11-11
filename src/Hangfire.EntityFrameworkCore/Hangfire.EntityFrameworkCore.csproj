@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-   <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
+   <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)ReleaseNotes.txt'))</PackageReleaseNotes>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,11 @@
   </ItemGroup>
 
   <Choose>
+    <When Condition=" '$(TargetFramework)'=='net10.0' ">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+      </ItemGroup>
+    </When>
     <When Condition=" '$(TargetFramework)'=='net9.0' ">
       <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />

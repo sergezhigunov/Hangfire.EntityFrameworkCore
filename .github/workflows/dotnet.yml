@@ -21,6 +21,7 @@ jobs:
         dotnet-version: |
           8.0.x
           9.0.x
+          10.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -29,6 +30,8 @@ jobs:
       run: dotnet test --no-build --verbosity normal -c Release -f net8.0
     - name: Test .NET 9.0
       run: dotnet test --no-build --verbosity normal -c Release -f net9.0
+    - name: Test .NET 10.0
+      run: dotnet test --no-build --verbosity normal -c Release -f net10.0
     - name: Test .NET Framework 4.8
       if: matrix.os == 'windows-latest'
       run: dotnet test --no-build --verbosity normal -c Release -f net48
