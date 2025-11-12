@@ -9,9 +9,15 @@ An [Entity Framework Core](https://github.com/aspnet/EntityFrameworkCore) provid
 
 ## Installation
 
-To install Hangfire Entity Framework Core Storage, run the following command in the Nuget Package Manager Console:
+To install Hangfire Entity Framework Core Storage, run the following command in the Terminal:
 
+```dotnetcli
+dotnet add package Hangfire.EntityFrameworkCore
 ```
+
+Alternatively run the following command in the Nuget Package Manager Console:
+
+```powershell
 PM> Install-Package Hangfire.EntityFrameworkCore
 ```
 
