@@ -646,13 +646,12 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             [
                 state,
             ],
-            Parameters = parameters.
-                Select(x => new HangfireJobParameter
+            Parameters = [.. parameters
+                .Select(x => new HangfireJobParameter
                 {
                     Name = x.Key,
                     Value = x.Value,
-                }).
-                ToList(),
+                })],
         };
         UseContextSavingChanges(context => context.Add(job));
         var jobId = job.Id.ToString(CultureInfo.InvariantCulture);

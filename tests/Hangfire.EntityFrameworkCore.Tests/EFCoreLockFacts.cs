@@ -26,12 +26,8 @@ public static class EFCoreLockFacts
 
         var instance = new EFCoreLock(provider, resource, timeout);
 
-        Assert.Equal(provider,
-            Assert.IsAssignableFrom<ILockProvider>(
-                instance.GetFieldValue("_provider")));
-        Assert.Equal(resource,
-            Assert.IsType<string>(
-                instance.GetFieldValue("_resource")));
+        Assert.Equal(provider, Assert.IsType<ILockProvider>(instance.GetFieldValue("_provider"), false));
+        Assert.Equal(resource, Assert.IsType<string>(instance.GetFieldValue("_resource")));
         providerMock.Verify(x => x.Acquire(resource, timeout));
     }
 

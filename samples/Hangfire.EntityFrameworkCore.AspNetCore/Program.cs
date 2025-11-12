@@ -1,5 +1,4 @@
-﻿using Hangfire.Dashboard;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore.AspNetCore;
 

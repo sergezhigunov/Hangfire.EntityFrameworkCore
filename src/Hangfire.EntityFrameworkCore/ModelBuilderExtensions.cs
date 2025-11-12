@@ -43,29 +43,28 @@ public static class ModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string schema)
     {
-        if (modelBuilder is null)
-            throw new ArgumentNullException(nameof(modelBuilder));
-
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(modelBuilder);
+#else
+        if (modelBuilder is null) throw new ArgumentNullException(nameof(modelBuilder));
+#endif
         void SetSchema(EntityTypeBuilder entity)
         {
             if (!string.IsNullOrEmpty(schema))
                 entity.Metadata.SetSchema(schema);
         }
-
         modelBuilder.Entity<HangfireCounter>(entity =>
         {
             entity.HasIndex(nameof(HangfireCounter.Key), nameof(HangfireCounter.Value));
             entity.HasIndex(nameof(HangfireCounter.ExpireAt));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireHash>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Field });
             entity.HasIndex(nameof(HangfireHash.ExpireAt));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireJob>(entity =>
         {
             entity.Property(x => x.InvocationData)
@@ -76,13 +75,11 @@ public static class ModelBuilderExtensions
             entity.HasIndex(nameof(HangfireJob.ExpireAt));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireJobParameter>(entity =>
         {
             entity.HasKey(x => new { x.JobId, x.Name });
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireList>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Position });
@@ -90,17 +87,12 @@ public static class ModelBuilderExtensions
             SetSchema(entity);
         });
 
-        modelBuilder.Entity<HangfireLock>(entity =>
-        {
-            SetSchema(entity);
-        });
-
+        modelBuilder.Entity<HangfireLock>(SetSchema);
         modelBuilder.Entity<HangfireQueuedJob>(entity =>
         {
             entity.HasIndex(nameof(HangfireQueuedJob.Queue), nameof(HangfireQueuedJob.FetchedAt));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireSet>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Value });
@@ -108,7 +100,6 @@ public static class ModelBuilderExtensions
             entity.HasIndex(nameof(HangfireSet.ExpireAt));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireServer>(entity =>
         {
             entity.Property(x => x.Queues)
@@ -118,7 +109,6 @@ public static class ModelBuilderExtensions
             entity.HasIndex(nameof(HangfireServer.Heartbeat));
             SetSchema(entity);
         });
-
         modelBuilder.Entity<HangfireState>(entity =>
         {
             entity.Property(x => x.Data)

@@ -31,8 +31,7 @@ public abstract class EFCoreStorageTest : DbContextOptionsTest
     private protected static InvocationData InvocationDataStub { get; } =
         new InvocationData(null, null, null, string.Empty);
 
-    private protected static string[] EmptyArrayStub { get; } =
-        Array.Empty<string>();
+    private protected static string[] EmptyArrayStub { get; } = [];
 
     private protected static IDictionary<string, string> EmptyDictionaryStub { get; } =
         new Dictionary<string, string>();

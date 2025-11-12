@@ -9,10 +9,10 @@ namespace Hangfire.EntityFrameworkCore.Tests;
 [ExcludeFromCodeCoverage]
 public abstract class DbContextOptionsTest : IDisposable
 {
-    public static LoggerFactory LoggerFactory { get; } = new LoggerFactory(new[]
-    {
-            new DebugLoggerProvider(),
-    });
+    public static LoggerFactory LoggerFactory { get; } = new LoggerFactory(
+    [
+        new DebugLoggerProvider(),
+    ]);
 
     private SqliteConnection _connection;
     private bool _disposed = false;

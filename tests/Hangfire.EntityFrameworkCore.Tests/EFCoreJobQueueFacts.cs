@@ -37,7 +37,7 @@ public class EFCoreJobQueueFacts : EFCoreStorageTest
     public void Dequeue_Throws_WhenQueuesParameterIsEmpty()
     {
         var instance = new EFCoreJobQueue(CreateStorageStub());
-        string[] queues = Array.Empty<string>();
+        string[] queues = [];
 
         Assert.Throws<ArgumentException>(nameof(queues),
             () => instance.Dequeue(queues, CancellationToken.None));
@@ -47,7 +47,7 @@ public class EFCoreJobQueueFacts : EFCoreStorageTest
     public void Dequeue_Throws_WhenCancellationTokenIsSet()
     {
         var instance = new EFCoreJobQueue(Storage);
-        string[] queues = { "default" };
+        string[] queues = ["default"];
         var source = new CancellationTokenSource();
         source.Cancel();
 
@@ -63,17 +63,17 @@ public class EFCoreJobQueueFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            QueuedJobs = new List<HangfireQueuedJob>
+            QueuedJobs =
+            [
+                new()
                 {
-                    new HangfireQueuedJob
-                    {
-                        Queue = queue,
-                    },
+                    Queue = queue,
                 },
+            ],
         };
         UseContextSavingChanges(context => context.Add(job));
 
-        var result = instance.Dequeue(new[] { queue }, CancellationToken.None);
+        var result = instance.Dequeue([queue], CancellationToken.None);
 
         Assert.NotNull(result);
         var fetchedJob = Assert.IsType<EFCoreFetchedJob>(result);
@@ -98,7 +98,7 @@ public class EFCoreJobQueueFacts : EFCoreStorageTest
         var source = new CancellationTokenSource(50);
 
         Assert.Throws<OperationCanceledException>(
-            () => instance.Dequeue(new[] { queue }, source.Token));
+            () => instance.Dequeue([queue], source.Token));
     }
 
     [Fact]

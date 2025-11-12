@@ -2,16 +2,18 @@
 using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.States;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Hangfire.EntityFrameworkCore;
 
 using GetHashFieldsFunc = Func<DbContext, string, IEnumerable<string>>;
-using GetSetValuesFunc = Func<DbContext, string, IEnumerable<string>>;
-using GetListsFunc = Func<DbContext, string, IEnumerable<HangfireList>>;
 using GetListPositionsFunc = Func<DbContext, string, IEnumerable<int>>;
+using GetListsFunc = Func<DbContext, string, IEnumerable<HangfireList>>;
 using GetMaxListPositionFunc = Func<DbContext, string, int?>;
-using SetExistsFunc = Func<DbContext, string, string, bool>;
+using GetSetValuesFunc = Func<DbContext, string, IEnumerable<string>>;
 using NotNullAttribute = Annotations.NotNullAttribute;
+using SetExistsFunc = Func<DbContext, string, string, bool>;
 
 internal sealed class EFCoreStorageTransaction : JobStorageTransaction
 {
@@ -58,30 +60,31 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     public EFCoreStorageTransaction(
         EFCoreStorage storage)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+#endif
         _storage = storage;
         _queue = new Queue<Action<DbContext>>();
         _afterCommitQueue = new Queue<Action>();
     }
 
     public override void AddJobState([NotNull] string jobId, [NotNull] IState state)
-    {
-        AddJobState(jobId, state, false);
-    }
+        => AddJobState(jobId, state, false);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void AddRangeToSet([NotNull] string key, [NotNull] IList<string> items)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (items is null)
-            throw new ArgumentNullException(nameof(items));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(items);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (items is null) throw new ArgumentNullException(nameof(items));
+#endif
         ThrowIfDisposed();
-
         var values = new HashSet<string>(items);
-
         _queue.Enqueue(context =>
         {
             var entries = context
@@ -116,7 +119,6 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         ValidateQueue(queue);
         long id = ValidateJobId(jobId);
         ThrowIfDisposed();
-
         var provider = _storage.GetQueueProvider(queue);
         var persistentQueue = provider.GetJobQueue();
         switch (persistentQueue)
@@ -137,20 +139,19 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
                 () => EFCoreJobQueue.NewItemInQueueEvent.Set());
     }
 
-    public override void AddToSet([NotNull] string key, [NotNull] string value)
-    {
-        AddToSet(key, value, 0d);
-    }
+    public override void AddToSet([NotNull] string key, [NotNull] string value) => AddToSet(key, value, 0d);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void AddToSet([NotNull] string key, [NotNull] string value, double score)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (value is null)
-            throw new ArgumentNullException(nameof(value));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(value);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (value is null) throw new ArgumentNullException(nameof(value));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entry = context.FindEntry<HangfireSet>(x => x.Key == key && x.Value == value);
@@ -178,7 +179,6 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     public override void Commit()
     {
         ThrowIfDisposed();
-
         _storage.UseContextSavingChanges(context =>
         {
             while (_queue.Count > 0)
@@ -187,7 +187,6 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
                 action.Invoke(context);
             }
         });
-
         while (_afterCommitQueue.Count > 0)
         {
             var action = _afterCommitQueue.Dequeue();
@@ -195,15 +194,10 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         }
     }
 
-    public override void DecrementCounter([NotNull] string key)
-    {
-        AddCounter(key, -1L, default);
-    }
+    public override void DecrementCounter([NotNull] string key) => AddCounter(key, -1L, default);
 
     public override void DecrementCounter([NotNull] string key, TimeSpan expireIn)
-    {
-        AddCounter(key, -1L, DateTime.UtcNow + expireIn);
-    }
+        => AddCounter(key, -1L, DateTime.UtcNow + expireIn);
 
     public override void Dispose()
     {
@@ -225,42 +219,31 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     }
 
     public override void ExpireJob([NotNull] string jobId, TimeSpan expireIn)
-    {
-        SetJobExpiration(jobId, DateTime.UtcNow + expireIn);
-    }
+        => SetJobExpiration(jobId, DateTime.UtcNow + expireIn);
 
     public override void ExpireHash([NotNull] string key, TimeSpan expireIn)
-    {
-        SetHashExpiration(key, DateTime.UtcNow + expireIn);
-    }
+        => SetHashExpiration(key, DateTime.UtcNow + expireIn);
 
     public override void ExpireList([NotNull] string key, TimeSpan expireIn)
-    {
-        SetListExpiration(key, DateTime.UtcNow + expireIn);
-    }
+        => SetListExpiration(key, DateTime.UtcNow + expireIn);
 
     public override void ExpireSet([NotNull] string key, TimeSpan expireIn)
-    {
-        SetSetExpiration(key, DateTime.UtcNow + expireIn);
-    }
+        => SetSetExpiration(key, DateTime.UtcNow + expireIn);
 
-    public override void IncrementCounter([NotNull] string key)
-    {
-        AddCounter(key, 1L, default);
-    }
+    public override void IncrementCounter([NotNull] string key) => AddCounter(key, 1L, default);
 
     public override void IncrementCounter([NotNull] string key, TimeSpan expireIn)
-    {
-        AddCounter(key, 1L, DateTime.UtcNow + expireIn);
-    }
+        => AddCounter(key, 1L, DateTime.UtcNow + expireIn);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void InsertToList([NotNull] string key, string value)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var maxPosition = context.FindEntries<HangfireList>(x => x.Key == key)
@@ -276,33 +259,23 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
-    public override void PersistJob([NotNull] string jobId)
-    {
-        SetJobExpiration(jobId, null);
-    }
+    public override void PersistJob([NotNull] string jobId) => SetJobExpiration(jobId, null);
 
-    public override void PersistHash([NotNull] string key)
-    {
-        SetHashExpiration(key, null);
-    }
+    public override void PersistHash([NotNull] string key) => SetHashExpiration(key, null);
 
-    public override void PersistList([NotNull] string key)
-    {
-        SetListExpiration(key, null);
-    }
+    public override void PersistList([NotNull] string key) => SetListExpiration(key, null);
 
-    public override void PersistSet([NotNull] string key)
-    {
-        SetSetExpiration(key, null);
-    }
+    public override void PersistSet([NotNull] string key) => SetSetExpiration(key, null);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveFromList([NotNull] string key, string value)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var list = GetListsFunc(context, key).OrderBy(x => x.Position).ToList();
@@ -316,12 +289,14 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveFromSet([NotNull] string key, [NotNull] string value)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (value is null)
-            throw new ArgumentNullException(nameof(value));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(value);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (value is null) throw new ArgumentNullException(nameof(value));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entry = context.FindEntry<HangfireSet>(x => x.Key == key && x.Value == value);
@@ -342,17 +317,17 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveHash([NotNull] string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entries = context.FindEntries<HangfireHash>(x => x.Key == key)
             .ToDictionary(x => x.Entity.Field);
-
             var fields = GetHashFieldsFunc(context, key);
-
             foreach (var field in fields)
                 if (entries.TryGetValue(field, out var entry) &&
                     entry.State != EntityState.Deleted)
@@ -369,10 +344,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveSet([NotNull] string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entries = context.FindEntries<HangfireSet>(x => x.Key == key)
@@ -391,24 +368,22 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
         });
     }
 
-    public override void SetJobState([NotNull] string jobId, [NotNull] IState state)
-    {
-        AddJobState(jobId, state, true);
-    }
+    public override void SetJobState([NotNull] string jobId, [NotNull] IState state) => AddJobState(jobId, state, true);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void SetRangeInHash(
         [NotNull] string key,
         [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (keyValuePairs is null)
-            throw new ArgumentNullException(nameof(keyValuePairs));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(keyValuePairs);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (keyValuePairs is null) throw new ArgumentNullException(nameof(keyValuePairs));
+#endif
         ThrowIfDisposed();
-
         var fields = new HashSet<string>(keyValuePairs.Select(x => x.Key));
-
         _queue.Enqueue(context =>
         {
             var exisitingFields = new HashSet<string>(GetHashFieldsFunc(context, key));
@@ -438,10 +413,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     public override void TrimList([NotNull] string key, int keepStartingFrom, int keepEndingAt)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var list = GetListsFunc(context, key)
@@ -459,10 +436,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     private void AddCounter([NotNull] string key, long value, DateTime? expireAt)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entity = (
@@ -483,13 +462,14 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     private void AddJobState([NotNull] string jobId, [NotNull] IState state, bool setActual)
     {
         var id = ValidateJobId(jobId);
-        if (state is null)
-            throw new ArgumentNullException(nameof(state));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(state);
+#else
+        if (state is null) throw new ArgumentNullException(nameof(state));
+#endif
         ThrowIfDisposed();
-
         var data = state.SerializeData();
         var createdAt = state.GetCreatedAt() ?? DateTime.UtcNow;
-
         _queue.Enqueue(context =>
         {
             var stateEntity = context
@@ -537,7 +517,6 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     {
         var id = ValidateJobId(jobId);
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var entry = context.FindEntry<HangfireJob>(x => x.Id == id);
@@ -558,10 +537,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     private void SetHashExpiration(string key, DateTime? expireAt)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var fields = new HashSet<string>(GetHashFieldsFunc(context, key));
@@ -585,10 +566,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     private void SetListExpiration(string key, DateTime? expireAt)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var positions = new HashSet<int>(GetListPositionsFunc(context, key));
@@ -611,10 +594,12 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
     [SuppressMessage("Maintainability", "CA1510")]
     private void SetSetExpiration(string key, DateTime? expireAt)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         ThrowIfDisposed();
-
         _queue.Enqueue(context =>
         {
             var values = new HashSet<string>(GetSetValuesFunc(context, key));
@@ -636,30 +621,40 @@ internal sealed class EFCoreStorageTransaction : JobStorageTransaction
 
     [SuppressMessage("Maintainability", "CA1513")]
     private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(GetType().FullName);
-    }
+#if NET8_0_OR_GREATER
+        => ObjectDisposedException.ThrowIf(_disposed, this);
+#else
+{
+        if (_disposed) throw new ObjectDisposedException(GetType().FullName);
+}
+#endif
 
     [SuppressMessage("Maintainability", "CA1510")]
     private static void ValidateQueue(string queue)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
         if (queue.Length == 0)
             throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                 nameof(queue));
+#endif
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     private static long ValidateJobId(string jobId)
     {
-        if (jobId is null)
-            throw new ArgumentNullException(nameof(jobId));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(jobId);
+        ArgumentException.ThrowIfNullOrEmpty(jobId);
+#else
+        if (jobId is null) throw new ArgumentNullException(nameof(jobId));
         if (jobId.Length == 0)
             throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                 nameof(jobId));
-
+#endif
         return long.Parse(jobId, CultureInfo.InvariantCulture);
     }
 }

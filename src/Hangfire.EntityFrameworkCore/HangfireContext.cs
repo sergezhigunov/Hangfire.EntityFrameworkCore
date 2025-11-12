@@ -12,9 +12,11 @@ internal class HangfireContext : DbContext
     public HangfireContext([NotNull] DbContextOptions options, [NotNull] string schema)
         : base(options)
     {
-        if (schema is null)
-            throw new ArgumentNullException(nameof(schema));
-
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(schema);
+#else
+        if (schema is null) throw new ArgumentNullException(nameof(schema));
+#endif
         Schema = schema;
     }
 

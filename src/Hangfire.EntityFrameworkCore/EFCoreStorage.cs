@@ -9,7 +9,11 @@ namespace Hangfire.EntityFrameworkCore;
 /// </summary>
 public class EFCoreStorage : JobStorage
 {
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
     private readonly object _lock = new();
+#endif
     private readonly DbContextOptions _contextOptions;
     private readonly EFCoreStorageOptions _options;
     private readonly Func<DbContext> _dbContextBuilder;
@@ -32,6 +36,7 @@ public class EFCoreStorage : JobStorage
     internal TimeSpan CountersAggregationInterval => _options.CountersAggregationInterval;
 
     internal TimeSpan SlidingInvisibilityTimeout => _options.SlidingInvisibilityTimeout;
+
     internal bool UseSlidingInvisibilityTimeout => _options.UseSlidingInvisibilityTimeout;
 
     /// <summary>
@@ -58,11 +63,13 @@ public class EFCoreStorage : JobStorage
         Action<DbContextOptionsBuilder> optionsAction,
         EFCoreStorageOptions options)
     {
-        if (optionsAction is null)
-            throw new ArgumentNullException(nameof(optionsAction));
-        if (options is null)
-            throw new ArgumentNullException(nameof(options));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(optionsAction);
+        ArgumentNullException.ThrowIfNull(options);
+#else
+        if (optionsAction is null) throw new ArgumentNullException(nameof(optionsAction));
+        if (options is null) throw new ArgumentNullException(nameof(options));
+#endif
         _options = options;
         var contextOptionsBuilder = new DbContextOptionsBuilder<HangfireContext>();
         optionsAction.Invoke(contextOptionsBuilder);
@@ -94,13 +101,18 @@ public class EFCoreStorage : JobStorage
         Func<DbContext> dbContextBuilder,
         EFCoreStorageOptions options)
     {
-        _dbContextBuilder = dbContextBuilder ?? throw new ArgumentNullException(nameof(dbContextBuilder));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(dbContextBuilder);
+        ArgumentNullException.ThrowIfNull(options);
+#else
+        if (dbContextBuilder is null) throw new ArgumentNullException(nameof(dbContextBuilder));
+        if (options is null) throw new ArgumentNullException(nameof(options));
+#endif
+        _dbContextBuilder = dbContextBuilder;
+        _options = options;
         DefaultQueueProvider = new EFCoreJobQueueProvider(this);
         if (UseSlidingInvisibilityTimeout)
-        {
             HeartbeatProcess = new EFCoreHeartbeatProcess();
-        }
     }
 
     /// <summary>
@@ -109,10 +121,7 @@ public class EFCoreStorage : JobStorage
     /// <returns>
     /// A new job storage connection.
     /// </returns>
-    public override IStorageConnection GetConnection()
-    {
-        return new EFCoreStorageConnection(this);
-    }
+    public override IStorageConnection GetConnection() => new EFCoreStorageConnection(this);
 
     /// <summary>
     /// Creates a new job storage monitoring API.
@@ -120,10 +129,7 @@ public class EFCoreStorage : JobStorage
     /// <returns>
     /// A new job storage monitoring API.
     /// </returns>
-    public override IMonitoringApi GetMonitoringApi()
-    {
-        return new EFCoreStorageMonitoringApi(this);
-    }
+    public override IMonitoringApi GetMonitoringApi() => new EFCoreStorageMonitoringApi(this);
 
     /// <summary>
     /// Returns of server component collection.
@@ -149,9 +155,11 @@ public class EFCoreStorage : JobStorage
     [SuppressMessage("Maintainability", "CA1510")]
     internal IPersistentJobQueueProvider GetQueueProvider(string queue)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
+#endif
         return QueueProviders.GetValue(queue) ?? DefaultQueueProvider;
     }
 
@@ -161,16 +169,17 @@ public class EFCoreStorage : JobStorage
     [SuppressMessage("Maintainability", "CA1510")]
     internal void RegisterProvider(IPersistentJobQueueProvider provider, IList<string> queues)
     {
-        if (provider is null)
-            throw new ArgumentNullException(nameof(provider));
-        if (queues is null)
-            throw new ArgumentNullException(nameof(queues));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(queues);
+#else
+        if (provider is null) throw new ArgumentNullException(nameof(provider));
+        if (queues is null) throw new ArgumentNullException(nameof(queues));
+#endif
         if (queues.Count == 0)
             throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
                 nameof(queues));
-
         var providers = QueueProviders;
-
         foreach (var queue in queues)
             providers[queue] = provider;
     }
@@ -178,9 +187,11 @@ public class EFCoreStorage : JobStorage
     [SuppressMessage("Maintainability", "CA1510")]
     internal void UseContext(Action<DbContext> action)
     {
-        if (action is null)
-            throw new ArgumentNullException(nameof(action));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(action);
+#else
+        if (action is null) throw new ArgumentNullException(nameof(action));
+#endif
         using var context = CreateContext();
         action(context);
     }
@@ -197,9 +208,11 @@ public class EFCoreStorage : JobStorage
     [SuppressMessage("Maintainability", "CA1510")]
     internal T UseContext<T>(Func<DbContext, T> func)
     {
-        if (func is null)
-            throw new ArgumentNullException(nameof(func));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(func);
+#else
+        if (func is null) throw new ArgumentNullException(nameof(func));
+#endif
         using var context = CreateContext();
         return func(context);
     }
@@ -217,10 +230,7 @@ public class EFCoreStorage : JobStorage
     internal DbContext CreateContext()
     {
         if (_dbContextBuilder != null)
-        {
             return _dbContextBuilder();
-        }
-
         var context = new HangfireContext(_contextOptions, _options.Schema);
         if (!_databaseInitialized)
             lock (_lock)
@@ -229,7 +239,6 @@ public class EFCoreStorage : JobStorage
                     _databaseInitializer?.Invoke(context);
                     _databaseInitialized = true;
                 }
-
         return context;
     }
 }

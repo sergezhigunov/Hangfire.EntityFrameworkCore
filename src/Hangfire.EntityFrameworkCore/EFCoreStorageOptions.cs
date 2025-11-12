@@ -9,13 +9,6 @@ namespace Hangfire.EntityFrameworkCore;
 /// </summary>
 public class EFCoreStorageOptions
 {
-    private TimeSpan _distributedLockTimeout = new(0, 10, 0);
-    private TimeSpan _queuePollInterval = new(0, 0, 15);
-    private TimeSpan _countersAggregationInterval = new(0, 5, 0);
-    private TimeSpan _jobExpirationCheckInterval = new(0, 30, 0);
-    private TimeSpan _slidingInvisibilityTimeout = new(0, 5, 0);
-    private string _schema = string.Empty;
-
     /// <summary>
     /// Gets or set maximal distributed lock lifetime. The default value is 00:10:00.
     /// </summary>
@@ -27,13 +20,13 @@ public class EFCoreStorageOptions
     /// </exception>
     public TimeSpan DistributedLockTimeout
     {
-        get => _distributedLockTimeout;
+        get;
         set
         {
             ThrowIfNonPositive(value);
-            _distributedLockTimeout = value;
+            field = value;
         }
-    }
+    } = new(0, 10, 0);
 
     /// <summary>
     /// Gets or set queue polling interval. The default value is 00:00:15.
@@ -46,13 +39,13 @@ public class EFCoreStorageOptions
     /// </exception>
     public TimeSpan QueuePollInterval
     {
-        get => _queuePollInterval;
+        get;
         set
         {
             ThrowIfNonPositive(value);
-            _queuePollInterval = value;
+            field = value;
         }
-    }
+    } = new(0, 0, 15);
 
     /// <summary>
     /// Gets or set interval between counter aggregation executions.
@@ -66,13 +59,13 @@ public class EFCoreStorageOptions
     /// </exception>
     public TimeSpan CountersAggregationInterval
     {
-        get => _countersAggregationInterval;
+        get;
         set
         {
             ThrowIfNonPositive(value);
-            _countersAggregationInterval = value;
+            field = value;
         }
-    }
+    } = new(0, 5, 0);
 
     /// <summary>
     /// Gets or set interval between expiration manager executions.
@@ -86,13 +79,13 @@ public class EFCoreStorageOptions
     /// </exception>
     public TimeSpan JobExpirationCheckInterval
     {
-        get => _jobExpirationCheckInterval;
+        get;
         set
         {
             ThrowIfNonPositive(value);
-            _jobExpirationCheckInterval = value;
+            field = value;
         }
-    }
+    } = new(0, 30, 0);
 
     /// <summary>
     /// Gets or set fetched job invisibility timeout. The default value is 00:05:00.
@@ -105,13 +98,13 @@ public class EFCoreStorageOptions
     /// </exception>
     public TimeSpan SlidingInvisibilityTimeout
     {
-        get => _slidingInvisibilityTimeout;
+        get;
         set
         {
             ThrowIfNonPositive(value);
-            _slidingInvisibilityTimeout = value;
+            field = value;
         }
-    }
+    } = new(0, 5, 0);
 
     /// <summary>
     /// Apply a sliding invisibility timeout where the last fetched time is continually updated in the background.
@@ -136,19 +129,26 @@ public class EFCoreStorageOptions
     [SuppressMessage("Maintainability", "CA1510")]
     public string Schema
     {
-        get => _schema;
+        get;
         set
         {
-            if (value is null)
-                throw new ArgumentNullException(nameof(value));
-            _schema = value;
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(value);
+#else
+            if (value is null) throw new ArgumentNullException(nameof(value));
+#endif
+            field = value;
         }
-    }
+    } = string.Empty;
 
     private static void ThrowIfNonPositive(TimeSpan value)
     {
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+#else
         if (value <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(value), value,
                 CoreStrings.ArgumentOutOfRangeExceptionNeedPositiveValue);
+#endif
     }
 }

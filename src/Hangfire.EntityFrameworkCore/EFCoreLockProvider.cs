@@ -20,31 +20,36 @@ internal class EFCoreLockProvider : ILockProvider
     public EFCoreLockProvider(
         [NotNull] EFCoreStorage storage)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+#endif
         _storage = storage;
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public void Acquire([NotNull] string resource, TimeSpan timeout)
     {
-        if (resource is null)
-            throw new ArgumentNullException(nameof(resource));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(resource);
+        ArgumentException.ThrowIfNullOrEmpty(resource);
+        ArgumentOutOfRangeException.ThrowIfLessThan(timeout, TimeSpan.Zero);
+#else
+        if (resource is null) throw new ArgumentNullException(nameof(resource));
         if (resource.Length == 0)
-            throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
+            throw new ArgumentException(
+                CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
                 nameof(resource));
         if (timeout < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(timeout), timeout,
                 CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
-
+#endif
         var deadline = DateTime.UtcNow + timeout;
-
         while (true)
         {
             if (TryAcquireLock(resource))
                 return;
-
             switch (TryReacquireLock(resource))
             {
                 case true:
@@ -52,9 +57,7 @@ internal class EFCoreLockProvider : ILockProvider
                 case false:
                     continue;
             }
-
             var remaining = deadline - DateTime.UtcNow;
-
             if (remaining <= TimeSpan.Zero)
                 break;
             else if (remaining < _maxSleepDuration)
@@ -62,16 +65,22 @@ internal class EFCoreLockProvider : ILockProvider
             else
                 Thread.Sleep(_maxSleepDuration);
         }
-
         throw new DistributedLockTimeoutException(resource);
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public void Release([NotNull] string resource)
     {
-        if (resource is null)
-            throw new ArgumentNullException(nameof(resource));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(resource);
+        ArgumentException.ThrowIfNullOrEmpty(resource);
+#else
+        if (resource is null) throw new ArgumentNullException(nameof(resource));
+        if (resource.Length == 0)
+            throw new ArgumentException(
+                CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
+                nameof(resource));
+#endif
         _storage.UseContext(context =>
         {
             context.Remove(new HangfireLock
@@ -84,61 +93,54 @@ internal class EFCoreLockProvider : ILockProvider
             }
             catch (DbUpdateConcurrencyException)
             {
-                    // Someone else already has deleted this record. Database wins.
-                }
+                // Someone else already has deleted this record. Database wins.
+            }
         });
     }
 
     private bool TryAcquireLock(string resource)
-    {
-        return _storage.UseContext(context =>
-        {
-            context.Add(new HangfireLock
+        => _storage.UseContext(
+            context =>
             {
-                Id = resource,
-                AcquiredAt = DateTime.UtcNow,
-            });
-
-            try
-            {
-                context.SaveChanges();
-                return true; // Lock taken
-                }
-            catch (DbUpdateException)
-            {
-                return false; // Lock already exists
-                }
-        });
-    }
-
-    private bool? TryReacquireLock(string resource)
-    {
-        return _storage.UseContext<bool?>(context =>
-        {
-            var @lock = GetLockFunc(context, resource);
-
-                // If the lock has been removed we should try to insert again
-                if (@lock is null)
-                return false;
-
-                // If the lock has been expired, we should update its creation timestamp
-                var now = DateTime.UtcNow;
-            if (@lock.AcquiredAt + _storage.DistributedLockTimeout < now)
-            {
-                @lock.AcquiredAt = now;
-
+                context.Add(new HangfireLock
+                {
+                    Id = resource,
+                    AcquiredAt = DateTime.UtcNow,
+                });
                 try
                 {
                     context.SaveChanges();
                     return true; // Lock taken
-                    }
-                catch (DbUpdateConcurrencyException)
+                }
+                catch (DbUpdateException)
                 {
-                    return false; // Already removed, we should try to insert again
-                    }
-            }
+                    return false; // Lock already exists
+                }
+            });
 
-            return default;
-        });
-    }
+    private bool? TryReacquireLock(string resource)
+        => _storage.UseContext<bool?>(
+            context =>
+            {
+                var @lock = GetLockFunc(context, resource);
+                // If the lock has been removed we should try to insert again
+                if (@lock is null)
+                    return false;
+                // If the lock has been expired, we should update its creation timestamp
+                var now = DateTime.UtcNow;
+                if (@lock.AcquiredAt + _storage.DistributedLockTimeout < now)
+                {
+                    @lock.AcquiredAt = now;
+                    try
+                    {
+                        context.SaveChanges();
+                        return true; // Lock taken
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        return false; // Already removed, we should try to insert again
+                    }
+                }
+                return default;
+            });
 }

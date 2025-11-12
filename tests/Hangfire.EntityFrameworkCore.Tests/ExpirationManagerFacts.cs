@@ -1,6 +1,4 @@
-﻿using System.Xml.Linq;
-
-namespace Hangfire.EntityFrameworkCore.Tests;
+﻿namespace Hangfire.EntityFrameworkCore.Tests;
 
 public class ExpirationManagerFacts : EFCoreStorageTest
 {

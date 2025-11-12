@@ -89,10 +89,10 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             from x in context.Set<HangfireJob>()
             where new[]
             {
-                    EnqueuedState.StateName,
-                    FailedState.StateName,
-                    ProcessingState.StateName,
-                    ScheduledState.StateName,
+                EnqueuedState.StateName,
+                FailedState.StateName,
+                ProcessingState.StateName,
+                ScheduledState.StateName,
             }.
             Contains(x.StateName)
             group x by x.StateName into g
@@ -103,12 +103,12 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             from x in context.Set<HangfireCounter>()
             where new[]
             {
-                    DeletedCounterName,
-                    SucceededCounterName,
+                DeletedCounterName,
+                SucceededCounterName,
             }.
             Contains(x.Key)
-            group x by x.Key into g
-            select new KeyValuePair<string, long>(g.Key, g.Sum(x => x.Value))));
+            group x.Value by x.Key into g
+            select new KeyValuePair<string, long>(g.Key, g.Sum())));
 
     private static GetCountFunc GetServersCountFunc { get; } = EF.CompileQuery(
         (DbContext context) => (
@@ -146,7 +146,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 {
                     Job = Deserialize(job.InvocationData),
                     State = job.StateName,
-                    FetchedAt = job.QueuedJobs.Max(x => x.FetchedAt),
+                    FetchedAt = job.QueuedJobs.Select(x => x.FetchedAt).Max(),
                 }));
 
     private static ServersFunc ServersFunc { get; } = EF.CompileQuery(
@@ -167,34 +167,33 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     public EFCoreStorageMonitoringApi(
         EFCoreStorage storage)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+#endif
         _storage = storage;
     }
 
     public JobList<DeletedJobDto> DeletedJobs(int from, int count)
-    {
-        return GetJobs(from, count, DeletedState.StateName,
+        => GetJobs(from, count, DeletedState.StateName,
             (job, data, reason) => new DeletedJobDto
             {
                 Job = job,
                 DeletedAt = JobHelper.DeserializeNullableDateTime(
                     data?.GetValue(nameof(DeletedJobDto.DeletedAt))),
             });
-    }
 
-    public long DeletedListCount()
-    {
-        return GetNumberOfJobsByStateName(DeletedState.StateName);
-    }
+    public long DeletedListCount() => GetNumberOfJobsByStateName(DeletedState.StateName);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public long EnqueuedCount([NotNull] string queue)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
+#endif
         var provider = _storage.GetQueueProvider(queue);
         var monitoringApi = provider.GetMonitoringApi();
         var statistics = monitoringApi.GetQueueStatistics(queue);
@@ -204,28 +203,23 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     [SuppressMessage("Maintainability", "CA1510")]
     public JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
+#endif
         var provider = _storage.GetQueueProvider(queue);
         var monitoringApi = provider.GetMonitoringApi();
         var ids = monitoringApi.GetEnqueuedJobIds(queue, from, perPage);
         return EnqueuedJobs(ids);
     }
 
-    public IDictionary<DateTime, long> FailedByDatesCount()
-    {
-        return GetDailyTimelineStats(FailedStatsName);
-    }
+    public IDictionary<DateTime, long> FailedByDatesCount() => GetDailyTimelineStats(FailedStatsName);
 
-    public long FailedCount()
-    {
-        return GetNumberOfJobsByStateName(FailedState.StateName);
-    }
+    public long FailedCount() => GetNumberOfJobsByStateName(FailedState.StateName);
 
     public JobList<FailedJobDto> FailedJobs(int from, int count)
-    {
-        return GetJobs(from, count, FailedState.StateName,
+        => GetJobs(from, count, FailedState.StateName,
             (job, data, reason) => new FailedJobDto
             {
                 Job = job,
@@ -236,14 +230,15 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 FailedAt = JobHelper.DeserializeNullableDateTime(
                     data?.GetValue(nameof(FailedJobDto.FailedAt))),
             });
-    }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public long FetchedCount([NotNull] string queue)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
+#endif
         var provider = _storage.GetQueueProvider(queue);
         var monitoringApi = provider.GetMonitoringApi();
         var statistics = monitoringApi.GetQueueStatistics(queue);
@@ -253,24 +248,21 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     [SuppressMessage("Maintainability", "CA1510")]
     public JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
     {
-        if (queue is null)
-            throw new ArgumentNullException(nameof(queue));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queue);
+#else
+        if (queue is null) throw new ArgumentNullException(nameof(queue));
+#endif
         var provider = _storage.GetQueueProvider(queue);
         var monitoringApi = provider.GetMonitoringApi();
         var ids = monitoringApi.GetFetchedJobIds(queue, from, perPage);
-
         if (!ids.Any())
-            return new JobList<FetchedJobDto>(
-                Array.Empty<KeyValuePair<string, FetchedJobDto>>());
-
+            return new JobList<FetchedJobDto>([]);
         var keys = ids.Select(x =>
             long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture));
-
         var items = _storage.UseContext(context =>
             FetchedJobsFunc(context, keys).
             ToList());
-
         return new JobList<FetchedJobDto>(
             items.Select(x => new KeyValuePair<string, FetchedJobDto>(
                 x.Key.ToString(CultureInfo.InvariantCulture),
@@ -284,7 +276,6 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             var dictionary = GetJobStatisticsFunc(context).
                 Concat(GetCounterStatisticsFunc(context)).
                 ToDictionary(x => x.Key, x => x.Value);
-
             var recurringCount = GetRecurringJobCountFunc(context);
             var serversCount = GetServersCountFunc(context);
             return new StatisticsDto
@@ -299,7 +290,6 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 Scheduled = dictionary.GetValue(ScheduledState.StateName),
             };
         });
-
         result.Queues = _storage.DefaultQueueProvider.
             GetMonitoringApi().
             GetQueues().
@@ -309,50 +299,35 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return result;
     }
 
-    public IDictionary<DateTime, long> HourlyFailedJobs()
-    {
-        return GetHourlyTimelineStats(FailedStatsName);
-    }
+    public IDictionary<DateTime, long> HourlyFailedJobs() => GetHourlyTimelineStats(FailedStatsName);
 
-    public IDictionary<DateTime, long> HourlySucceededJobs()
-    {
-        return GetHourlyTimelineStats(SucceededStatsName);
-    }
+    public IDictionary<DateTime, long> HourlySucceededJobs() => GetHourlyTimelineStats(SucceededStatsName);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public JobDetailsDto JobDetails([NotNull] string jobId)
     {
-        if (jobId is null)
-            throw new ArgumentNullException(nameof(jobId));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(jobId);
+#else
+        if (jobId is null) throw new ArgumentNullException(nameof(jobId));
+#endif
         if (!TryParseJobId(jobId, out var id))
             return null;
-
         return _storage.UseContext(context =>
         {
             var jobInfo = GetJobDetailsFunc(context, id);
-
             if (jobInfo is null)
                 return null;
-
-            jobInfo.Properties = GetJobParametersFunc(context, id).
-                ToDictionary(x => x.Key, x => x.Value);
-            jobInfo.History = GetStateHistoryFunc(context, id).
-                OrderByDescending(x => x.CreatedAt).
-                ToList();
-
+            jobInfo.Properties = GetJobParametersFunc(context, id).ToDictionary(x => x.Key, x => x.Value);
+            jobInfo.History = [.. GetStateHistoryFunc(context, id).OrderByDescending(x => x.CreatedAt)];
             return jobInfo;
         });
     }
 
-    public long ProcessingCount()
-    {
-        return GetNumberOfJobsByStateName(ProcessingState.StateName);
-    }
+    public long ProcessingCount() => GetNumberOfJobsByStateName(ProcessingState.StateName);
 
     public JobList<ProcessingJobDto> ProcessingJobs(int from, int count)
-    {
-        return GetJobs(from, count, ProcessingState.StateName,
+        => GetJobs(from, count, ProcessingState.StateName,
             (job, data, reason) => new ProcessingJobDto
             {
                 Job = job,
@@ -360,7 +335,6 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 StartedAt = JobHelper.DeserializeNullableDateTime(
                     data?.GetValue(nameof(ProcessingJobDto.StartedAt))),
             });
-    }
 
     public IList<QueueWithTopEnqueuedJobsDto> Queues()
     {
@@ -381,15 +355,12 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                     Monitoring = item.Value.GetMonitoringApi(),
                 }).
             ToArray();
-
         var result = new List<QueueWithTopEnqueuedJobsDto>(tuples.Length);
-
         foreach (var tuple in tuples)
         {
             var enqueuedJobIds = tuple.Monitoring.GetEnqueuedJobIds(tuple.Queue, 0, 5);
             var enqueuedJobCount = tuple.Monitoring.GetQueueStatistics(tuple.Queue);
             var firstJobs = EnqueuedJobs(enqueuedJobIds);
-
             result.Add(new QueueWithTopEnqueuedJobsDto
             {
                 Name = tuple.Queue,
@@ -398,18 +369,13 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 FirstJobs = firstJobs
             });
         }
-
         return result;
     }
 
-    public long ScheduledCount()
-    {
-        return GetNumberOfJobsByStateName(ScheduledState.StateName);
-    }
+    public long ScheduledCount() => GetNumberOfJobsByStateName(ScheduledState.StateName);
 
     public JobList<ScheduledJobDto> ScheduledJobs(int from, int count)
-    {
-        return GetJobs(from, count, ScheduledState.StateName,
+        => GetJobs(from, count, ScheduledState.StateName,
             (job, data, reason) => new ScheduledJobDto
             {
                 Job = job,
@@ -418,21 +384,13 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 ScheduledAt = JobHelper.DeserializeNullableDateTime(
                     data?.GetValue(nameof(ScheduledJobDto.ScheduledAt))) ?? default,
             });
-    }
 
-    public IList<ServerDto> Servers() =>
-        _storage.UseContext(context =>
-            ServersFunc(context).
-            ToList());
+    public IList<ServerDto> Servers() => _storage.UseContext(context => ServersFunc(context).ToList());
 
-    public IDictionary<DateTime, long> SucceededByDatesCount()
-    {
-        return GetDailyTimelineStats(SucceededStatsName);
-    }
+    public IDictionary<DateTime, long> SucceededByDatesCount() => GetDailyTimelineStats(SucceededStatsName);
 
     public JobList<SucceededJobDto> SucceededJobs(int from, int count)
-    {
-        return GetJobs(from, count, SucceededState.StateName,
+        => GetJobs(from, count, SucceededState.StateName,
             (job, data, reason) => new SucceededJobDto
             {
                 Job = job,
@@ -446,12 +404,8 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                             long.Parse(latency, CultureInfo.InvariantCulture) :
                     default(long?)
             });
-    }
 
-    public long SucceededListCount()
-    {
-        return GetNumberOfJobsByStateName(SucceededState.StateName);
-    }
+    public long SucceededListCount() => GetNumberOfJobsByStateName(SucceededState.StateName);
 
     private static Job Deserialize(InvocationData data)
     {
@@ -468,16 +422,12 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     private JobList<EnqueuedJobDto> EnqueuedJobs(IList<string> ids)
     {
         if (!ids.Any())
-            return new JobList<EnqueuedJobDto>(
-                Array.Empty<KeyValuePair<string, EnqueuedJobDto>>());
-
+            return new JobList<EnqueuedJobDto>([]);
         var keys = ids.Select(
             x => long.Parse(x, NumberStyles.Integer, CultureInfo.InvariantCulture));
-
         var items = _storage.UseContext(context =>
             EnqueuedJobsFunc(context, keys).
             ToList());
-
         return new JobList<EnqueuedJobDto>(
             items.Select(x => new KeyValuePair<string, EnqueuedJobDto>(
                 x.Id.ToString(CultureInfo.InvariantCulture),
@@ -497,18 +447,14 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
 
     private JobList<T> GetJobs<T>(int from, int count, string stateName,
         Func<Job, IDictionary<string, string>, string, T> selector)
-    {
-        return _storage.UseContext(context =>
+        => _storage.UseContext(context =>
             new JobList<T>(GetStateDataFunc(context, stateName, from, count).
                 ToDictionary(
                     x => x.Id.ToString(CultureInfo.InvariantCulture),
                     x => selector(x.Job, x.Data, x.Reason))));
-    }
 
     private long GetNumberOfJobsByStateName(string state)
-    {
-        return _storage.UseContext(context => GetStateCountFunc(context, state));
-    }
+        => _storage.UseContext(context => GetStateCountFunc(context, state));
 
     private Dictionary<DateTime, long> GetHourlyTimelineStats(string type)
     {
@@ -516,7 +462,6 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         var endDate = new DateTime(ticks - ticks % TimeSpan.TicksPerHour, DateTimeKind.Utc);
         var dates = Enumerable.Range(0, 24).Select(x => endDate.AddHours(-x));
         var keyMaps = dates.ToDictionary(x => $"stats:{type}:{x:yyyy-MM-dd-HH}");
-
         return GetTimelineStats(keyMaps);
     }
 
@@ -525,7 +470,6 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         var endDate = DateTime.UtcNow.Date;
         var dates = Enumerable.Range(0, 7).Select(x => endDate.AddDays(-x));
         var keyMaps = dates.ToDictionary(x => $"stats:{type}:{x:yyyy-MM-dd}");
-
         return GetTimelineStats(keyMaps);
     }
 
@@ -534,13 +478,12 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         var counters = _storage.UseContext(context =>
             GetCountersFunc(context, keyMaps.Keys).
             ToDictionary(x => x.Key, x => x.Value));
-
         return keyMaps.ToDictionary(x => x.Value,
             x => counters.TryGetValue(x.Key, out var result) ? result : 0L);
     }
 
-    private static bool TryParseJobId(string jobId, out long id) =>
-        long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
+    private static bool TryParseJobId(string jobId, out long id)
+        => long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
 
     internal class JobState
     {

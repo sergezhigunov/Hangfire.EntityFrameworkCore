@@ -7,29 +7,24 @@ public static class EFCoreStorageOptionsFacts
     {
         var instance = new EFCoreStorageOptions();
 
-        Assert.Equal(new TimeSpan(0, 10, 0), Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_distributedLockTimeout")));
-        Assert.Equal(new TimeSpan(0, 0, 15), Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_queuePollInterval")));
-        Assert.Equal(new TimeSpan(0, 5, 0), Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_countersAggregationInterval")));
-        Assert.Equal(new TimeSpan(0, 30, 0), Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_jobExpirationCheckInterval")));
-        Assert.Equal(new TimeSpan(0, 5, 0), Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_slidingInvisibilityTimeout")));
-        Assert.Empty(Assert.IsType<string>(instance.GetFieldValue("_schema")));
+        Assert.Equal(new TimeSpan(0, 10, 0), instance.DistributedLockTimeout);
+        Assert.Equal(new TimeSpan(0, 0, 15), instance.QueuePollInterval);
+        Assert.Equal(new TimeSpan(0, 5, 0), instance.CountersAggregationInterval);
+        Assert.Equal(new TimeSpan(0, 30, 0), instance.JobExpirationCheckInterval);
+        Assert.Equal(new TimeSpan(0, 5, 0), instance.SlidingInvisibilityTimeout);
+        Assert.Empty(instance.Schema);
     }
 
-    [Fact]
-    public static void DistributedLockTimeout_Throws_WhenValueIsNonPositive()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public static void DistributedLockTimeout_Throws_WhenValueIsNonPositive(long ticks)
     {
         var instance = new EFCoreStorageOptions();
+        var value = new TimeSpan(ticks);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.DistributedLockTimeout = default);
-
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.DistributedLockTimeout = new TimeSpan(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(nameof(value),
+            () => instance.DistributedLockTimeout = value);
     }
 
     [Fact]
@@ -41,20 +36,18 @@ public static class EFCoreStorageOptionsFacts
         instance.DistributedLockTimeout = value;
 
         Assert.Equal(value, instance.DistributedLockTimeout);
-        Assert.Equal(value, Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_distributedLockTimeout")));
     }
 
-    [Fact]
-    public static void QueuePollInterval_Throws_WhenValueIsNonPositive()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public static void QueuePollInterval_Throws_WhenValueIsNonPositive(long ticks)
     {
         var instance = new EFCoreStorageOptions();
+        var value = new TimeSpan(ticks);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.QueuePollInterval = default);
-
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.QueuePollInterval = new TimeSpan(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(nameof(value),
+            () => instance.QueuePollInterval = value);
     }
 
     [Fact]
@@ -66,20 +59,18 @@ public static class EFCoreStorageOptionsFacts
         instance.QueuePollInterval = value;
 
         Assert.Equal(value, instance.QueuePollInterval);
-        Assert.Equal(value, Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_queuePollInterval")));
     }
 
-    [Fact]
-    public static void CountersAggregationInterval_Throws_WhenValueIsNonPositive()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public static void CountersAggregationInterval_Throws_WhenValueIsNonPositive(long ticks)
     {
         var instance = new EFCoreStorageOptions();
+        var value = new TimeSpan(ticks);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.CountersAggregationInterval = default);
-
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.CountersAggregationInterval = new TimeSpan(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(nameof(value),
+            () => instance.CountersAggregationInterval = value);
     }
 
     [Fact]
@@ -91,20 +82,18 @@ public static class EFCoreStorageOptionsFacts
         instance.CountersAggregationInterval = value;
 
         Assert.Equal(value, instance.CountersAggregationInterval);
-        Assert.Equal(value, Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_countersAggregationInterval")));
     }
 
-    [Fact]
-    public static void JobExpirationCheckInterval_Throws_WhenValueIsNonPositive()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public static void JobExpirationCheckInterval_Throws_WhenValueIsNonPositive(long ticks)
     {
         var instance = new EFCoreStorageOptions();
+        var value = new TimeSpan(ticks);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.JobExpirationCheckInterval = default);
-
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.JobExpirationCheckInterval = new TimeSpan(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(nameof(value),
+            () => instance.JobExpirationCheckInterval = value);
     }
 
     [Fact]
@@ -116,21 +105,20 @@ public static class EFCoreStorageOptionsFacts
         instance.JobExpirationCheckInterval = value;
 
         Assert.Equal(value, instance.JobExpirationCheckInterval);
-        Assert.Equal(value, Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_jobExpirationCheckInterval")));
     }
 
-    [Fact]
-    public static void SlidingInvisibilityTimeout_Throws_WhenValueIsNonPositive()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public static void SlidingInvisibilityTimeout_Throws_WhenValueIsNonPositive(long ticks)
     {
         var instance = new EFCoreStorageOptions();
+        var value = new TimeSpan(ticks);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.SlidingInvisibilityTimeout = default);
+        Assert.Throws<ArgumentOutOfRangeException>(nameof(value),
+            () => instance.SlidingInvisibilityTimeout = value);
 
-        Assert.Throws<ArgumentOutOfRangeException>("value",
-            () => instance.SlidingInvisibilityTimeout = new TimeSpan(-1));
-    }
+     }
 
     [Fact]
     public static void SlidingInvisibilityTimeout_GetsAndSetsCorrectly()
@@ -141,16 +129,15 @@ public static class EFCoreStorageOptionsFacts
         instance.SlidingInvisibilityTimeout = value;
 
         Assert.Equal(value, instance.SlidingInvisibilityTimeout);
-        Assert.Equal(value, Assert.IsType<TimeSpan>(
-            instance.GetFieldValue("_slidingInvisibilityTimeout")));
     }
 
     [Fact]
     public static void Schema_Throws_WhenValueIsNull()
     {
         var instance = new EFCoreStorageOptions();
+        var value = default(string)!;
 
-        Assert.Throws<ArgumentNullException>("value",
+        Assert.Throws<ArgumentNullException>(nameof(value),
             () => instance.Schema = default);
     }
 
@@ -163,7 +150,5 @@ public static class EFCoreStorageOptionsFacts
         instance.Schema = value;
 
         Assert.Equal(value, instance.Schema);
-        Assert.Equal(value, Assert.IsType<string>(
-            instance.GetFieldValue("_schema")));
     }
 }

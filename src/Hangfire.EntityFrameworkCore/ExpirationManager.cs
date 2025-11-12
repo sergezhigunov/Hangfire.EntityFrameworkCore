@@ -17,9 +17,11 @@ internal class ExpirationManager : IServerComponent
     [SuppressMessage("Maintainability", "CA1510")]
     public ExpirationManager(EFCoreStorage storage)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(storage);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+#endif
         _storage = storage;
     }
 
@@ -56,12 +58,10 @@ internal class ExpirationManager : IServerComponent
                 var entries = expiredEntityIds
                     .Select(x => context.Attach(new HangfireJob { Id = x }))
                     .ToList();
-
                 var expiredParameterIds = context.Set<HangfireJobParameter>()
                     .Where(x => expiredEntityIds.Contains(x.JobId))
                     .Select(x => new { x.JobId, x.Name })
                     .ToList();
-
                 // Trying to set StateId = null for all fetched jobs first
                 foreach (var entry in entries)
                     entry.Property(x => x.StateId).IsModified = true;
@@ -70,7 +70,6 @@ internal class ExpirationManager : IServerComponent
                     context.RemoveRange(
                         expiredParameterIds.Select(
                             x => new HangfireJobParameter { JobId = x.JobId, Name = x.Name }));
-
                 try
                 {
                     context.SaveChanges();
@@ -97,7 +96,6 @@ internal class ExpirationManager : IServerComponent
                 return affected;
             }));
         });
-
         _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
     }
 
@@ -108,7 +106,6 @@ internal class ExpirationManager : IServerComponent
     {
         var type = typeof(TEntity);
         _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
-
         UseLock(() =>
         {
             while (0 != _storage.UseContext(context =>
@@ -133,7 +130,6 @@ internal class ExpirationManager : IServerComponent
                 }
             }));
         });
-
         _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
     }
 
@@ -163,12 +159,9 @@ internal class ExpirationManager : IServerComponent
         DbContext context,
         Expression<Func<TEntity, TKey>> keySelector)
         where TEntity : class, IExpirable
-    {
-        return context
+        => [.. context
             .Set<TEntity>()
             .Where(x => x.ExpireAt < DateTime.UtcNow)
             .Select(keySelector)
-            .Take(BatchSize)
-            .ToList();
-    }
+            .Take(BatchSize)];
 }

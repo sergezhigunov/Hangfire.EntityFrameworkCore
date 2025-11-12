@@ -2,12 +2,13 @@
 
 internal static class DictionaryExtensions
 {
-    internal static TValue GetValue<TKey, TValue>(
-        this IDictionary<TKey, TValue> dictionary,
-        TKey key)
+    extension<TKey, TValue>(IDictionary<TKey, TValue> dictionary)
     {
-        if (dictionary.TryGetValue(key, out var value))
-            return value;
-        return default;
+        public TValue GetValue(TKey key)
+        {
+            if (dictionary.TryGetValue(key, out var value))
+                return value;
+            return default;
+        }
     }
 }

@@ -8,13 +8,17 @@ namespace Hangfire.EntityFrameworkCore;
 internal sealed class EFCoreFetchedJob : IFetchedJob
 {
     private readonly ILog _logger = LogProvider.GetLogger(typeof(EFCoreFetchedJob));
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
     private readonly object _lock = new();
+#endif
     private readonly EFCoreStorage _storage;
     private readonly HangfireQueuedJob _queuedJob;
     private bool _disposed;
     private bool _removedFromQueue;
     private bool _requeued;
-    private long _lastHeartbeat;
+    private readonly long _lastHeartbeat;
     private readonly TimeSpan _interval;
 
     public long Id => _queuedJob.Id;
@@ -29,11 +33,13 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
         [NotNull] EFCoreStorage storage,
         [NotNull] HangfireQueuedJob queuedJob)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-        if (queuedJob is null)
-            throw new ArgumentNullException(nameof(queuedJob));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+        ArgumentNullException.ThrowIfNull(queuedJob);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+        if (queuedJob is null) throw new ArgumentNullException(nameof(queuedJob));
+#endif
         _storage = storage;
         _queuedJob = queuedJob;
 
@@ -50,10 +56,7 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
         lock (_lock)
         {
             if (!FetchedAt.HasValue)
-            {
                 return;
-            }
-
             _storage.UseContext(context =>
             {
                 context.Remove(_queuedJob);
@@ -75,10 +78,7 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
         lock (_lock)
         {
             if (!FetchedAt.HasValue)
-            {
                 return;
-            }
-
             SetFetchedAt(null);
             _requeued = true;
         }
@@ -104,33 +104,20 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
     internal void DisposeTimer()
     {
         if (_storage.UseSlidingInvisibilityTimeout)
-        {
             _storage.HeartbeatProcess.Untrack(this);
-        }
     }
 
     [SuppressMessage("Design", "CA1031")]
     internal void ExecuteKeepAliveQueryIfRequired()
     {
-        var now = TimestampHelper.GetTimestamp();
-
-        if (TimestampHelper.Elapsed(now, Interlocked.Read(ref _lastHeartbeat)) < _interval)
-        {
+        if (TimestampHelper.Elapsed(_lastHeartbeat) < _interval)
             return;
-        }
-
         lock (_lock)
         {
             if (!FetchedAt.HasValue)
-            {
                 return;
-            }
-
             if (_requeued || _removedFromQueue)
-            {
                 return;
-            }
-
             try
             {
                 SetFetchedAt(DateTime.UtcNow);
@@ -149,20 +136,11 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
     public void Dispose()
     {
         if (_disposed)
-        {
             return;
-        }
-
         _disposed = true;
-
         DisposeTimer();
-
         lock (_lock)
-        {
             if (!_removedFromQueue && !_requeued)
-            {
                 Requeue();
-            }
-        }
     }
 }

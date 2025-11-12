@@ -4,7 +4,7 @@ namespace Hangfire.EntityFrameworkCore;
 
 internal class HangfireModelCacheKeyFactory : IModelCacheKeyFactory
 {
-#if !NET6_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822")]
 #endif
     public object Create(DbContext context, bool designTime)
@@ -12,6 +12,5 @@ internal class HangfireModelCacheKeyFactory : IModelCacheKeyFactory
             ? (context.GetType(), hangfireContext.Schema, designTime)
             : (object)context.GetType();
 
-    public object Create(DbContext context)
-        => Create(context, false);
+    public object Create(DbContext context) => Create(context, false);
 }

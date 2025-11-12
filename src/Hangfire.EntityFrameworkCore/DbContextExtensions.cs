@@ -1,36 +1,19 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Hangfire.EntityFrameworkCore;
 
 internal static class DbContextExtensions
 {
-    [SuppressMessage("Maintainability", "CA1510")]
-    public static ICollection<EntityEntry<T>> FindEntries<T>(this DbContext context, Func<T, bool> predicate)
-        where T : class
+    extension<T>(DbContext context)
+         where T : class
     {
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-        if (predicate is null)
-            throw new ArgumentNullException(nameof(predicate));
+        public ICollection<EntityEntry<T>> FindEntries(Func<T, bool> predicate)
+            => [.. context.FindEntriesCore(predicate)];
 
-        return context.ChangeTracker
-            .Entries<T>()
-            .Where(x => predicate(x.Entity))
-            .ToList();
-    }
+        public EntityEntry<T> FindEntry(Func<T, bool> predicate)
+            => context.FindEntriesCore(predicate).FirstOrDefault();
 
-    [SuppressMessage("Maintainability", "CA1510")]
-    public static EntityEntry<T> FindEntry<T>(this DbContext context, Func<T, bool> predicate)
-        where T : class
-    {
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-        if (predicate is null)
-            throw new ArgumentNullException(nameof(predicate));
-
-        return context.ChangeTracker
-            .Entries<T>()
-            .FirstOrDefault(x => predicate(x.Entity));
+        private IEnumerable<EntityEntry<T>> FindEntriesCore(Func<T, bool> predicate)
+            => context.ChangeTracker.Entries<T>().Where(x => predicate(x.Entity));
     }
 }

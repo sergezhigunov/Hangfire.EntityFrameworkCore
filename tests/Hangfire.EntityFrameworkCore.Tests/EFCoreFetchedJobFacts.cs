@@ -82,14 +82,14 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            QueuedJobs = new List<HangfireQueuedJob>
+            QueuedJobs =
+            [
+                new()
                 {
-                    new HangfireQueuedJob
-                    {
-                        Queue = "queue",
-                        FetchedAt = DateTime.UtcNow,
-                    },
+                    Queue = "queue",
+                    FetchedAt = DateTime.UtcNow,
                 },
+            ],
         };
         UseContextSavingChanges(context => context.Add(job));
         using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());
@@ -134,14 +134,14 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            QueuedJobs = new List<HangfireQueuedJob>
+            QueuedJobs =
+            [
+                new()
                 {
-                    new HangfireQueuedJob
-                    {
-                        Queue = "queue",
-                        FetchedAt = DateTime.UtcNow,
-                    },
+                    Queue = "queue",
+                    FetchedAt = DateTime.UtcNow,
                 },
+            ],
         };
         UseContextSavingChanges(context => context.Add(job));
         using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());
@@ -190,14 +190,14 @@ public class EFCoreFetchedJobFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            QueuedJobs = new List<HangfireQueuedJob>
+            QueuedJobs =
+            [
+                new()
                 {
-                    new HangfireQueuedJob
-                    {
-                        Queue = "queue",
-                        FetchedAt = DateTime.UtcNow,
-                    },
+                    Queue = "queue",
+                    FetchedAt = DateTime.UtcNow,
                 },
+            ],
         };
         UseContextSavingChanges(context => context.Add(job));
         using var instance = new EFCoreFetchedJob(Storage, job.QueuedJobs.Single());

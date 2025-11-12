@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -276,7 +275,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
         var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         configurationMock.Setup(x => x.Entry).Returns(Storage);
         var configuration = configurationMock.Object;
-        configuration.UseQueueProvider(queueProvider, new[] { queueName });
+        configuration.UseQueueProvider(queueProvider, [queueName]);
         using (var instance = new EFCoreStorageTransaction(Storage))
         {
             instance.AddToQueue("queue", jobId);
@@ -1076,8 +1075,8 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void RemoveFromList_RemovesAllRecords_WithGivenKeyAndValue()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange([
                 new HangfireList
                 {
                     Key = key,
@@ -1090,7 +1089,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
                     Value = "my-value",
                     Position = 1,
                 },
-            }));
+            ]));
 
         UseTransaction(true, instance => instance.RemoveFromList(key, "my-value"));
 
@@ -1101,15 +1100,15 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void RemoveFromList_DoesNotRemoveRecords_WithSameKey_ButDifferentValue()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange([
                 new HangfireList
                 {
                     Key = key,
                     Value = "my-value",
                     Position = 0,
                 },
-            }));
+            ]));
 
         UseTransaction(true, instance => instance.RemoveFromList(key, "different-value"));
 
@@ -1120,15 +1119,15 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void RemoveFromList_DoesNotRemoveRecords_WithSameValue_ButDifferentKey()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange([
                 new HangfireList
                 {
                     Key = key,
                     Value = "my-value",
                     Position = 0,
                 },
-            }));
+            ]));
 
         UseTransaction(true, instance => instance.RemoveFromList("different-key", "my-value"));
 
@@ -1435,8 +1434,9 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void SetRangeInHash_MergesAllRecords_WhenStorageHasExistingValues()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange(
+            [
                 new HangfireHash
                 {
                     Key = key,
@@ -1449,7 +1449,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
                     Field = "field-2",
                     Value = "old-value2",
                 },
-            }));
+            ]));
         var keyValuePairs = new Dictionary<string, string>
         {
             ["field-1"] = "value-1",
@@ -1496,8 +1496,9 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void TrimList_TrimsAList_ToASpecifiedRange()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange(
+            [
                 new HangfireList
                 {
                     Key = key,
@@ -1522,7 +1523,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
                     Position = 3,
                     Value = "3",
                 },
-            }));
+            ]));
 
         UseTransaction(true, instance => instance.TrimList(key, 1, 2));
 
@@ -1539,8 +1540,9 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void TrimList_RemovesRecordsToEnd_IfKeepAndingAt_GreaterThanMaxElementIndex()
     {
         string key = "key";
-        UseContextSavingChanges(context => context.AddRange(new[]
-        {
+        UseContextSavingChanges(
+            context => context.AddRange(
+            [
                 new HangfireList
                 {
                     Key = key,
@@ -1559,7 +1561,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
                     Position = 2,
                     Value = "2",
                 },
-            }));
+            ]));
 
         UseTransaction(true, instance => instance.TrimList(key, 1, 100));
 

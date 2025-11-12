@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using Hangfire.Common;
 using Hangfire.Server;
-using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
@@ -96,12 +95,12 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         var serverId = "server";
         var serverContext1 = new ServerContext
         {
-            Queues = new[] { "critical", "default" },
+            Queues = ["critical", "default"],
             WorkerCount = 4
         };
         var serverContext2 = new ServerContext
         {
-            Queues = new[] { "default" },
+            Queues = ["default"],
             WorkerCount = 1000
         };
         UseConnection(instance =>
@@ -254,7 +253,7 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
     [Fact]
     public void FetchNextJob_Throws_IfQueuesParameterIsEmpty()
     {
-        string[] queues = Array.Empty<string>();
+        string[] queues = [];
         var cancellationToken = CancellationToken.None;
 
         UseConnection(instance => Assert.Throws<ArgumentException>(nameof(queues),
@@ -319,25 +318,25 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var hangfireHashes = new[]
         {
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "Key1",
-                    Value = "Value1",
-                },
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "Key2",
-                    Value = "Value2",
-                },
-                new HangfireHash
-                {
-                    Key = key2,
-                    Field = "Key3",
-                    Value = "Value3",
-                },
-            };
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "Key1",
+                Value = "Value1",
+            },
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "Key2",
+                Value = "Value2",
+            },
+            new HangfireHash
+            {
+                Key = key2,
+                Field = "Key3",
+                Value = "Value3",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
         var result = UseConnection(instance => instance.GetAllEntriesFromHash(key1));
@@ -374,30 +373,30 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         string key2 = "key2";
         var lists = new[]
         {
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 0,
-                    Value = "1",
-                },
-                new HangfireList
-                {
-                    Key = key2,
-                    Position = 0,
-                    Value = "2",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 1,
-                    Value = "3"
-                , },
-            };
+            new HangfireList
+            {
+                Key = key1,
+                Position = 0,
+                Value = "1",
+            },
+            new HangfireList
+            {
+                Key = key2,
+                Position = 0,
+                Value = "2",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 1,
+                Value = "3",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(lists));
 
         var result = UseConnection(instance => instance.GetAllItemsFromList(key1));
 
-        Assert.Equal(new[] { "3", "1" }, result);
+        Assert.Equal(["3", "1"], result);
     }
 
     [Fact]
@@ -427,17 +426,17 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key,
-                    Value = "1",
-                },
-                new HangfireSet
-                {
-                    Key = key,
-                    Value = "2",
-                },
-            };
+            new HangfireSet
+            {
+                Key = key,
+                Value = "1",
+            },
+            new HangfireSet
+            {
+                Key = key,
+                Value = "2",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetAllItemsFromSet(key));
@@ -474,22 +473,22 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var counters = new[]
         {
-                new HangfireCounter
-                {
-                    Key = key1,
-                    Value = 1,
-                },
-                new HangfireCounter
-                {
-                    Key = key2,
-                    Value = 1,
-                },
-                new HangfireCounter
-                {
-                    Key = key1,
-                    Value = 1,
-                },
-            };
+            new HangfireCounter
+            {
+                Key = key1,
+                Value = 1,
+            },
+            new HangfireCounter
+            {
+                Key = key2,
+                Value = 1,
+            },
+            new HangfireCounter
+            {
+                Key = key1,
+                Value = 1,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(counters));
 
         var result = UseConnection(instance => instance.GetCounter(key1));
@@ -516,31 +515,31 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "1.0",
-                    Score = 1.0,
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "-1.0",
-                    Score = -1.0,
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "-5.0",
-                    Score = -5.0,
-                },
-                new HangfireSet
-                {
-                    Key = key2,
-                    Value = "-2.0",
-                    Score = -2.0,
-                },
-            };
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "1.0",
+                Score = 1.0,
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "-1.0",
+                Score = -1.0,
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "-5.0",
+                Score = -5.0,
+            },
+            new HangfireSet
+            {
+                Key = key2,
+                Value = "-2.0",
+                Score = -2.0,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetFirstByLowestScoreFromSet(key1, fromScore, toScore));
@@ -675,14 +674,14 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            Parameters = new[]
-            {
-                    new HangfireJobParameter
-                    {
-                        Name = parameterName,
-                        Value = parameterValue,
-                    }
-                },
+            Parameters =
+            [
+                new()
+                {
+                    Name = parameterName,
+                    Value = parameterValue,
+                }
+            ],
         };
         UseContextSavingChanges(context => context.Add(job));
         var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
@@ -719,22 +718,22 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var hangfireHashes = new[]
         {
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "field-1",
-                },
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "field-2",
-                },
-                new HangfireHash
-                {
-                    Key = key2,
-                    Field = "field-1",
-                },
-            };
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "field-1",
+            },
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "field-2",
+            },
+            new HangfireHash
+            {
+                Key = key2,
+                Field = "field-1",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
         var result = UseConnection(instance => instance.GetHashCount(key1));
@@ -769,18 +768,18 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var hangfireHashes = new[]
         {
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "field",
-                    ExpireAt = DateTime.UtcNow.AddHours(1),
-                },
-                new HangfireHash
-                {
-                    Key = key2,
-                    Field = "field",
-                },
-            };
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "field",
+                ExpireAt = DateTime.UtcNow.AddHours(1),
+            },
+            new HangfireHash
+            {
+                Key = key2,
+                Field = "field",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
         var result = UseConnection(instance => instance.GetHashTtl(key1));
@@ -816,22 +815,22 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var lists = new[]
         {
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 0,
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 1,
-                },
-                new HangfireList
-                {
-                    Key = key2,
-                    Position = 0,
-                },
-            };
+            new HangfireList
+            {
+                Key = key1,
+                Position = 0,
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 1,
+            },
+            new HangfireList
+            {
+                Key = key2,
+                Position = 0,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(lists));
 
         var result = UseConnection(instance => instance.GetListCount(key1));
@@ -866,18 +865,18 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var lists = new[]
         {
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 0,
-                    ExpireAt = DateTime.UtcNow.AddHours(1)
-                },
-                new HangfireList
-                {
-                    Key = key2,
-                    Position = 0,
-                },
-            };
+            new HangfireList
+            {
+                Key = key1,
+                Position = 0,
+                ExpireAt = DateTime.UtcNow.AddHours(1)
+            },
+            new HangfireList
+            {
+                Key = key2,
+                Position = 0,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(lists));
 
         var result = UseConnection(instance => instance.GetListTtl(key1));
@@ -913,42 +912,42 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var lists = new[]
         {
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 0,
-                    Value = "1",
-                },
-                new HangfireList
-                {
-                    Key = key2,
-                    Position = 0,
-                    Value = "2",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 1,
-                    Value = "3",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 2,
-                    Value = "4",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 3,
-                    Value = "5",
-                },
-            };
+            new HangfireList
+            {
+                Key = key1,
+                Position = 0,
+                Value = "1",
+            },
+            new HangfireList
+            {
+                Key = key2,
+                Position = 0,
+                Value = "2",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 1,
+                Value = "3",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 2,
+                Value = "4",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 3,
+                Value = "5",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(lists));
 
         var result = UseConnection(instance => instance.GetRangeFromList(key1, 1, 2));
 
-        Assert.Equal(new[] { "4", "3" }, result);
+        Assert.Equal(["4", "3"], result);
     }
 
     [Fact]
@@ -959,42 +958,42 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var lists = new[]
         {
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 0,
-                    Value = "1",
-                },
-                new HangfireList
-                {
-                    Key = key2,
-                    Position = 0,
-                    Value = "2",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 1,
-                    Value = "3",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 2,
-                    Value = "4",
-                },
-                new HangfireList
-                {
-                    Key = key1,
-                    Position = 3,
-                    Value = "5",
-                },
-            };
+            new HangfireList
+            {
+                Key = key1,
+                Position = 0,
+                Value = "1",
+            },
+            new HangfireList
+            {
+                Key = key2,
+                Position = 0,
+                Value = "2",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 1,
+                Value = "3",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 2,
+                Value = "4",
+            },
+            new HangfireList
+            {
+                Key = key1,
+                Position = 3,
+                Value = "5",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(lists));
 
         var result = UseConnection(instance => instance.GetRangeFromList(key1, 2, 1));
 
-        Assert.Equal(new[] { "4", "3" }, result);
+        Assert.Equal(["4", "3"], result);
     }
 
     [Fact]
@@ -1014,42 +1013,42 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "1",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "2",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "3",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "4",
-                },
-                new HangfireSet
-                {
-                    Key = key2,
-                    Value = "4",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "5",
-                },
-            };
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "1",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "2",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "3",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "4",
+            },
+            new HangfireSet
+            {
+                Key = key2,
+                Value = "4",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "5",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetRangeFromSet(key1, 2, 3));
 
-        Assert.Equal(new[] { "3", "4" }, result);
+        Assert.Equal(["3", "4"], result);
     }
 
     [Fact]
@@ -1060,42 +1059,42 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "1",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "2",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "3",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "4",
-                },
-                new HangfireSet
-                {
-                    Key = key2,
-                    Value = "4",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "5",
-                },
-            };
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "1",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "2",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "3",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "4",
+            },
+            new HangfireSet
+            {
+                Key = key2,
+                Value = "4",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "5",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetRangeFromSet(key1, 3, 2));
 
-        Assert.Equal(new[] { "3", "4" }, result);
+        Assert.Equal(["3", "4"], result);
     }
 
     [Fact]
@@ -1125,22 +1124,22 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "1",
-                },
-                new HangfireSet
-                {
-                    Key = key2,
-                    Value = "1",
-                },
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "2",
-                },
-            };
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "1",
+            },
+            new HangfireSet
+            {
+                Key = key2,
+                Value = "1",
+            },
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "2",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetSetCount(key1));
@@ -1175,18 +1174,18 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var sets = new[]
         {
-                new HangfireSet
-                {
-                    Key = key1,
-                    Value = "1",
-                    ExpireAt = DateTime.UtcNow.AddHours(1),
-                },
-                new HangfireSet
-                {
-                    Key = key2,
-                    Value = "2",
-                },
-            };
+            new HangfireSet
+            {
+                Key = key1,
+                Value = "1",
+                ExpireAt = DateTime.UtcNow.AddHours(1),
+            },
+            new HangfireSet
+            {
+                Key = key2,
+                Value = "2",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(sets));
 
         var result = UseConnection(instance => instance.GetSetTtl(key1));
@@ -1330,25 +1329,25 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var hangfireHashes = new[]
         {
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "field-1",
-                    Value = "1",
-                },
-                new HangfireHash
-                {
-                    Key = key1,
-                    Field = "field-2",
-                    Value = "2",
-                },
-                new HangfireHash
-                {
-                    Key = key2,
-                    Field = "field-1",
-                    Value = "3",
-                },
-            };
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "field-1",
+                Value = "1",
+            },
+            new HangfireHash
+            {
+                Key = key1,
+                Field = "field-2",
+                Value = "2",
+            },
+            new HangfireHash
+            {
+                Key = key2,
+                Field = "field-1",
+                Value = "3",
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(hangfireHashes));
 
         var result = UseConnection(instance => instance.GetValueFromHash(key1, "field-1"));
@@ -1383,21 +1382,21 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
 
         var servers = new[]
         {
-                new HangfireServer
-                {
-                    Id = server1,
-                    StartedAt = datetime,
-                    Heartbeat = datetime,
-                    Queues = EmptyArrayStub,
-                },
-                new HangfireServer
-                {
-                    Id = server2,
-                    StartedAt = datetime,
-                    Heartbeat = datetime,
-                    Queues = EmptyArrayStub,
-                },
-            };
+            new HangfireServer
+            {
+                Id = server1,
+                StartedAt = datetime,
+                Heartbeat = datetime,
+                Queues = EmptyArrayStub,
+            },
+            new HangfireServer
+            {
+                Id = server2,
+                StartedAt = datetime,
+                Heartbeat = datetime,
+                Queues = EmptyArrayStub,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(servers));
 
         UseConnection(instance => instance.Heartbeat("server1"));
@@ -1456,21 +1455,21 @@ public class EFCoreStorageConnectionFacts : EFCoreStorageTest
         var startedAt = new DateTime(2017, 1, 1, 11, 33, 33);
         var servers = new[]
         {
-                new HangfireServer
-                {
-                    Id = server1,
-                    StartedAt = startedAt,
-                    Heartbeat = DateTime.UtcNow.AddHours(-1),
-                    Queues = EmptyArrayStub,
-                },
-                new HangfireServer
-                {
-                    Id = server2,
-                    StartedAt = startedAt,
-                    Heartbeat = DateTime.UtcNow.AddHours(-3),
-                    Queues = EmptyArrayStub,
-                },
-            };
+            new HangfireServer
+            {
+                Id = server1,
+                StartedAt = startedAt,
+                Heartbeat = DateTime.UtcNow.AddHours(-1),
+                Queues = EmptyArrayStub,
+            },
+            new HangfireServer
+            {
+                Id = server2,
+                StartedAt = startedAt,
+                Heartbeat = DateTime.UtcNow.AddHours(-3),
+                Queues = EmptyArrayStub,
+            },
+        };
         UseContextSavingChanges(context => context.AddRange(servers));
 
         UseConnection(instance => instance.RemoveTimedOutServers(TimeSpan.FromHours(2)));

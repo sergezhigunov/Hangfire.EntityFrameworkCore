@@ -15,9 +15,11 @@ internal sealed class EFCoreLock : IDisposable
         [NotNull] string resource,
         TimeSpan timeout)
     {
-        if (provider is null)
-            throw new ArgumentNullException(nameof(provider));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(provider);
+#else
+        if (provider is null) throw new ArgumentNullException(nameof(provider));
+#endif
         _provider = provider;
         _provider.Acquire(resource, timeout);
         _resource = resource;
@@ -29,7 +31,6 @@ internal sealed class EFCoreLock : IDisposable
         {
             if (disposing)
                 _provider.Release(_resource);
-
             _disposed = true;
         }
     }

@@ -57,8 +57,7 @@ public static class EFCoreStorageExtensionsFacts
         var result = configuration.UseEFCoreStorage(OptionsAction, options);
 
         Assert.NotNull(result);
-        var genericConfiguration =
-            Assert.IsAssignableFrom<IGlobalConfiguration<EFCoreStorage>>(result);
+        var genericConfiguration = Assert.IsType<IGlobalConfiguration<EFCoreStorage>>(result, exactMatch: false);
         Assert.NotNull(genericConfiguration.Entry);
         Assert.True(exposed);
     }
@@ -74,8 +73,7 @@ public static class EFCoreStorageExtensionsFacts
         var result = configuration.UseEFCoreStorage(OptionsAction);
 
         Assert.NotNull(result);
-        var genericConfiguration =
-            Assert.IsAssignableFrom<IGlobalConfiguration<EFCoreStorage>>(result);
+        var genericConfiguration = Assert.IsType<IGlobalConfiguration<EFCoreStorage>>(result, exactMatch: false);
         Assert.NotNull(genericConfiguration.Entry);
         Assert.True(optionsActionExposed);
     }
@@ -124,8 +122,7 @@ public static class EFCoreStorageExtensionsFacts
         var result = configuration.UseEFCoreStorage(contextBuilder, options);
 
         Assert.NotNull(result);
-        var genericConfiguration =
-            Assert.IsAssignableFrom<IGlobalConfiguration<EFCoreStorage>>(result);
+        var genericConfiguration = Assert.IsType<IGlobalConfiguration<EFCoreStorage>>(result, exactMatch: false);
         Assert.NotNull(genericConfiguration.Entry);
     }
 

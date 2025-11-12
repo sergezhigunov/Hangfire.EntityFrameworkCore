@@ -52,13 +52,13 @@ public class EFCoreJobQueueMonitoringApiFacts : EFCoreStorageTest
             Select(_ => new HangfireJob
             {
                 InvocationData = InvocationDataStub,
-                QueuedJobs = new List<HangfireQueuedJob>
-                {
-                        new HangfireQueuedJob
-                        {
-                            Queue = queue,
-                        }
-                },
+                QueuedJobs =
+                [
+                    new()
+                    {
+                        Queue = queue,
+                    }
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context => context.AddRange(jobs));
@@ -103,14 +103,14 @@ public class EFCoreJobQueueMonitoringApiFacts : EFCoreStorageTest
             Select(_ => new HangfireJob
             {
                 InvocationData = InvocationDataStub,
-                QueuedJobs = new List<HangfireQueuedJob>
-                {
-                        new HangfireQueuedJob
-                        {
-                            Queue = queue,
-                            FetchedAt = DateTime.UtcNow,
-                        }
-                },
+                QueuedJobs =
+                [
+                    new()
+                    {
+                        Queue = queue,
+                        FetchedAt = DateTime.UtcNow,
+                    }
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context => context.AddRange(jobs));
@@ -146,12 +146,11 @@ public class EFCoreJobQueueMonitoringApiFacts : EFCoreStorageTest
         var job = new HangfireJob
         {
             InvocationData = InvocationDataStub,
-            QueuedJobs = queues.
-                Select(x => new HangfireQueuedJob
+            QueuedJobs = [.. queues
+                .Select(x => new HangfireQueuedJob
                 {
                     Queue = x,
-                }).
-                ToList()
+                })]
         };
         UseContextSavingChanges(context => context.Add(job));
         var instance = new EFCoreJobQueueMonitoringApi(Storage);
@@ -192,14 +191,14 @@ public class EFCoreJobQueueMonitoringApiFacts : EFCoreStorageTest
             Select(index => new HangfireJob
             {
                 InvocationData = InvocationDataStub,
-                QueuedJobs = new List<HangfireQueuedJob>
-                {
-                        new HangfireQueuedJob
-                        {
-                            Queue = queue,
-                            FetchedAt = index < 2 ? default(DateTime?) : DateTime.UtcNow,
-                        }
-                },
+                QueuedJobs =
+                [
+                    new()
+                    {
+                        Queue = queue,
+                        FetchedAt = index < 2 ? default(DateTime?) : DateTime.UtcNow,
+                    }
+                ],
             }).
             ToArray();
         UseContextSavingChanges(context => context.AddRange(jobs));

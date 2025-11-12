@@ -169,9 +169,11 @@ internal class EFCoreStorageConnection : JobStorageConnection
     [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreStorageConnection(EFCoreStorage storage)
     {
-        if (storage is null)
-            throw new ArgumentNullException(nameof(storage));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(storage);
+#else
+        if (storage is null) throw new ArgumentNullException(nameof(storage));
+#endif
         _storage = storage;
         _lockProvider = new EFCoreLockProvider(_storage);
     }
@@ -188,7 +190,6 @@ internal class EFCoreStorageConnection : JobStorageConnection
         if (timeout < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(timeout), timeout,
                 CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
-
         return new EFCoreLock(_lockProvider, resource, timeout);
     }
 
@@ -197,13 +198,14 @@ internal class EFCoreStorageConnection : JobStorageConnection
         [NotNull] string serverId,
         [NotNull] ServerContext context)
     {
-        if (serverId is null)
-            throw new ArgumentNullException(nameof(serverId));
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(serverId);
+        ArgumentNullException.ThrowIfNull(context);
+#else
+        if (serverId is null) throw new ArgumentNullException(nameof(serverId));
+        if (context is null) throw new ArgumentNullException(nameof(context));
+#endif
         var timestamp = DateTime.UtcNow;
-
         var server = new HangfireServer
         {
             Id = serverId,
@@ -212,7 +214,6 @@ internal class EFCoreStorageConnection : JobStorageConnection
             WorkerCount = context.WorkerCount,
             Queues = context.Queues,
         };
-
         _storage.UseContextSavingChanges(dbContext =>
         {
             if (!dbContext.Set<HangfireServer>().Any(x => x.Id == serverId))
@@ -229,27 +230,26 @@ internal class EFCoreStorageConnection : JobStorageConnection
         DateTime createdAt,
         TimeSpan expireIn)
     {
-        if (job is null)
-            throw new ArgumentNullException(nameof(job));
-        if (parameters is null)
-            throw new ArgumentNullException(nameof(parameters));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(parameters);
+#else
+        if (job is null) throw new ArgumentNullException(nameof(job));
+        if (parameters is null) throw new ArgumentNullException(nameof(parameters));
+#endif
         var invocationData = InvocationData.SerializeJob(job);
-
         var hangfireJob = new HangfireJob
         {
             CreatedAt = createdAt,
             ExpireAt = createdAt + expireIn,
             InvocationData = invocationData,
-            Parameters = parameters.
+            Parameters = [.. parameters.
                 Select(x => new HangfireJobParameter
                 {
                     Name = x.Key,
                     Value = x.Value,
-                }).
-                ToList(),
+                })],
         };
-
         return _storage.UseContext(context =>
         {
             context.Add(hangfireJob);
@@ -258,23 +258,21 @@ internal class EFCoreStorageConnection : JobStorageConnection
         });
     }
 
-    public override IWriteOnlyTransaction CreateWriteTransaction()
-    {
-        return new EFCoreStorageTransaction(
-            _storage);
-    }
+    public override IWriteOnlyTransaction CreateWriteTransaction() => new EFCoreStorageTransaction(_storage);
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override IFetchedJob FetchNextJob(
         [NotNull] string[] queues,
         CancellationToken cancellationToken)
     {
-        if (queues is null)
-            throw new ArgumentNullException(nameof(queues));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(queues);
+#else
+        if (queues is null) throw new ArgumentNullException(nameof(queues));
+#endif
         if (queues.Length == 0)
             throw new ArgumentException(CoreStrings.ArgumentExceptionCollectionCannotBeEmpty,
                 nameof(queues));
-
         var provider = new EFCoreJobQueueProvider(_storage);
         var queue = provider.GetJobQueue();
         return queue.Dequeue(queues, cancellationToken);
@@ -283,22 +281,25 @@ internal class EFCoreStorageConnection : JobStorageConnection
     [SuppressMessage("Maintainability", "CA1510")]
     public override Dictionary<string, string> GetAllEntriesFromHash([NotNull] string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         var result = _storage.UseContext(context =>
             GetAllEntriesFromHashFunc(context, key).
             ToDictionary(x => x.Key, x => x.Value));
-
         return result.Count != 0 ? result : null;
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override List<string> GetAllItemsFromList([NotNull] string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         return _storage.UseContext(context =>
             GetAllItemsFromListFunc(context, key).
             ToList());
@@ -307,9 +308,11 @@ internal class EFCoreStorageConnection : JobStorageConnection
     [SuppressMessage("Maintainability", "CA1510")]
     public override HashSet<string> GetAllItemsFromSet([NotNull] string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         return _storage.UseContext(context =>
             new HashSet<string>(GetAllItemsFromSetFunc(context, key)));
     }
@@ -319,52 +322,52 @@ internal class EFCoreStorageConnection : JobStorageConnection
     public override string GetFirstByLowestScoreFromSet(
         [NotNull] string key,
         double fromScore,
-        double toScore) =>
-        UseContext((context, k) =>
-        {
-            if (toScore < fromScore)
-                Swap(ref fromScore, ref toScore);
+        double toScore)
+        => UseContext(
+            (context, k) =>
+            {
+                if (toScore < fromScore)
+                    Swap(ref fromScore, ref toScore);
+                return GetFirstByLowestScoreFromSetFunc(context, k, fromScore, toScore);
+            },
+            key);
 
-            return GetFirstByLowestScoreFromSetFunc(context, k, fromScore, toScore);
-        }, key);
+    public override long GetHashCount([NotNull] string key) => UseContext(GetHashCountFunc, key);
 
-    public override long GetHashCount([NotNull] string key) =>
-        UseContext(GetHashCountFunc, key);
-
-    public override TimeSpan GetHashTtl([NotNull] string key) =>
-        ToTtl(UseContext(GetHashTtlFunc, key));
+    public override TimeSpan GetHashTtl([NotNull] string key) => ToTtl(UseContext(GetHashTtlFunc, key));
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override JobData GetJobData([NotNull] string jobId)
     {
-        if (jobId is null)
-            throw new ArgumentNullException(nameof(jobId));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(jobId);
+#else
+        if (jobId is null) throw new ArgumentNullException(nameof(jobId));
+#endif
 
         if (!TryParseJobId(jobId, out var id))
             return null;
-
         return _storage.UseContext(context => GetJobDataFunc(context, id));
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override string GetJobParameter([NotNull] string id, [NotNull] string name)
     {
-        if (id is null)
-            throw new ArgumentNullException(nameof(id));
-        if (name is null)
-            throw new ArgumentNullException(nameof(name));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(name);
+#else
+        if (id is null) throw new ArgumentNullException(nameof(id));
+        if (name is null) throw new ArgumentNullException(nameof(name));
+#endif
         if (!TryParseJobId(id, out var jobId))
             return null;
-
         return _storage.UseContext(context => GetJobParameterFunc(context, jobId, name));
     }
 
-    public override long GetListCount([NotNull] string key) =>
-        UseContext(GetListCountFunc, key);
+    public override long GetListCount([NotNull] string key) => UseContext(GetListCountFunc, key);
 
-    public override TimeSpan GetListTtl([NotNull] string key) =>
-        ToTtl(UseContext(GetListTtlFunc, key));
+    public override TimeSpan GetListTtl([NotNull] string key) => ToTtl(UseContext(GetListTtlFunc, key));
 
     public override List<string> GetRangeFromList(
         [NotNull] string key,
@@ -374,7 +377,6 @@ internal class EFCoreStorageConnection : JobStorageConnection
         {
             if (endingAt < startingFrom)
                 Swap(ref startingFrom, ref endingAt);
-
             return GetRangeFromListFunc(context, k, startingFrom, endingAt).ToList();
         }, key);
 
@@ -387,46 +389,47 @@ internal class EFCoreStorageConnection : JobStorageConnection
             if (endingAt < startingFrom)
                 Swap(ref startingFrom, ref endingAt);
             int take = endingAt - startingFrom + 1;
-
             return GetRangeFromSetFunc(context, key, startingFrom, take).ToList();
         }, key);
 
+    public override long GetSetCount([NotNull] string key) => UseContext(GetSetCountFunc, key);
 
-    public override long GetSetCount([NotNull] string key) =>
-        UseContext(GetSetCountFunc, key);
-
-    public override TimeSpan GetSetTtl([NotNull] string key) =>
-        ToTtl(UseContext(GetSetTtlFunc, key));
+    public override TimeSpan GetSetTtl([NotNull] string key) => ToTtl(UseContext(GetSetTtlFunc, key));
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override StateData GetStateData([NotNull] string jobId)
     {
-        if (jobId is null)
-            throw new ArgumentNullException(nameof(jobId));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(jobId);
+#else
+        if (jobId is null) throw new ArgumentNullException(nameof(jobId));
+#endif
         if (!TryParseJobId(jobId, out var id))
             return null;
-
         return _storage.UseContext(context => GetStateDataFunc(context, id));
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override string GetValueFromHash([NotNull] string key, [NotNull] string name)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (name is null)
-            throw new ArgumentNullException(nameof(name));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(name);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (name is null) throw new ArgumentNullException(nameof(name));
+#endif
         return _storage.UseContext(context => GetValueFromHashFunc(context, key, name));
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void Heartbeat([NotNull] string serverId)
     {
-        if (serverId is null)
-            throw new ArgumentNullException(nameof(serverId));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(serverId);
+#else
+        if (serverId is null) throw new ArgumentNullException(nameof(serverId));
+#endif
         _storage.UseContext(context =>
         {
             var entry = context.Attach(new HangfireServer
@@ -442,16 +445,18 @@ internal class EFCoreStorageConnection : JobStorageConnection
             catch (DbUpdateConcurrencyException)
             {
                     // Someone else already has deleted this record. Database wins.
-                }
+               }
         });
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
     public override void RemoveServer([NotNull] string serverId)
     {
-        if (serverId is null)
-            throw new ArgumentNullException(nameof(serverId));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(serverId);
+#else
+        if (serverId is null) throw new ArgumentNullException(nameof(serverId));
+#endif
         _storage.UseContext(context =>
         {
             context.Remove(new HangfireServer
@@ -465,36 +470,37 @@ internal class EFCoreStorageConnection : JobStorageConnection
             catch (DbUpdateConcurrencyException)
             {
                     // Someone else already has deleted this record. Database wins.
-                }
+            }
         });
     }
 
     public override int RemoveTimedOutServers(TimeSpan timeOut)
     {
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(timeOut, TimeSpan.Zero);
+#else
         if (timeOut < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(timeOut), timeOut,
                 CoreStrings.ArgumentOutOfRangeExceptionNeedNonNegativeValue);
-
+#endif
         return _storage.UseContextSavingChanges(context =>
         {
             var ids = GetTimedOutServersFunc(context, DateTime.UtcNow - timeOut).ToList();
             var count = ids.Count;
             if (count == 0)
                 return 0;
-
             context.RemoveRange(ids.Select(x => new HangfireServer
             {
                 Id = x,
             }));
-
             try
             {
                 return context.SaveChanges();
             }
             catch (DbUpdateConcurrencyException exception)
             {
-                    // Someone else already has deleted this record. Database wins.
-                    return count - exception.Entries.Count;
+                // Someone else already has deleted this record. Database wins.
+                return count - exception.Entries.Count;
             }
         });
     }
@@ -505,9 +511,11 @@ internal class EFCoreStorageConnection : JobStorageConnection
         [NotNull] string name,
         string value)
     {
-        if (name is null)
-            throw new ArgumentNullException(nameof(name));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(name);
+#else
+        if (name is null) throw new ArgumentNullException(nameof(name));
+#endif
         long jobId = ValidateId(id);
         var parameter = new HangfireJobParameter
         {
@@ -515,7 +523,6 @@ internal class EFCoreStorageConnection : JobStorageConnection
             Name = name,
             Value = value,
         };
-
         _storage.UseContextSavingChanges(context =>
         {
             if (JobParameterExistsFunc(context, jobId, name))
@@ -530,18 +537,19 @@ internal class EFCoreStorageConnection : JobStorageConnection
         [NotNull] string key,
         [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-        if (keyValuePairs is null)
-            throw new ArgumentNullException(nameof(keyValuePairs));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(keyValuePairs);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (keyValuePairs is null) throw new ArgumentNullException(nameof(keyValuePairs));
+#endif
         var hashes = keyValuePairs.Select(x => new HangfireHash
         {
             Key = key,
             Field = x.Key,
             Value = x.Value,
         });
-
         _storage.UseContextSavingChanges(context =>
         {
             var fields = new HashSet<string>(GetHashFieldsFunc(context, key));
@@ -557,9 +565,11 @@ internal class EFCoreStorageConnection : JobStorageConnection
     [SuppressMessage("Maintainability", "CA1510")]
     private T UseContext<T>(Func<DbContext, string, T> func, string key)
     {
-        if (key is null)
-            throw new ArgumentNullException(nameof(key));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(key);
+#else
+        if (key is null) throw new ArgumentNullException(nameof(key));
+#endif
         return _storage.UseContext(context => func(context, key));
     }
 
@@ -578,32 +588,29 @@ internal class EFCoreStorageConnection : JobStorageConnection
         {
             result.LoadException = exception;
         }
-
         return result;
     }
 
-    private static void Swap<T>(ref T left, ref T right)
-    {
-        (right, left) = (left, right);
-    }
+    private static void Swap<T>(ref T left, ref T right) => (right, left) = (left, right);
 
-    private static TimeSpan ToTtl(DateTime? expireAt) =>
-       expireAt.HasValue ?
-       expireAt.Value - DateTime.UtcNow :
-       new TimeSpan(0, 0, -1);
+    private static TimeSpan ToTtl(DateTime? expireAt)
+        => expireAt.HasValue ? expireAt.Value - DateTime.UtcNow : new TimeSpan(0, 0, -1);
 
-    private static bool TryParseJobId(string jobId, out long id) =>
-        long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
+    private static bool TryParseJobId(string jobId, out long id)
+        => long.TryParse(jobId, NumberStyles.Integer, CultureInfo.InvariantCulture, out id);
 
     [SuppressMessage("Maintainability", "CA1510")]
     private static long ValidateId(string id)
     {
-        if (id is null)
-            throw new ArgumentNullException(nameof(id));
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrEmpty(id);
+#else
+        if (id is null) throw new ArgumentNullException(nameof(id));
         if (id.Length == 0)
             throw new ArgumentException(CoreStrings.ArgumentExceptionStringCannotBeEmpty,
                 nameof(id));
-
+#endif
         return long.Parse(id, CultureInfo.InvariantCulture);
     }
 }

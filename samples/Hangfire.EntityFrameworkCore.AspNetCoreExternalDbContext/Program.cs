@@ -1,5 +1,4 @@
-﻿using Hangfire.Dashboard;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext;
 
@@ -41,7 +40,7 @@ public static class Program
             new DashboardOptions
             {
                 AppPath = null,
-                Authorization = Array.Empty<IDashboardAuthorizationFilter>(),
+                Authorization = [],
             });
         RecurringJob.AddOrUpdate(nameof(HelloWorld), () => HelloWorld(), Cron.Minutely);
 

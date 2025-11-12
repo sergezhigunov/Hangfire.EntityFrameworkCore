@@ -11,11 +11,7 @@ internal static class TimestampHelper
 #endif
     }
 
-    public static TimeSpan Elapsed(long timestamp)
-    {
-        long now = GetTimestamp();
-        return Elapsed(now, timestamp);
-    }
+    public static TimeSpan Elapsed(long timestamp) => Elapsed(GetTimestamp(), timestamp);
 
     public static TimeSpan Elapsed(long now, long timestamp)
     {

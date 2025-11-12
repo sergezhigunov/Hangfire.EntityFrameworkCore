@@ -67,9 +67,11 @@ public static class EFCoreStorageExtensions
         [NotNull] Action<DbContextOptionsBuilder> optionsAction,
         [NotNull] EFCoreStorageOptions options)
     {
-        if (configuration is null)
-            throw new ArgumentNullException(nameof(configuration));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(configuration);
+#else
+        if (configuration is null) throw new ArgumentNullException(nameof(configuration));
+#endif
         return configuration.UseStorage(new EFCoreStorage(optionsAction, options));
     }
 
@@ -105,13 +107,15 @@ public static class EFCoreStorageExtensions
         [NotNull] Func<DbContext> contextBuilder,
         [NotNull] EFCoreStorageOptions options)
     {
-        if (configuration is null)
-            throw new ArgumentNullException(nameof(configuration));
-        if (contextBuilder is null)
-            throw new ArgumentNullException(nameof(contextBuilder));
-        if (options is null)
-            throw new ArgumentNullException(nameof(options));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(contextBuilder);
+        ArgumentNullException.ThrowIfNull(options);
+#else
+        if (configuration is null) throw new ArgumentNullException(nameof(configuration));
+        if (contextBuilder is null) throw new ArgumentNullException(nameof(contextBuilder));
+        if (options is null) throw new ArgumentNullException(nameof(options));
+#endif
         return configuration.UseStorage(new EFCoreStorage(contextBuilder, options));
     }
 
@@ -131,9 +135,11 @@ public static class EFCoreStorageExtensions
     public static IGlobalConfiguration<EFCoreStorage> UseDatabaseCreator(
         [NotNull] this IGlobalConfiguration<EFCoreStorage> configuration)
     {
-        if (configuration is null)
-            throw new ArgumentNullException(nameof(configuration));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(configuration);
+#else
+        if (configuration is null) throw new ArgumentNullException(nameof(configuration));
+#endif
         configuration.Entry.RegisterDatabaseInitializer(
             context => context.Database.EnsureCreated());
         return configuration;
@@ -172,9 +178,11 @@ public static class EFCoreStorageExtensions
         [NotNull] IPersistentJobQueueProvider provider,
         [NotNull] IList<string> queues)
     {
-        if (configuration is null)
-            throw new ArgumentNullException(nameof(configuration));
-
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(configuration);
+#else
+        if (configuration is null) throw new ArgumentNullException(nameof(configuration));
+#endif
         configuration.Entry.RegisterProvider(provider, queues);
         return configuration;
     }
