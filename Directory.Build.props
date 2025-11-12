@@ -6,7 +6,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <VersionPrefix>0.7.0</VersionPrefix>
+    <VersionPrefix>0.8.0</VersionPrefix>
   </PropertyGroup>
 
 </Project>

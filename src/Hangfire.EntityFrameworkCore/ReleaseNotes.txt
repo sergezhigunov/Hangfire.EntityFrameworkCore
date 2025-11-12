@@ -1,4 +1,7 @@
-﻿0.7.0
+﻿0.8.0
+• Added – .NET 10 support.
+
+0.7.0
 • Added – .NET 9 support.
 • Added – External DbContext custom schema name support.
 • Breaking – Remove `net6.0` target.
