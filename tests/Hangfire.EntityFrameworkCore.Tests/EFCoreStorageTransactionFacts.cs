@@ -61,7 +61,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void AddJobState_Throws_WhenJobIdParameterIsNull()
     {
         string jobId = null;
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
         using var instance = CreateTransaction();
         Assert.Throws<ArgumentNullException>(nameof(jobId),
             () => instance.AddJobState(jobId, state));
@@ -71,7 +71,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void AddJobState_Throws_WhenJobIdParameterIsEmpty()
     {
         string jobId = string.Empty;
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
         using var instance = CreateTransaction();
         Assert.Throws<ArgumentException>(nameof(jobId),
             () => instance.AddJobState(jobId, state));
@@ -101,15 +101,9 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     {
         var job = InsertJob();
         var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
-        var stateMock = new Mock<IState>();
-        stateMock.Setup(x => x.Name).Returns("State");
-        stateMock.Setup(x => x.Reason).Returns("Reason");
-        stateMock.Setup(x => x.SerializeData()).
-            Returns(new Dictionary<string, string>
-            {
-                ["Name"] = "Value",
-            });
-        var state = stateMock.Object;
+        var serializedData = new Dictionary<string, string> { ["Name"] = "Value" };
+        var state = Mock.Of<IState>(x =>
+            x.Name == "State" && x.Reason == "Reason" && x.SerializeData() == serializedData);
         var createdAtFrom = DateTime.UtcNow;
 
         UseTransaction(true, instance => instance.AddJobState(jobId, state));
@@ -268,14 +262,10 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
         var job = InsertJob();
         var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
         var queueMock = new Mock<IPersistentJobQueue>();
-        var queueProviderMock = new Mock<IPersistentJobQueueProvider>();
-        queueProviderMock.Setup(x => x.GetJobQueue()).Returns(queueMock.Object);
-        var queueProvider = queueProviderMock.Object;
+        var queueProvider = Mock.Of<IPersistentJobQueueProvider>(x => x.GetJobQueue() == queueMock.Object);
         var queueName = "queue";
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
-        configurationMock.Setup(x => x.Entry).Returns(Storage);
-        var configuration = configurationMock.Object;
-        configuration.UseQueueProvider(queueProvider, [queueName]);
+        Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == Storage)
+            .UseQueueProvider(queueProvider, [queueName]);
         using (var instance = new EFCoreStorageTransaction(Storage))
         {
             instance.AddToQueue("queue", jobId);
@@ -1303,7 +1293,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void SetJobState_Throws_WhenJobIdParameterIsNull()
     {
         string jobId = null;
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
         using var instance = CreateTransaction();
 
         Assert.Throws<ArgumentNullException>(nameof(jobId),
@@ -1314,7 +1304,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void SetJobState_Throws_WhenJobIdParameterIsEmpty()
     {
         string jobId = string.Empty;
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
         using var instance = CreateTransaction();
 
         Assert.Throws<ArgumentException>(nameof(jobId),
@@ -1336,7 +1326,7 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
     public void SetJobState_Throws_WhenTransactionDisposed()
     {
         string jobId = "1";
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
 
         AssertThrowsObjectDisposed(instance => instance.SetJobState(jobId, state));
     }
@@ -1347,17 +1337,14 @@ public class EFCoreStorageTransactionFacts : EFCoreStorageTest
         var createdAtFrom = DateTime.UtcNow;
         var job = InsertJob();
         var anotherJob = InsertJob();
-        var state = new Mock<IState>();
-        state.Setup(x => x.Name).Returns("State");
-        state.Setup(x => x.Reason).Returns("Reason");
-        state.Setup(x => x.SerializeData()).
-            Returns(new Dictionary<string, string>
-            {
-                ["Name"] = "Value",
-            });
+        var serializedData = new Dictionary<string, string>{ ["Name"] = "Value" };
+        var state = Mock.Of<IState>(x =>
+            x.Name == "State" &&
+            x.Reason == "Reason" &&
+            x.SerializeData() == serializedData);
         var jobId = job.Id.ToString(CultureInfo.InvariantCulture);
 
-        UseTransaction(true, instance => instance.SetJobState(jobId, state.Object));
+        UseTransaction(true, instance => instance.SetJobState(jobId, state));
 
         var createdAtTo = DateTime.UtcNow;
         UseContext(context =>

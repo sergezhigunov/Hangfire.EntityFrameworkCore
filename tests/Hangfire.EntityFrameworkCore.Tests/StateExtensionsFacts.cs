@@ -17,7 +17,7 @@ public class StateExtensionsFacts
     [Fact]
     public static void GetCreatedAt_ReturnsNull_WhenStateHasUnknownType()
     {
-        var state = new Mock<IState>().Object;
+        var state = Mock.Of<IState>();
 
         var result = state.GetCreatedAt();
 

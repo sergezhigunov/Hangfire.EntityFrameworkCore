@@ -167,7 +167,7 @@ public class EFCoreStorageFacts : EFCoreStorageTest
     {
         var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
         var dictionary = storage.QueueProviders;
-        var provider = new Mock<IPersistentJobQueueProvider>().Object;
+        var provider = Mock.Of<IPersistentJobQueueProvider>();
         var queue = "queue";
         dictionary[queue] = provider;
 

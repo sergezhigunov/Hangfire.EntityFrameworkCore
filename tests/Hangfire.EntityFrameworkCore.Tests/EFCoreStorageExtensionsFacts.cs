@@ -23,7 +23,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorage_Throws_WhenOptionsActionParameterIsNull()
     {
-        var configuration = new Mock<IGlobalConfiguration>().Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         Action<DbContextOptionsBuilder> optionsAction = null;
         var options = new EFCoreStorageOptions();
 
@@ -37,7 +37,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorage_Throws_WhenOptionsParameterIsNull()
     {
-        var configuration = new Mock<IGlobalConfiguration>().Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         static void OptionsAction(DbContextOptionsBuilder builder) { }
         EFCoreStorageOptions options = null;
 
@@ -48,8 +48,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorage_CompletesSuccesfully()
     {
-        var configurationMock = new Mock<IGlobalConfiguration>();
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         bool exposed = false;
         void OptionsAction(DbContextOptionsBuilder builder) => exposed = true;
         var options = new EFCoreStorageOptions();
@@ -65,8 +64,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorage_CompletesSuccesfully_WithDefaultOptions()
     {
-        var configurationMock = new Mock<IGlobalConfiguration>();
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         bool optionsActionExposed = false;
         void OptionsAction(DbContextOptionsBuilder builder) => optionsActionExposed = true;
 
@@ -92,7 +90,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorageFactory_Throws_WhenContextBuilderParameterIsNull()
     {
-        IGlobalConfiguration configuration = new Mock<IGlobalConfiguration>().Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         Func<DbContext> contextBuilder = null;
         EFCoreStorageOptions options = new Mock<EFCoreStorageOptions>().Object;
 
@@ -103,7 +101,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorageFactory_Throws_WhenOptionsParameterIsNull()
     {
-        IGlobalConfiguration configuration = new Mock<IGlobalConfiguration>().Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         static DbContext contextBuilder() => new Mock<DbContext>().Object;
         EFCoreStorageOptions options = null;
 
@@ -114,8 +112,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseEFCoreStorageFactory_CompletesSuccessfully()
     {
-        var configurationMock = new Mock<IGlobalConfiguration>();
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration>();
         var options = new EFCoreStorageOptions();
         static DbContext contextBuilder() => new Mock<DbContext>().Object;
 
@@ -129,7 +126,7 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseDatabaseCreator_Throws_WhenStorageParameterIsNull()
     {
-        var configuration = default(IGlobalConfiguration<EFCoreStorage>);
+        var configuration = default(IGlobalConfiguration<EFCoreStorage>)!;
 
         Assert.Throws<ArgumentNullException>(nameof(configuration),
             () => configuration.UseDatabaseCreator());
@@ -138,10 +135,8 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseDatabaseCreator_RegistersDatabaseCreatorCorrectly()
     {
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
-        configurationMock.Setup(x => x.Entry).Returns(storage);
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == storage);
 
         var result = configuration.UseDatabaseCreator();
 
@@ -154,7 +149,7 @@ public static class EFCoreStorageExtensionsFacts
     public static void UseQueueProvider_Throws_WhenStorageParameterIsNull()
     {
         var configuration = default(IGlobalConfiguration<EFCoreStorage>);
-        var provider = new Mock<IPersistentJobQueueProvider>().Object;
+        var provider = Mock.Of<IPersistentJobQueueProvider>();
         var queues = new[] { EnqueuedState.DefaultQueue, };
 
         Assert.Throws<ArgumentNullException>(nameof(configuration),
@@ -164,10 +159,8 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseQueueProvider_Throws_WhenProviderParameterIsNull()
     {
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
-        configurationMock.Setup(x => x.Entry).Returns(storage);
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == storage);
         IPersistentJobQueueProvider provider = null;
         var queues = new[] { EnqueuedState.DefaultQueue, };
 
@@ -178,10 +171,8 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseQueueProvider_Throws_WhenQueuesParameterIsNull()
     {
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
-        configurationMock.Setup(x => x.Entry).Returns(storage);
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == storage);
         var provider = new Mock<IPersistentJobQueueProvider>().Object;
         string[] queues = null;
 
@@ -192,10 +183,8 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseQueueProvider_Throws_WhenQueuesParameterIsEmpty()
     {
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
-        configurationMock.Setup(x => x.Entry).Returns(storage);
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == storage);
         var provider = new Mock<IPersistentJobQueueProvider>().Object;
         var queues = Array.Empty<string>();
 
@@ -206,10 +195,8 @@ public static class EFCoreStorageExtensionsFacts
     [Fact]
     public static void UseQueueProvider_RegistersSpecifiedQueueProviderCorrectly()
     {
-        var configurationMock = new Mock<IGlobalConfiguration<EFCoreStorage>>();
         var storage = new EFCoreStorage(x => { }, new EFCoreStorageOptions());
-        configurationMock.Setup(x => x.Entry).Returns(storage);
-        var configuration = configurationMock.Object;
+        var configuration = Mock.Of<IGlobalConfiguration<EFCoreStorage>>(x => x.Entry == storage);
         var provider = new Mock<IPersistentJobQueueProvider>().Object;
         var queues = new[] { "test1", "test2" };
 
