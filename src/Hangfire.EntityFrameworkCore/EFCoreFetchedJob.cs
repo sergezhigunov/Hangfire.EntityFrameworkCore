@@ -125,11 +125,11 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
             catch (Exception exception)
             {
                 _logger.Log(LogLevel.Debug, () =>
-                    CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed(Id),
+                    string.Format(null, CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed, Id),
                     exception);
                 return;
             }
-            _logger.Trace(CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryCompleted(Id));
+            _logger.Trace(string.Format(null, CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryCompleted, Id));
         }
     }
 

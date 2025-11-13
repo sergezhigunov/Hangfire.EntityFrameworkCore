@@ -36,7 +36,7 @@ internal class CountersAggregator : IServerComponent
 
     public void Execute(CancellationToken cancellationToken)
     {
-        _logger.Debug(CoreStrings.CountersAggregatorExecuteStarting(nameof(HangfireCounter)));
+        _logger.Debug(string.Format(null, CoreStrings.CountersAggregatorExecuteStarting, nameof(HangfireCounter)));
         int removedCount;
         do
         {
@@ -75,7 +75,7 @@ internal class CountersAggregator : IServerComponent
         }
         while (removedCount > 0);
 
-        _logger.Trace(CoreStrings.CountersAggregatorExecuteCompleted(nameof(HangfireCounter)));
+        _logger.Trace(string.Format(null, CoreStrings.CountersAggregatorExecuteCompleted, nameof(HangfireCounter)));
         cancellationToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
     }
 }

@@ -30,7 +30,4 @@
     <File Path="tests/Directory.Build.props" />
     <Project Path="tests/Hangfire.EntityFrameworkCore.Tests/Hangfire.EntityFrameworkCore.Tests.csproj" />
   </Folder>
-  <Folder Name="/tools/">
-    <File Path="tools/Resources.tt" />
-  </Folder>
 </Solution>

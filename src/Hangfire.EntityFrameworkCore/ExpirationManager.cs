@@ -46,7 +46,7 @@ internal class ExpirationManager : IServerComponent
     private void RemoveExpiredJobs()
     {
         var type = typeof(HangfireJob);
-        _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
+        _logger.Debug(string.Format(null, CoreStrings.ExpirationManagerRemoveExpiredStarting, type.Name));
 
         UseLock(() =>
         {
@@ -96,7 +96,7 @@ internal class ExpirationManager : IServerComponent
                 return affected;
             }));
         });
-        _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
+        _logger.Trace(string.Format(null, CoreStrings.ExpirationManagerRemoveExpiredCompleted, type.Name));
     }
 
     private void RemoveExpired<TEntity, TKey>(
@@ -105,7 +105,7 @@ internal class ExpirationManager : IServerComponent
         where TEntity : class, IExpirable
     {
         var type = typeof(TEntity);
-        _logger.Debug(CoreStrings.ExpirationManagerRemoveExpiredStarting(type.Name));
+        _logger.Debug(string.Format(null, CoreStrings.ExpirationManagerRemoveExpiredStarting, type.Name));
         UseLock(() =>
         {
             while (0 != _storage.UseContext(context =>
@@ -130,7 +130,7 @@ internal class ExpirationManager : IServerComponent
                 }
             }));
         });
-        _logger.Trace(CoreStrings.ExpirationManagerRemoveExpiredCompleted(type.Name));
+        _logger.Trace(string.Format(null, CoreStrings.ExpirationManagerRemoveExpiredCompleted, type.Name));
     }
 
     private void UseLock(Action action)
@@ -146,7 +146,8 @@ internal class ExpirationManager : IServerComponent
         when (exception.Resource == LockKey)
         {
             _logger.Log(LogLevel.Debug, () =>
-                 CoreStrings.ExpirationManagerUseLockFailed(
+                 string.Format(null,
+                    CoreStrings.ExpirationManagerUseLockFailed,
                     LockKey,
                     lockTimeout.TotalSeconds,
                     _storage.JobExpirationCheckInterval.TotalSeconds),

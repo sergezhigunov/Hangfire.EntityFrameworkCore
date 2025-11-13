@@ -130,26 +130,26 @@
     <value>Positive value required.</value>
   </data>
   <data name="CountersAggregatorExecuteCompleted" xml:space="preserve">
-    <value>Records from the '{tableName}' table aggregated.</value>
+    <value>Records from the '{0}' table aggregated.</value>
   </data>
   <data name="CountersAggregatorExecuteStarting" xml:space="preserve">
-    <value>Aggregating records in '{tableName}' table...</value>
+    <value>Aggregating records in '{0}' table...</value>
   </data>
   <data name="EFCoreFetchedJobExecuteKeepAliveQueryCompleted" xml:space="preserve">
-    <value>Keep-alive query for message {id} sent</value>
+    <value>Keep-alive query for message {0} sent</value>
   </data>
   <data name="EFCoreFetchedJobExecuteKeepAliveQueryFailed" xml:space="preserve">
-    <value>Unable to execute keep-alive query for message {id}</value>
+    <value>Unable to execute keep-alive query for message {0}</value>
   </data>
   <data name="ExpirationManagerRemoveExpiredCompleted" xml:space="preserve">
-    <value>Outdated records removed from the '{tableName}' table.</value>
+    <value>Outdated records removed from the '{0}' table.</value>
   </data>
   <data name="ExpirationManagerRemoveExpiredStarting" xml:space="preserve">
-    <value>Removing outdated records from the '{tableName}' table...</value>
+    <value>Removing outdated records from the '{0}' table...</value>
   </data>
   <data name="ExpirationManagerUseLockFailed" xml:space="preserve">
-    <value>An exception was thrown during acquiring distributed lock on the {lockKey} resource within {lockTimeoutSeconds} seconds. Outdated records were not removed.
-It will be retried in {expirationCheckIntervalSeconds} seconds.</value>
+    <value>An exception was thrown during acquiring distributed lock on the {0} resource within {1} seconds. Outdated records were not removed.
+It will be retried in {2} seconds.</value>
   </data>
   <data name="InvalidOperationExceptionJobDoesNotExists" xml:space="preserve">
     <value>The job does not exist.</value>

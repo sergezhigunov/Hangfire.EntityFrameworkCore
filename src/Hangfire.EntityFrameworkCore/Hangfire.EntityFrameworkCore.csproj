@@ -4,7 +4,7 @@
    <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <Description>Entity Framework Core SQL provider-neutral job storage implementation for Hangfire (https://www.hangfire.io).</Description>
     <PackageReleaseNotes>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)ReleaseNotes.txt'))</PackageReleaseNotes>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;CA1863</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,21 +36,16 @@
 
   <ItemGroup>
     <EmbeddedResource Update="Properties\CoreStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>CoreStrings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Properties\CoreStrings.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CoreStrings.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Properties\CoreStrings.cs">
+    <Compile Update="Properties\CoreStrings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>CoreStrings.tt</DependentUpon>
+      <DependentUpon>CoreStrings.resx</DependentUpon>
     </Compile>
   </ItemGroup>
 
