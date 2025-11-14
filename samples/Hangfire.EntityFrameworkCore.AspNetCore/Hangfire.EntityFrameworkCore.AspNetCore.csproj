@@ -7,13 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="**\*.db" />
-    <None Remove="**\*.db-journal" />
-    <None Remove="**\*.db-wal" />
-    <None Remove="**\*.db-shm" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\Hangfire.EntityFrameworkCore\Hangfire.EntityFrameworkCore.csproj" />
   </ItemGroup>
 

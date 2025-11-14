@@ -6,9 +6,7 @@ public static class Program
 {
     private static async Task Main(string[] args)
     {
-        AppDomain.CurrentDomain.SetData(
-            "DataDirectory",
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        AppContext.SetData("DataDirectory", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         var builder = WebApplication.CreateBuilder(args);
         var connectionString = builder.Configuration.GetConnectionString("HangfireConnection")
             ?? throw new InvalidOperationException("Connection string 'HangfireConnection' not found.");
