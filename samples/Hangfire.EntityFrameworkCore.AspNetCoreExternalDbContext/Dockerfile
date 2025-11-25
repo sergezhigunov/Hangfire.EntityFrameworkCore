@@ -12,6 +12,7 @@ COPY ["Directory.Build.props", "."]
 COPY ["src/Directory.Build.props", "src/"]
 COPY ["samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext.csproj", "samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/"]
 COPY ["src/Hangfire.EntityFrameworkCore/Hangfire.EntityFrameworkCore.csproj", "src/Hangfire.EntityFrameworkCore/"]
+COPY ["src/Hangfire.EntityFrameworkCore/ReleaseNotes.txt", "src/Hangfire.EntityFrameworkCore/"]
 RUN dotnet restore "./samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext.csproj"
 COPY . .
 WORKDIR "/src/samples/Hangfire.EntityFrameworkCore.AspNetCoreExternalDbContext"
