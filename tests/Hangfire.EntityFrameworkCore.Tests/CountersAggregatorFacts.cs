@@ -1,4 +1,6 @@
-﻿namespace Hangfire.EntityFrameworkCore.Tests;
+﻿using Hangfire.Server;
+
+namespace Hangfire.EntityFrameworkCore.Tests;
 
 public class CountersAggregatorFacts : EFCoreStorageTest
 {
@@ -22,23 +24,62 @@ public class CountersAggregatorFacts : EFCoreStorageTest
     }
 
     [Fact]
-    public void Execute_Throws_WhenCancellationTokenRequested()
+    public void Execute_Component_Throws_WhenCancellationTokenRequested()
     {
-        var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions
-        {
-            CountersAggregationInterval = new TimeSpan(1),
-        });
-        storage.RegisterDatabaseInitializer(context => context.Database.EnsureCreated());
-        var instance = new CountersAggregator(storage);
-        var source = new CancellationTokenSource();
-        source.Cancel();
+        (var instance, var context) = SetupInitialState(true);
 
         Assert.Throws<OperationCanceledException>(
-            () => instance.Execute(source.Token));
+            () => instance.Execute(context.StoppingToken));
     }
 
     [Fact]
-    public void Execute_DoWorkCorrectly()
+    public void Execute_Component_DoWorkCorrectly()
+    {
+        InitializeData();
+        (var instance, var context) = SetupInitialState(false);
+
+        instance.Execute(context.StoppingToken);
+
+        UseContext(context =>
+        {
+            var result = context.Set<HangfireCounter>().ToArray();
+
+            Assert.Equal(3, result.Length);
+            Assert.Equal(10, result.Single(x => x.Key == "counter1").Value);
+            Assert.Equal(-20, result.Single(x => x.Key == "counter2").Value);
+            Assert.Equal(99, result.Single(x => x.Key == "counter3").Value);
+        });
+    }
+
+    [Fact]
+    public void Execute_Process_Throws_WhenCancellationTokenRequested()
+    {
+        (var instance, var context) = SetupInitialState(true);
+
+        Assert.Throws<OperationCanceledException>(
+            () => instance.Execute(context));
+    }
+
+    [Fact]
+    public void Execute_Process_DoWorkCorrectly()
+    {
+        InitializeData();
+        (var instance, var context) = SetupInitialState(false);
+
+        instance.Execute(context);
+
+        UseContext(context =>
+        {
+            var result = context.Set<HangfireCounter>().ToArray();
+
+            Assert.Equal(3, result.Length);
+            Assert.Equal(10, result.Single(x => x.Key == "counter1").Value);
+            Assert.Equal(-20, result.Single(x => x.Key == "counter2").Value);
+            Assert.Equal(99, result.Single(x => x.Key == "counter3").Value);
+        });
+    }
+
+    private void InitializeData()
     {
         UseContextSavingChanges(context =>
         {
@@ -69,24 +110,21 @@ public class CountersAggregatorFacts : EFCoreStorageTest
                 Value = -1
             });
         });
+    }
 
+    private (CountersAggregator instance, BackgroundProcessContext context) SetupInitialState(bool cancelled)
+    {
         var storage = new EFCoreStorage(OptionsAction, new EFCoreStorageOptions
         {
             CountersAggregationInterval = new TimeSpan(1),
         });
+        storage.RegisterDatabaseInitializer(context => context.Database.EnsureCreated());
         var instance = new CountersAggregator(storage);
         var source = new CancellationTokenSource();
-
-        instance.Execute(source.Token);
-
-        UseContext(context =>
-        {
-            var result = context.Set<HangfireCounter>().ToArray();
-
-            Assert.Equal(3, result.Length);
-            Assert.Equal(10, result.Single(x => x.Key == "counter1").Value);
-            Assert.Equal(-20, result.Single(x => x.Key == "counter2").Value);
-            Assert.Equal(99, result.Single(x => x.Key == "counter3").Value);
-        });
+        if (cancelled)
+            source.Cancel();
+        var context = new BackgroundProcessContext(
+            "1", storage, new Dictionary<string, object>(), default, source.Token, default, default);
+        return (instance, context);
     }
 }

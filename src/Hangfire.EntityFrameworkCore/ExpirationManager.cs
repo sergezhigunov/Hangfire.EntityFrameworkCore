@@ -5,9 +5,13 @@ using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore;
 
-#pragma warning disable 618
-internal class ExpirationManager : IServerComponent
-#pragma warning restore 618
+using NotNullAttribute = Annotations.NotNullAttribute;
+
+internal class ExpirationManager :
+#pragma warning disable CS0618
+    IServerComponent,
+#pragma warning restore CS0618
+    IBackgroundProcess
 {
     private const int BatchSize = 1000;
     private const string LockKey = "locks:expirationmanager";
@@ -23,6 +27,12 @@ internal class ExpirationManager : IServerComponent
         if (storage is null) throw new ArgumentNullException(nameof(storage));
 #endif
         _storage = storage;
+    }
+
+
+    public void Execute([NotNull] BackgroundProcessContext context)
+    {
+        Execute(context.StoppingToken);
     }
 
     public void Execute(CancellationToken cancellationToken)

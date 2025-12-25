@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire.Storage;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
@@ -77,7 +78,7 @@ public class EFCoreStorageFacts : EFCoreStorageTest
         var result = instance.GetMonitoringApi();
 
         Assert.NotNull(result);
-        var api = Assert.IsType<EFCoreStorageMonitoringApi>(result);
+        var api = Assert.IsType<EFCoreJobStorageMonitor>(result);
 
         Assert.Same(instance,
             Assert.IsType<EFCoreStorage>(result.GetFieldValue("_storage")));
@@ -182,10 +183,74 @@ public class EFCoreStorageFacts : EFCoreStorageTest
     {
         var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
 
-        var result = storage.GetComponents();
+#pragma warning disable CS0618
+        var result =  storage.GetComponents();
+#pragma warning restore CS0618
 
-        var componentTypes = result.Select(x => x.GetType()).ToArray();
-        Assert.Contains(typeof(ExpirationManager), componentTypes);
-        Assert.Contains(typeof(CountersAggregator), componentTypes);
+        Assert.Contains(result, x => x is EFCoreHeartbeatProcess);
+        Assert.Contains(result, x => x is ExpirationManager);
+        Assert.Contains(result, x => x is CountersAggregator);
+    }
+
+    [Fact]
+    public static void GetServerRequiredProcesses_ReturnsAllNeededComponents()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+
+        var result = storage.GetServerRequiredProcesses();
+
+        Assert.Contains(result, x => x is EFCoreHeartbeatProcess);
+    }
+
+    [Fact]
+    public static void GetStorageWideProcesses_ReturnsAllNeededComponents()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+
+        var result = storage.GetStorageWideProcesses();
+
+        Assert.Contains(result, x => x is ExpirationManager);
+        Assert.Contains(result, x => x is CountersAggregator);
+    }
+
+    [Fact]
+    public static void HasFeature_ThrowsArgumentNullException_IfFeatureIdIsNull()
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+        string featureId = null;
+
+        Assert.Throws<ArgumentNullException>(nameof(featureId), () => storage.HasFeature(featureId));
+    }
+
+    [Theory]
+    [InlineData("Job.Queue")]
+    [InlineData("Connection.GetUtcDateTime")]
+    [InlineData("Connection.GetSetContains")]
+    [InlineData("Connection.GetSetCount.Limited")]
+    [InlineData("Connection.BatchedGetFirstByLowestScoreFromSet")]
+    [InlineData("Storage.ExtendedApi")]
+    [InlineData("Transaction.AcquireDistributedLock")]
+    [InlineData("Transaction.CreateJob")]
+    [InlineData("Transaction.SetJobParameter")]
+    public static void HasFeature_ReturnsFalse_IfFeatureIsSupported(string featureId)
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+
+        var result = storage.HasFeature(featureId);
+
+        Assert.False(result);
+    }
+
+    [Theory]
+    [InlineData("Monitoring.AwaitingJobs")]
+    [InlineData("Monitoring.DeletedStateGraphs")]
+    [InlineData("Storage.ProcessesInsteadOfComponents")]
+    public static void HasFeature_ReturnsTrue_IfFeatureIsSupported(string featureId)
+    {
+        var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
+
+        var result = storage.HasFeature(featureId);
+
+        Assert.True(result);
     }
 }

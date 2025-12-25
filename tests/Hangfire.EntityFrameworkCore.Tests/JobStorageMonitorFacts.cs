@@ -4,7 +4,7 @@ using Hangfire.States;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
 
-public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
+public class JobStorageMonitorFacts : EFCoreStorageTest
 {
     [Fact]
     public static void Ctor_Throws_WhenStorageParameterIsNull()
@@ -12,7 +12,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         EFCoreStorage storage = null;
 
         Assert.Throws<ArgumentNullException>(nameof(storage),
-            () => new EFCoreStorageMonitoringApi(storage));
+            () => new EFCoreJobStorageMonitor(storage));
     }
 
     [Fact]
@@ -20,9 +20,81 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
     {
         var storage = CreateStorageStub();
 
-        var instance = new EFCoreStorageMonitoringApi(storage);
+        var instance = new EFCoreJobStorageMonitor(storage);
 
         Assert.Same(storage, Assert.IsType<EFCoreStorage>(instance.GetFieldValue("_storage")));
+    }
+
+    [Fact]
+    public void AwaitingJobs_ReturnsCorrectResult()
+    {
+        var now = DateTime.UtcNow;
+        var parentStateName = "StateName";
+        var data = new Dictionary<string, string>
+        {
+            ["AwaitingAt"] = JobHelper.SerializeDateTime(now),
+            ["ParentStateName"] = parentStateName,
+        };
+        var invocationData = CreateInvocationData(() => SampleMethod("Arguments"));
+        var jobs = Enumerable.Range(0, 5).
+            Select(x => new HangfireJob
+            {
+                CreatedAt = now + new TimeSpan(0, 0, x),
+                InvocationData = invocationData,
+                States =
+                [
+                    new()
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        Name = AwaitingState.StateName,
+                        Data = data,
+                    },
+                ],
+            }).
+            ToArray();
+        UseContextSavingChanges(context =>
+        {
+            foreach (var job in jobs)
+                context.Add(job);
+            context.SaveChanges();
+            foreach (var job in jobs)
+            {
+                var state = job.States.Single();
+                job.State = state;
+                job.StateName = state.Name;
+            }
+        });
+
+        var result = UseMonitoringApi(instance => instance.AwaitingJobs(1, 2));
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+
+        Assert.All(result, item =>
+        {
+            Assert.NotNull(item.Key);
+            var value = item.Value;
+            Assert.NotNull(value);
+            Assert.Equal(now, value.AwaitingAt);
+            Assert.Equal(parentStateName, value.ParentStateName);
+        });
+
+        Assert.Equal(jobs[2].Id.ToString(CultureInfo.InvariantCulture), result[1].Key);
+        Assert.Equal(jobs[3].Id.ToString(CultureInfo.InvariantCulture), result[0].Key);
+    }
+
+    [Fact]
+    public void AwaitingCount_ReturnsCorrectResult()
+    {
+        UseContextSavingChanges(context =>
+        {
+            for (int i = 0; i < 3; i++)
+                AddJobWithStateToContext(context, AwaitingState.StateName);
+        });
+
+        var result = UseMonitoringApi(instance => instance.AwaitingCount());
+
+        Assert.Equal(3, result);
     }
 
     [Fact]
@@ -222,6 +294,27 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
             Assert.Equal(job.StateName, value.State);
             Assert.Equal(job.State.Name, value.State);
         });
+    }
+
+    [Fact]
+    public void DeletedByDatesCount_ReturnsCorrectResult()
+    {
+        var today = DateTime.UtcNow.Date;
+        var counts = Enumerable.Range(0, 7);
+        var dictionaryDates = counts.ToDictionary(x => today.AddDays(-x));
+
+        UseContextSavingChanges(context => context.AddRange(
+            dictionaryDates.Select(item => new HangfireCounter
+            {
+                Key = $"stats:deleted:{item.Key:yyyy-MM-dd}",
+                Value = item.Value,
+            })));
+
+        var result = UseMonitoringApi(instance => instance.DeletedByDatesCount());
+
+        Assert.NotNull(result);
+        Assert.Equal(7, result.Count);
+        Assert.All(result, item => Assert.Equal(dictionaryDates[item.Key], item.Value));
     }
 
     [Fact]
@@ -459,6 +552,7 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         var result = UseMonitoringApi(instance => instance.GetStatistics());
 
         Assert.NotNull(result);
+        Assert.Equal(0, result.Awaiting);
         Assert.Equal(0, result.Deleted);
         Assert.Equal(0, result.Enqueued);
         Assert.Equal(0, result.Failed);
@@ -478,37 +572,40 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         UseContextSavingChanges(context =>
         {
             for (int i = 0; i < 1; i++)
-                AddJobWithStateToContext(context, EnqueuedState.StateName);
+                AddJobWithStateToContext(context, AwaitingState.StateName);
 
             for (int i = 0; i < 2; i++)
-                AddJobWithStateToContext(context, FailedState.StateName);
+                AddJobWithStateToContext(context, EnqueuedState.StateName);
 
             for (int i = 0; i < 3; i++)
-                AddJobWithStateToContext(context, ProcessingState.StateName);
+                AddJobWithStateToContext(context, FailedState.StateName);
 
             for (int i = 0; i < 4; i++)
+                AddJobWithStateToContext(context, ProcessingState.StateName);
+
+            for (int i = 0; i < 5; i++)
                 AddJobWithStateToContext(context, ScheduledState.StateName);
 
             context.AddRange(
                 new HangfireCounter
                 {
                     Key = "stats:deleted",
-                    Value = 5,
+                    Value = 6,
                 },
                 new HangfireCounter
                 {
                     Key = "stats:succeeded",
-                    Value = 6,
+                    Value = 7,
                 });
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 8; i++)
                 context.Add(new HangfireSet
                 {
                     Key = "recurring-jobs",
                     Value = $"recurring-job-{i}",
                 });
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 9; i++)
                 context.Add(new HangfireServer
                 {
                     Id = $"server-id-{i}",
@@ -517,22 +614,54 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
                     Queues = EmptyArrayStub,
                 });
 
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; i < 10; i++)
                 AddJobWithQueueItemToContext(context, Guid.NewGuid().ToString());
         });
 
         var result = UseMonitoringApi(instance => instance.GetStatistics());
 
         Assert.NotNull(result);
-        Assert.Equal(5, result.Deleted);
-        Assert.Equal(1, result.Enqueued);
-        Assert.Equal(2, result.Failed);
-        Assert.Equal(3, result.Processing);
-        Assert.Equal(9, result.Queues);
-        Assert.Equal(7, result.Recurring);
-        Assert.Equal(4, result.Scheduled);
-        Assert.Equal(8, result.Servers);
-        Assert.Equal(6, result.Succeeded);
+        Assert.Equal(1, result.Awaiting);
+        Assert.Equal(2, result.Enqueued);
+        Assert.Equal(3, result.Failed);
+        Assert.Equal(4, result.Processing);
+        Assert.Equal(5, result.Scheduled);
+        Assert.Equal(6, result.Deleted);
+        Assert.Equal(7, result.Succeeded);
+        Assert.Equal(8, result.Recurring);
+        Assert.Equal(9, result.Servers);
+        Assert.Equal(10, result.Queues);
+    }
+
+    [Fact]
+    public void HourlyDeletedJobs_ReturnsCorrectResult()
+    {
+        var now = DateTime.UtcNow;
+        var counts = Enumerable.Range(0, 24);
+
+        var dictionaryDates = counts.ToDictionary(x =>
+        {
+            var hour = now.AddHours(-x);
+            return new DateTime(hour.Year, hour.Month, hour.Day, hour.Hour, 0, 0, DateTimeKind.Utc);
+        });
+
+        UseContextSavingChanges(context =>
+        {
+            foreach (var item in dictionaryDates)
+                if (item.Value != 0)
+                    context.Add(new HangfireCounter
+                    {
+                        Key = $"stats:deleted:{item.Key:yyyy-MM-dd-HH}",
+                        Value = item.Value,
+                    });
+        });
+
+        var result = UseMonitoringApi(instance => instance.HourlyDeletedJobs());
+
+        Assert.NotNull(result);
+        Assert.Equal(24, result.Count);
+
+        Assert.All(result, item => Assert.Equal(dictionaryDates[item.Key], item.Value));
     }
 
     [Fact]
@@ -1060,8 +1189,8 @@ public class EFCoreStorageMonitoringApiFacts : EFCoreStorageTest
         context.SaveChanges();
     }
 
-    private T UseMonitoringApi<T>(Func<EFCoreStorageMonitoringApi, T> func)
+    private T UseMonitoringApi<T>(Func<EFCoreJobStorageMonitor, T> func)
     {
-        return func(new EFCoreStorageMonitoringApi(Storage));
+        return func(new EFCoreJobStorageMonitor(Storage));
     }
 }

@@ -5,9 +5,11 @@ namespace Hangfire.EntityFrameworkCore;
 
 using GetCountersToRemoveFunc = Func<DbContext, IEnumerable<HangfireCounter>>;
 
+internal class CountersAggregator :
 #pragma warning disable CS0618
-internal class CountersAggregator : IServerComponent
+    IServerComponent,
 #pragma warning restore CS0618
+    IBackgroundProcess
 {
     private const int BatchSize = 1000;
 
@@ -32,6 +34,12 @@ internal class CountersAggregator : IServerComponent
 #endif
 
         _storage = storage;
+    }
+
+
+    public void Execute([NotNull] BackgroundProcessContext context)
+    {
+        Execute(context.StoppingToken);
     }
 
     public void Execute(CancellationToken cancellationToken)

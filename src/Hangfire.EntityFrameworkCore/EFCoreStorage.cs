@@ -4,11 +4,21 @@ using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore;
 
+using NotNullAttribute = Annotations.NotNullAttribute;
+
 /// <summary>
 /// Represents an Entity Framework Core based Hangfire Job Storage.
 /// </summary>
 public class EFCoreStorage : JobStorage
 {
+    private static IReadOnlyCollection<string> SupportedFeatures { get; }
+        = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            JobStorageFeatures.Monitoring.AwaitingJobs,
+            JobStorageFeatures.Monitoring.DeletedStateGraphs,
+            JobStorageFeatures.ProcessesInsteadOfComponents,
+        };
+
 #if NET9_0_OR_GREATER
     private readonly Lock _lock = new();
 #else
@@ -25,7 +35,7 @@ public class EFCoreStorage : JobStorage
     internal IDictionary<string, IPersistentJobQueueProvider> QueueProviders { get; } =
         new Dictionary<string, IPersistentJobQueueProvider>(StringComparer.OrdinalIgnoreCase);
 
-    internal EFCoreHeartbeatProcess HeartbeatProcess { get; }
+    internal EFCoreHeartbeatProcess HeartbeatProcess { get; } = new EFCoreHeartbeatProcess();
 
     internal TimeSpan DistributedLockTimeout => _options.DistributedLockTimeout;
 
@@ -121,7 +131,8 @@ public class EFCoreStorage : JobStorage
     /// <returns>
     /// A new job storage connection.
     /// </returns>
-    public override IStorageConnection GetConnection() => new EFCoreStorageConnection(this);
+    public override IStorageConnection GetConnection()
+        => new EFCoreStorageConnection(this);
 
     /// <summary>
     /// Creates a new job storage monitoring API.
@@ -129,7 +140,27 @@ public class EFCoreStorage : JobStorage
     /// <returns>
     /// A new job storage monitoring API.
     /// </returns>
-    public override IMonitoringApi GetMonitoringApi() => new EFCoreStorageMonitoringApi(this);
+    public override IMonitoringApi GetMonitoringApi()
+        => new EFCoreJobStorageMonitor(this);
+
+    /// <summary>
+    /// Returns a boolean value indicating whether the specified feature is enabled.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> if feature is enabled; otherwise <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="featureId"/> is <see langword="null"/>.
+    /// </exception>
+    public override bool HasFeature([NotNull] string featureId)
+    {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(featureId);
+#else
+        if (featureId is null) throw new ArgumentNullException(nameof(featureId));
+#endif
+        return SupportedFeatures.Contains(featureId) || base.HasFeature(featureId);
+    }
 
     /// <summary>
     /// Returns of server component collection.
@@ -137,19 +168,42 @@ public class EFCoreStorage : JobStorage
     /// <returns>
     /// Collection of server components <see cref="IServerComponent"/>.
     /// </returns>
-#pragma warning disable CS0618
+#pragma warning disable CS0618, CS0672
     public override IEnumerable<IServerComponent> GetComponents()
-#pragma warning restore CS0618
     {
         foreach (var item in base.GetComponents())
+#pragma warning restore CS0618, CS0672
             yield return item;
         yield return new ExpirationManager(this);
         yield return new CountersAggregator(this);
-        if (UseSlidingInvisibilityTimeout)
-        {
-            // This is only used to update the sliding invisibility timeouts, so if not enabled then do not use it
-            yield return HeartbeatProcess;
-        }
+        yield return HeartbeatProcess;
+    }
+
+    /// <summary>
+    /// Returns of server required process collection.
+    /// </summary>
+    /// <returns>
+    /// Collection of server process <see cref="IBackgroundProcess"/>.
+    /// </returns>
+    public override IEnumerable<IBackgroundProcess> GetServerRequiredProcesses()
+    {
+        foreach (var item in base.GetServerRequiredProcesses())
+            yield return item;
+        yield return HeartbeatProcess;
+    }
+
+    /// <summary>
+    /// Returns of server required process collection.
+    /// </summary>
+    /// <returns>
+    /// Collection of server process <see cref="IBackgroundProcess"/>.
+    /// </returns>
+    public override IEnumerable<IBackgroundProcess> GetStorageWideProcesses()
+    {
+        foreach (var item in base.GetStorageWideProcesses())
+            yield return item;
+        yield return new ExpirationManager(this);
+        yield return new CountersAggregator(this);
     }
 
     [SuppressMessage("Maintainability", "CA1510")]

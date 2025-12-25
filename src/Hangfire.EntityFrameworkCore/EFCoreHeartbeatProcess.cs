@@ -20,6 +20,9 @@ namespace Hangfire.EntityFrameworkCore
             cancellationToken.Wait(TimeSpan.FromSeconds(1));
         }
 
-        public void Execute(BackgroundProcessContext context) => Execute(context.StoppingToken);
+        public void Execute(BackgroundProcessContext context)
+        {
+            Execute(context.StoppingToken);
+        }
     }
 }

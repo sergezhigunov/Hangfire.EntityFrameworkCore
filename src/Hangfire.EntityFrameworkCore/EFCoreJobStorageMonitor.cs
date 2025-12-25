@@ -8,18 +8,19 @@ namespace Hangfire.EntityFrameworkCore;
 using GetCountersFunc = Func<DbContext, ICollection<string>, IEnumerable<KeyValuePair<string, long>>>;
 using GetJobDetailsFunc = Func<DbContext, long, JobDetailsDto>;
 using GetJobParametersFunc = Func<DbContext, long, IEnumerable<KeyValuePair<string, string>>>;
-using GetStateDataFunc = Func<DbContext, string, int, int, IEnumerable<EFCoreStorageMonitoringApi.JobState>>;
+using GetStateDataFunc = Func<DbContext, string, int, int, IEnumerable<EFCoreJobStorageMonitor.JobState>>;
 using GetStateHistoryFunc = Func<DbContext, long, IEnumerable<StateHistoryDto>>;
 using GetStateCountFunc = Func<DbContext, string, long>;
 using GetStatisticsFunc = Func<DbContext, IEnumerable<KeyValuePair<string, long>>>;
 using GetCountFunc = Func<DbContext, long>;
-using EnqueuedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<EFCoreStorageMonitoringApi.EnqueuedJobState>>;
+using EnqueuedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<EFCoreJobStorageMonitor.EnqueuedJobState>>;
 using FetchedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
 using ServersFunc = Func<DbContext, IEnumerable<ServerDto>>;
 using NotNullAttribute = Annotations.NotNullAttribute;
 
-internal class EFCoreStorageMonitoringApi : IMonitoringApi
+internal class EFCoreJobStorageMonitor : JobStorageMonitor
 {
+    private const string DeletedStatsName = "deleted";
     private const string FailedStatsName = "failed";
     private const string SucceededStatsName = "succeeded";
     private const string DeletedCounterName = "stats:deleted";
@@ -89,6 +90,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             from x in context.Set<HangfireJob>()
             where new[]
             {
+                AwaitingState.StateName,
                 EnqueuedState.StateName,
                 FailedState.StateName,
                 ProcessingState.StateName,
@@ -164,7 +166,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     private readonly EFCoreStorage _storage;
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public EFCoreStorageMonitoringApi(
+    public EFCoreJobStorageMonitor(
         EFCoreStorage storage)
     {
 #if NET8_0_OR_GREATER
@@ -175,7 +177,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         _storage = storage;
     }
 
-    public JobList<DeletedJobDto> DeletedJobs(int from, int count)
+    public override JobList<DeletedJobDto> DeletedJobs(int from, int count)
         => GetJobs(from, count, DeletedState.StateName,
             (job, data, reason) => new DeletedJobDto
             {
@@ -184,10 +186,10 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                     data?.GetValue(nameof(DeletedJobDto.DeletedAt))),
             });
 
-    public long DeletedListCount() => GetNumberOfJobsByStateName(DeletedState.StateName);
+    public override long DeletedListCount() => GetNumberOfJobsByStateName(DeletedState.StateName);
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public long EnqueuedCount([NotNull] string queue)
+    public override long EnqueuedCount([NotNull] string queue)
     {
 #if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(queue);
@@ -201,7 +203,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
+    public override JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
     {
 #if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(queue);
@@ -214,11 +216,13 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return EnqueuedJobs(ids);
     }
 
-    public IDictionary<DateTime, long> FailedByDatesCount() => GetDailyTimelineStats(FailedStatsName);
+    public override IDictionary<DateTime, long> FailedByDatesCount()
+        => GetDailyTimelineStats(FailedStatsName);
 
-    public long FailedCount() => GetNumberOfJobsByStateName(FailedState.StateName);
+    public override long FailedCount()
+        => GetNumberOfJobsByStateName(FailedState.StateName);
 
-    public JobList<FailedJobDto> FailedJobs(int from, int count)
+    public override JobList<FailedJobDto> FailedJobs(int from, int count)
         => GetJobs(from, count, FailedState.StateName,
             (job, data, reason) => new FailedJobDto
             {
@@ -232,7 +236,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
             });
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public long FetchedCount([NotNull] string queue)
+    public override long FetchedCount([NotNull] string queue)
     {
 #if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(queue);
@@ -246,7 +250,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
     }
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
+    public override JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
     {
 #if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(queue);
@@ -269,7 +273,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 x.Value)));
     }
 
-    public StatisticsDto GetStatistics()
+    public override StatisticsDto GetStatistics()
     {
         var result = _storage.UseContext(context =>
         {
@@ -288,6 +292,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                 Failed = dictionary.GetValue(FailedState.StateName),
                 Processing = dictionary.GetValue(ProcessingState.StateName),
                 Scheduled = dictionary.GetValue(ScheduledState.StateName),
+                Awaiting = dictionary.GetValue(AwaitingState.StateName),
             };
         });
         result.Queues = _storage.DefaultQueueProvider.
@@ -299,12 +304,14 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return result;
     }
 
-    public IDictionary<DateTime, long> HourlyFailedJobs() => GetHourlyTimelineStats(FailedStatsName);
+    public override IDictionary<DateTime, long> HourlyFailedJobs()
+        => GetHourlyTimelineStats(FailedStatsName);
 
-    public IDictionary<DateTime, long> HourlySucceededJobs() => GetHourlyTimelineStats(SucceededStatsName);
+    public override IDictionary<DateTime, long> HourlySucceededJobs()
+        => GetHourlyTimelineStats(SucceededStatsName);
 
     [SuppressMessage("Maintainability", "CA1510")]
-    public JobDetailsDto JobDetails([NotNull] string jobId)
+    public override JobDetailsDto JobDetails([NotNull] string jobId)
     {
 #if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(jobId);
@@ -324,9 +331,10 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         });
     }
 
-    public long ProcessingCount() => GetNumberOfJobsByStateName(ProcessingState.StateName);
+    public override long ProcessingCount()
+        => GetNumberOfJobsByStateName(ProcessingState.StateName);
 
-    public JobList<ProcessingJobDto> ProcessingJobs(int from, int count)
+    public override JobList<ProcessingJobDto> ProcessingJobs(int from, int count)
         => GetJobs(from, count, ProcessingState.StateName,
             (job, data, reason) => new ProcessingJobDto
             {
@@ -336,7 +344,7 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                     data?.GetValue(nameof(ProcessingJobDto.StartedAt))),
             });
 
-    public IList<QueueWithTopEnqueuedJobsDto> Queues()
+    public override IList<QueueWithTopEnqueuedJobsDto> Queues()
     {
         var tuples = (
             from provider in Enumerable.Repeat(_storage.DefaultQueueProvider, 1)
@@ -372,9 +380,9 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
         return result;
     }
 
-    public long ScheduledCount() => GetNumberOfJobsByStateName(ScheduledState.StateName);
+    public override long ScheduledCount() => GetNumberOfJobsByStateName(ScheduledState.StateName);
 
-    public JobList<ScheduledJobDto> ScheduledJobs(int from, int count)
+    public override JobList<ScheduledJobDto> ScheduledJobs(int from, int count)
         => GetJobs(from, count, ScheduledState.StateName,
             (job, data, reason) => new ScheduledJobDto
             {
@@ -385,11 +393,13 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                     data?.GetValue(nameof(ScheduledJobDto.ScheduledAt))) ?? default,
             });
 
-    public IList<ServerDto> Servers() => _storage.UseContext(context => ServersFunc(context).ToList());
+    public override IList<ServerDto> Servers()
+        => _storage.UseContext(context => ServersFunc(context).ToList());
 
-    public IDictionary<DateTime, long> SucceededByDatesCount() => GetDailyTimelineStats(SucceededStatsName);
+    public override IDictionary<DateTime, long> SucceededByDatesCount()
+        => GetDailyTimelineStats(SucceededStatsName);
 
-    public JobList<SucceededJobDto> SucceededJobs(int from, int count)
+    public override JobList<SucceededJobDto> SucceededJobs(int from, int count)
         => GetJobs(from, count, SucceededState.StateName,
             (job, data, reason) => new SucceededJobDto
             {
@@ -405,7 +415,27 @@ internal class EFCoreStorageMonitoringApi : IMonitoringApi
                     default(long?)
             });
 
-    public long SucceededListCount() => GetNumberOfJobsByStateName(SucceededState.StateName);
+    public override long SucceededListCount()
+        => GetNumberOfJobsByStateName(SucceededState.StateName);
+
+    public override long AwaitingCount()
+        => GetNumberOfJobsByStateName(AwaitingState.StateName);
+
+    public override JobList<AwaitingJobDto> AwaitingJobs(int from, int count)
+        => GetJobs(from, count, AwaitingState.StateName,
+            (job, data, reason) => new AwaitingJobDto
+            {
+                Job = job,
+                ParentStateName = data?.GetValue(nameof(AwaitingJobDto.ParentStateName)),
+                AwaitingAt = JobHelper.DeserializeNullableDateTime(
+                    data?.GetValue(nameof(AwaitingJobDto.AwaitingAt))),
+            });
+
+    public override IDictionary<DateTime, long> DeletedByDatesCount()
+        => GetDailyTimelineStats(DeletedStatsName);
+
+    public override IDictionary<DateTime, long> HourlyDeletedJobs()
+        => GetHourlyTimelineStats(DeletedStatsName);
 
     private static Job Deserialize(InvocationData data)
     {
