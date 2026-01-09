@@ -55,14 +55,14 @@ public static class ModelBuilderExtensions
         }
         modelBuilder.Entity<HangfireCounter>(entity =>
         {
-            entity.HasIndex(nameof(HangfireCounter.Key), nameof(HangfireCounter.Value));
-            entity.HasIndex(nameof(HangfireCounter.ExpireAt));
+            entity.HasIndex(x => new { x.Key, x.Value, });
+            entity.HasIndex(x => x.ExpireAt);
             SetSchema(entity);
         });
         modelBuilder.Entity<HangfireHash>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Field });
-            entity.HasIndex(nameof(HangfireHash.ExpireAt));
+            entity.HasIndex(x => x.ExpireAt);
             SetSchema(entity);
         });
         modelBuilder.Entity<HangfireJob>(entity =>
@@ -71,8 +71,8 @@ public static class ModelBuilderExtensions
                 .HasConversion(
                     x => SerializationHelper.Serialize(x),
                     x => SerializationHelper.Deserialize<InvocationData>(x));
-            entity.HasIndex(nameof(HangfireJob.StateName));
-            entity.HasIndex(nameof(HangfireJob.ExpireAt));
+            entity.HasIndex(x => x.StateName);
+            entity.HasIndex(x => x.ExpireAt);
             SetSchema(entity);
         });
         modelBuilder.Entity<HangfireJobParameter>(entity =>
@@ -83,7 +83,7 @@ public static class ModelBuilderExtensions
         modelBuilder.Entity<HangfireList>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Position });
-            entity.HasIndex(nameof(HangfireList.ExpireAt));
+            entity.HasIndex(x => x.ExpireAt);
             SetSchema(entity);
         });
 
@@ -96,8 +96,8 @@ public static class ModelBuilderExtensions
         modelBuilder.Entity<HangfireSet>(entity =>
         {
             entity.HasKey(x => new { x.Key, x.Value });
-            entity.HasIndex(nameof(HangfireSet.Key), nameof(HangfireSet.Score));
-            entity.HasIndex(nameof(HangfireSet.ExpireAt));
+            entity.HasIndex(x => new { x.Key, x.Score, });
+            entity.HasIndex(x => x.ExpireAt);
             SetSchema(entity);
         });
         modelBuilder.Entity<HangfireServer>(entity =>
@@ -106,7 +106,7 @@ public static class ModelBuilderExtensions
                 .HasConversion(
                     x => SerializationHelper.Serialize(x),
                     x => SerializationHelper.Deserialize<string[]>(x));
-            entity.HasIndex(nameof(HangfireServer.Heartbeat));
+            entity.HasIndex(x => x.Heartbeat);
             SetSchema(entity);
         });
         modelBuilder.Entity<HangfireState>(entity =>
@@ -115,7 +115,7 @@ public static class ModelBuilderExtensions
                .HasConversion(
                    x => SerializationHelper.Serialize(x),
                    x => SerializationHelper.Deserialize<Dictionary<string, string>>(x));
-            entity.HasIndex(nameof(HangfireState.JobId));
+            entity.HasIndex(x => x.JobId);
             entity.HasMany<HangfireJob>().
                 WithOne(x => x.State).
                 HasForeignKey(x => x.StateId);
