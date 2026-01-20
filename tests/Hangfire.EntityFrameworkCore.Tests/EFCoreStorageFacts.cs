@@ -223,15 +223,11 @@ public class EFCoreStorageFacts : EFCoreStorageTest
     }
 
     [Theory]
-    [InlineData("Job.Queue")]
     [InlineData("Connection.GetUtcDateTime")]
     [InlineData("Connection.GetSetContains")]
     [InlineData("Connection.GetSetCount.Limited")]
     [InlineData("Connection.BatchedGetFirstByLowestScoreFromSet")]
     [InlineData("Storage.ExtendedApi")]
-    [InlineData("Transaction.AcquireDistributedLock")]
-    [InlineData("Transaction.CreateJob")]
-    [InlineData("Transaction.SetJobParameter")]
     public static void HasFeature_ReturnsFalse_IfFeatureIsSupported(string featureId)
     {
         var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());
@@ -242,9 +238,13 @@ public class EFCoreStorageFacts : EFCoreStorageTest
     }
 
     [Theory]
+    [InlineData("Job.Queue")]
     [InlineData("Monitoring.AwaitingJobs")]
     [InlineData("Monitoring.DeletedStateGraphs")]
     [InlineData("Storage.ProcessesInsteadOfComponents")]
+    [InlineData("Transaction.AcquireDistributedLock")]
+    [InlineData("Transaction.CreateJob")]
+    [InlineData("Transaction.SetJobParameter")]
     public static void HasFeature_ReturnsTrue_IfFeatureIsSupported(string featureId)
     {
         var storage = new EFCoreStorage(OptionsActionStub, new EFCoreStorageOptions());

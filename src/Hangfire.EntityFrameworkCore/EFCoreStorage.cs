@@ -17,6 +17,10 @@ public class EFCoreStorage : JobStorage
             JobStorageFeatures.Monitoring.AwaitingJobs,
             JobStorageFeatures.Monitoring.DeletedStateGraphs,
             JobStorageFeatures.ProcessesInsteadOfComponents,
+            JobStorageFeatures.JobQueueProperty,
+            JobStorageFeatures.Transaction.AcquireDistributedLock,
+            JobStorageFeatures.Transaction.CreateJob,
+            JobStorageFeatures.Transaction.SetJobParameter,
         };
 
 #if NET9_0_OR_GREATER
