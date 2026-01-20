@@ -5,11 +5,7 @@ namespace Hangfire.EntityFrameworkCore;
 
 using GetCountersToRemoveFunc = Func<DbContext, IEnumerable<HangfireCounter>>;
 
-internal class CountersAggregator :
-#pragma warning disable CS0618
-    IServerComponent,
-#pragma warning restore CS0618
-    IBackgroundProcess
+internal class CountersAggregator : IBackgroundProcess
 {
     private const int BatchSize = 1000;
 
@@ -36,22 +32,16 @@ internal class CountersAggregator :
         _storage = storage;
     }
 
-
     public void Execute([NotNull] BackgroundProcessContext context)
-    {
-        Execute(context.StoppingToken);
-    }
-
-    public void Execute(CancellationToken cancellationToken)
     {
         _logger.Debug(string.Format(null, CoreStrings.CountersAggregatorExecuteStarting, nameof(HangfireCounter)));
         int removedCount;
         do
         {
             removedCount = 0;
-            using (var context = _storage.CreateContext())
+            using (var dbContext = _storage.CreateContext())
             {
-                var lookup = GetCountersToRemoveFunc(context).
+                var lookup = GetCountersToRemoveFunc(dbContext).
                     ToLookup(x => x.Key);
 
                 foreach (var items in lookup)
@@ -59,8 +49,8 @@ internal class CountersAggregator :
                     var count = items.Count();
                     if (count > 1)
                     {
-                        context.RemoveRange(items);
-                        context.Add(new HangfireCounter
+                        dbContext.RemoveRange(items);
+                        dbContext.Add(new HangfireCounter
                         {
                             Key = items.Key,
                             Value = items.Sum(x => x.Value),
@@ -71,7 +61,7 @@ internal class CountersAggregator :
                 }
                 try
                 {
-                    context.SaveChanges();
+                    dbContext.SaveChanges();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -79,11 +69,11 @@ internal class CountersAggregator :
                     continue;
                 }
             }
-            cancellationToken.ThrowIfCancellationRequested();
+            context.StoppingToken.ThrowIfCancellationRequested();
         }
         while (removedCount > 0);
 
         _logger.Trace(string.Format(null, CoreStrings.CountersAggregatorExecuteCompleted, nameof(HangfireCounter)));
-        cancellationToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
+        context.StoppingToken.WaitHandle.WaitOne(_storage.CountersAggregationInterval);
     }
 }

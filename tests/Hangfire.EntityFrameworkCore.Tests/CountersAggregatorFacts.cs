@@ -29,7 +29,7 @@ public class CountersAggregatorFacts : EFCoreStorageTest
         (var instance, var context) = SetupInitialState(true);
 
         Assert.Throws<OperationCanceledException>(
-            () => instance.Execute(context.StoppingToken));
+            () => instance.Execute(context));
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class CountersAggregatorFacts : EFCoreStorageTest
         InitializeData();
         (var instance, var context) = SetupInitialState(false);
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {

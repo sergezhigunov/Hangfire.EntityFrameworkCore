@@ -7,11 +7,7 @@ namespace Hangfire.EntityFrameworkCore;
 
 using NotNullAttribute = Annotations.NotNullAttribute;
 
-internal class ExpirationManager :
-#pragma warning disable CS0618
-    IServerComponent,
-#pragma warning restore CS0618
-    IBackgroundProcess
+internal class ExpirationManager : IBackgroundProcess
 {
     private const int BatchSize = 1000;
     private const string LockKey = "locks:expirationmanager";
@@ -32,11 +28,6 @@ internal class ExpirationManager :
 
     public void Execute([NotNull] BackgroundProcessContext context)
     {
-        Execute(context.StoppingToken);
-    }
-
-    public void Execute(CancellationToken cancellationToken)
-    {
         RemoveExpired(
             (HangfireCounter x) => x.Id,
             x => new HangfireCounter { Id = x });
@@ -50,7 +41,7 @@ internal class ExpirationManager :
             (HangfireSet x) => new { x.Key, x.Value },
             x => new HangfireSet { Key = x.Key, Value = x.Value });
         RemoveExpiredJobs();
-        cancellationToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
+        context.StoppingToken.WaitHandle.WaitOne(_storage.JobExpirationCheckInterval);
     }
 
     private void RemoveExpiredJobs()

@@ -3,9 +3,7 @@ using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore
 {
-#pragma warning disable CS0618
-    internal sealed class EFCoreHeartbeatProcess : IServerComponent, IBackgroundProcess
-#pragma warning restore CS0618
+    internal sealed class EFCoreHeartbeatProcess : IBackgroundProcess
     {
         private readonly ConcurrentDictionary<EFCoreFetchedJob, object> _items = new();
 
@@ -13,16 +11,11 @@ namespace Hangfire.EntityFrameworkCore
 
         public void Untrack(EFCoreFetchedJob item) => _items.TryRemove(item, out var _);
 
-        public void Execute(CancellationToken cancellationToken)
+        public void Execute(BackgroundProcessContext context)
         {
             foreach (var item in _items)
                 item.Key.ExecuteKeepAliveQueryIfRequired();
-            cancellationToken.Wait(TimeSpan.FromSeconds(1));
-        }
-
-        public void Execute(BackgroundProcessContext context)
-        {
-            Execute(context.StoppingToken);
+            context.StoppingToken.Wait(TimeSpan.FromSeconds(1));
         }
     }
 }

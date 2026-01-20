@@ -158,7 +158,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         CreateExpirationEntries(DateTime.UtcNow.AddMonths(-1));
         (var instance, var context) = CreateInitialState();
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {
@@ -176,7 +176,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         CreateExpirationEntries(null);
         (var instance, var context) = CreateInitialState();
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {
@@ -194,7 +194,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         CreateExpirationEntries(DateTime.UtcNow.AddMonths(1));
         (var instance, var context) = CreateInitialState();
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {
@@ -240,7 +240,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         });
         (var instance, var context) = CreateInitialState();
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {
@@ -271,7 +271,7 @@ public class ExpirationManagerFacts : EFCoreStorageTest
         UseContextSavingChanges(context => context.Add(job));
         (var instance, var context) = CreateInitialState();
 
-        instance.Execute(context.StoppingToken);
+        instance.Execute(context);
 
         UseContext(context =>
         {

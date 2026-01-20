@@ -1,5 +1,4 @@
-﻿using Hangfire.Storage;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Hangfire.EntityFrameworkCore.Tests;
@@ -187,9 +186,7 @@ public class EFCoreStorageFacts : EFCoreStorageTest
         var result =  storage.GetComponents();
 #pragma warning restore CS0618
 
-        Assert.Contains(result, x => x is EFCoreHeartbeatProcess);
-        Assert.Contains(result, x => x is ExpirationManager);
-        Assert.Contains(result, x => x is CountersAggregator);
+        Assert.Empty(result);
     }
 
     [Fact]

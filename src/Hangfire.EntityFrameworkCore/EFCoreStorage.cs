@@ -2,10 +2,9 @@
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
+using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
+
 namespace Hangfire.EntityFrameworkCore;
-
-using NotNullAttribute = Annotations.NotNullAttribute;
-
 /// <summary>
 /// Represents an Entity Framework Core based Hangfire Job Storage.
 /// </summary>
@@ -164,23 +163,6 @@ public class EFCoreStorage : JobStorage
         if (featureId is null) throw new ArgumentNullException(nameof(featureId));
 #endif
         return SupportedFeatures.Contains(featureId) || base.HasFeature(featureId);
-    }
-
-    /// <summary>
-    /// Returns of server component collection.
-    /// </summary>
-    /// <returns>
-    /// Collection of server components <see cref="IServerComponent"/>.
-    /// </returns>
-#pragma warning disable CS0618, CS0672
-    public override IEnumerable<IServerComponent> GetComponents()
-    {
-        foreach (var item in base.GetComponents())
-#pragma warning restore CS0618, CS0672
-            yield return item;
-        yield return new ExpirationManager(this);
-        yield return new CountersAggregator(this);
-        yield return HeartbeatProcess;
     }
 
     /// <summary>
