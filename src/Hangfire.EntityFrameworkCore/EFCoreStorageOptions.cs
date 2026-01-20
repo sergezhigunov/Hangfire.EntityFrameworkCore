@@ -126,7 +126,6 @@ public class EFCoreStorageOptions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="value"/> is <see langword="null"/>.
     /// </exception>
-    [SuppressMessage("Maintainability", "CA1510")]
     public string Schema
     {
         get;

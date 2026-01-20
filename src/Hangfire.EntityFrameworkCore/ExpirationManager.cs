@@ -1,11 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
 
 namespace Hangfire.EntityFrameworkCore;
-
-using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class ExpirationManager : IBackgroundProcess
 {
@@ -14,7 +11,6 @@ internal class ExpirationManager : IBackgroundProcess
     private readonly ILog _logger = LogProvider.For<ExpirationManager>();
     private readonly EFCoreStorage _storage;
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public ExpirationManager(EFCoreStorage storage)
     {
 #if NET8_0_OR_GREATER
@@ -156,7 +152,6 @@ internal class ExpirationManager : IBackgroundProcess
         }
     }
 
-    [SuppressMessage("Performance", "CA1859")]
     private static IReadOnlyCollection<TKey> GetExpiredIds<TEntity, TKey>(
         DbContext context,
         Expression<Func<TEntity, TKey>> keySelector)

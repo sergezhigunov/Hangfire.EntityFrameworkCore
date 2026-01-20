@@ -1,13 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 /// <summary>
 /// Represents a first-in, first-out collection of Hangfire jobs.
 /// </summary>
-[SuppressMessage("Naming", "CA1711")]
+#pragma warning disable CA1711
 public interface IPersistentJobQueue
+#pragma warning restore CA1711
 {
     /// <summary>
     /// Retrieves the job at the head of the queue and returns it.

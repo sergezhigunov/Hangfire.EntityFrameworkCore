@@ -1,8 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Hangfire.EntityFrameworkCore.Properties;
+﻿using Hangfire.EntityFrameworkCore.Properties;
 using Hangfire.Server;
-
-using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
 
 namespace Hangfire.EntityFrameworkCore;
 /// <summary>
@@ -71,7 +68,6 @@ public class EFCoreStorage : JobStorage
     /// <paramref name="options"/> is <see langword="null"/>.
     /// </exception>
     [CLSCompliant(false)]
-    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreStorage(
         Action<DbContextOptionsBuilder> optionsAction,
         EFCoreStorageOptions options)
@@ -192,7 +188,6 @@ public class EFCoreStorage : JobStorage
         yield return new CountersAggregator(this);
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     internal IPersistentJobQueueProvider GetQueueProvider(string queue)
     {
 #if NET8_0_OR_GREATER
@@ -206,7 +201,6 @@ public class EFCoreStorage : JobStorage
     internal void RegisterDatabaseInitializer(Action<HangfireContext> databaseInitializer)
         => _databaseInitializer = databaseInitializer;
 
-    [SuppressMessage("Maintainability", "CA1510")]
     internal void RegisterProvider(IPersistentJobQueueProvider provider, IList<string> queues)
     {
 #if NET8_0_OR_GREATER
@@ -224,7 +218,6 @@ public class EFCoreStorage : JobStorage
             providers[queue] = provider;
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     internal void UseContext(Action<DbContext> action)
     {
 #if NET8_0_OR_GREATER
@@ -245,7 +238,6 @@ public class EFCoreStorage : JobStorage
         });
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     internal T UseContext<T>(Func<DbContext, T> func)
     {
 #if NET8_0_OR_GREATER

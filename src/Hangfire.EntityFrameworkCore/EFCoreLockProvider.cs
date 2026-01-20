@@ -1,10 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿#if !NET8_0_OR_GREATER
 using Hangfire.EntityFrameworkCore.Properties;
+#endif
 
 namespace Hangfire.EntityFrameworkCore;
 
 using GetLockFunc = Func<DbContext, string, HangfireLock>;
-using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class EFCoreLockProvider : ILockProvider
 {
@@ -16,7 +16,6 @@ internal class EFCoreLockProvider : ILockProvider
             context.Set<HangfireLock>().
             SingleOrDefault(x => x.Id == id));
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreLockProvider(
         [NotNull] EFCoreStorage storage)
     {
@@ -28,7 +27,6 @@ internal class EFCoreLockProvider : ILockProvider
         _storage = storage;
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public void Acquire([NotNull] string resource, TimeSpan timeout)
     {
 #if NET8_0_OR_GREATER
@@ -68,7 +66,6 @@ internal class EFCoreLockProvider : ILockProvider
         throw new DistributedLockTimeoutException(resource);
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public void Release([NotNull] string resource)
     {
 #if NET8_0_OR_GREATER

@@ -1,7 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
-
-namespace Hangfire.EntityFrameworkCore;
+﻿namespace Hangfire.EntityFrameworkCore;
 
 internal sealed class EFCoreLock : IDisposable
 {
@@ -9,7 +6,6 @@ internal sealed class EFCoreLock : IDisposable
     private readonly string _resource;
     private bool _disposed;
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreLock(
         [NotNull] ILockProvider provider,
         [NotNull] string resource,

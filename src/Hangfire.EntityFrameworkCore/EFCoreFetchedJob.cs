@@ -1,7 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Globalization;
 using Hangfire.EntityFrameworkCore.Properties;
-using NotNullAttribute = Hangfire.Annotations.NotNullAttribute;
 
 namespace Hangfire.EntityFrameworkCore;
 
@@ -28,7 +26,6 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
 
     string IFetchedJob.JobId => _queuedJob.JobId.ToString(CultureInfo.InvariantCulture);
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreFetchedJob(
         [NotNull] EFCoreStorage storage,
         [NotNull] HangfireQueuedJob queuedJob)
@@ -107,7 +104,6 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
             _storage.HeartbeatProcess.Untrack(this);
     }
 
-    [SuppressMessage("Design", "CA1031")]
     internal void ExecuteKeepAliveQueryIfRequired()
     {
         if (TimestampHelper.Elapsed(_lastHeartbeat) < _interval)
@@ -122,7 +118,9 @@ internal sealed class EFCoreFetchedJob : IFetchedJob
             {
                 SetFetchedAt(DateTime.UtcNow);
             }
+#pragma warning disable CA1031
             catch (Exception exception)
+#pragma warning restore CA1031
             {
                 _logger.Log(LogLevel.Debug, () =>
                     string.Format(null, CoreStrings.EFCoreFetchedJobExecuteKeepAliveQueryFailed, Id),

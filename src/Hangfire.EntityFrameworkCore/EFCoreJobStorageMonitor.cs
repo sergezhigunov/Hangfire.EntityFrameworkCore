@@ -1,22 +1,20 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Globalization;
 using Hangfire.States;
 using Hangfire.Storage.Monitoring;
 
 namespace Hangfire.EntityFrameworkCore;
 
-using GetCountersFunc = Func<DbContext, ICollection<string>, IEnumerable<KeyValuePair<string, long>>>;
-using GetJobDetailsFunc = Func<DbContext, long, JobDetailsDto>;
-using GetJobParametersFunc = Func<DbContext, long, IEnumerable<KeyValuePair<string, string>>>;
-using GetStateDataFunc = Func<DbContext, string, int, int, IEnumerable<EFCoreJobStorageMonitor.JobState>>;
-using GetStateHistoryFunc = Func<DbContext, long, IEnumerable<StateHistoryDto>>;
-using GetStateCountFunc = Func<DbContext, string, long>;
-using GetStatisticsFunc = Func<DbContext, IEnumerable<KeyValuePair<string, long>>>;
-using GetCountFunc = Func<DbContext, long>;
 using EnqueuedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<EFCoreJobStorageMonitor.EnqueuedJobState>>;
 using FetchedJobsFunc = Func<DbContext, IEnumerable<long>, IEnumerable<KeyValuePair<long, FetchedJobDto>>>;
+using GetCountersFunc = Func<DbContext, ICollection<string>, IEnumerable<KeyValuePair<string, long>>>;
+using GetCountFunc = Func<DbContext, long>;
+using GetJobDetailsFunc = Func<DbContext, long, JobDetailsDto>;
+using GetJobParametersFunc = Func<DbContext, long, IEnumerable<KeyValuePair<string, string>>>;
+using GetStateCountFunc = Func<DbContext, string, long>;
+using GetStateDataFunc = Func<DbContext, string, int, int, IEnumerable<EFCoreJobStorageMonitor.JobState>>;
+using GetStateHistoryFunc = Func<DbContext, long, IEnumerable<StateHistoryDto>>;
+using GetStatisticsFunc = Func<DbContext, IEnumerable<KeyValuePair<string, long>>>;
 using ServersFunc = Func<DbContext, IEnumerable<ServerDto>>;
-using NotNullAttribute = Annotations.NotNullAttribute;
 
 internal class EFCoreJobStorageMonitor : JobStorageMonitor
 {
@@ -165,7 +163,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
 
     private readonly EFCoreStorage _storage;
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public EFCoreJobStorageMonitor(
         EFCoreStorage storage)
     {
@@ -188,7 +185,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
 
     public override long DeletedListCount() => GetNumberOfJobsByStateName(DeletedState.StateName);
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public override long EnqueuedCount([NotNull] string queue)
     {
 #if NET8_0_OR_GREATER
@@ -202,7 +198,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
         return statistics.Enqueued;
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public override JobList<EnqueuedJobDto> EnqueuedJobs([NotNull] string queue, int from, int perPage)
     {
 #if NET8_0_OR_GREATER
@@ -235,7 +230,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
                     data?.GetValue(nameof(FailedJobDto.FailedAt))),
             });
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public override long FetchedCount([NotNull] string queue)
     {
 #if NET8_0_OR_GREATER
@@ -249,7 +243,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
         return statistics.Fetched;
     }
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public override JobList<FetchedJobDto> FetchedJobs([NotNull] string queue, int from, int perPage)
     {
 #if NET8_0_OR_GREATER
@@ -310,7 +303,6 @@ internal class EFCoreJobStorageMonitor : JobStorageMonitor
     public override IDictionary<DateTime, long> HourlySucceededJobs()
         => GetHourlyTimelineStats(SucceededStatsName);
 
-    [SuppressMessage("Maintainability", "CA1510")]
     public override JobDetailsDto JobDetails([NotNull] string jobId)
     {
 #if NET8_0_OR_GREATER

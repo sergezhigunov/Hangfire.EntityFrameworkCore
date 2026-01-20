@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Hangfire.EntityFrameworkCore;
 
@@ -33,6 +32,7 @@ public class HangfireServer
     /// Gets or sets the queue names list processing by the server.
     /// </summary>
     [Required]
-    [SuppressMessage("Usage", "CA2227")]
+#pragma warning disable CA2227
     public IList<string> Queues { get; set; } = Array.Empty<string>();
+#pragma warning restore CA2227
 }
