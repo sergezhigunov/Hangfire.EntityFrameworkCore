@@ -1,4 +1,9 @@
-﻿0.8.0
+﻿0.9.0
+• Added - Deleted job statistics into real-time and history graphs.
+• Breaking – Set minimal inclusive Hangfire.Core version 1.8.20.
+• Breaking – Remove Hangfire.Server.IServerComponent interface usage.
+
+0.8.0
 • Added – .NET 10 support.
 
 0.7.0
