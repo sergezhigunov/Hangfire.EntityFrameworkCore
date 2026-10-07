@@ -104,7 +104,7 @@ internal sealed class EFCoreJobQueueMonitoringApi : IPersistentJobQueueMonitorin
             from x in context.Set<HangfireQueuedJob>().Where(predicate)
             where x.Queue == queue
             orderby x.Id ascending
-            select x.Id).
+            select x.JobId).
             Skip(skip).
             Take(perPage);
 }
